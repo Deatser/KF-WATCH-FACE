@@ -42,7 +42,7 @@
 							<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
 						</a>
 						<a href="#catalog" class="nav-link">Каталог</a>
-						<a href="#" class="nav-link">О нас</a>
+						<a href="#" class="nav-link" id="aboutLink">О нас</a>
 
 						<a href="https://t.me/krek_free" target="_blank" class="nav-link">
 							<i class="fab fa-telegram"></i>
@@ -213,6 +213,80 @@
 				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
 			</div>
 		</footer>
+
+		<!-- Модальное окно "О нас" -->
+		<div id="aboutModal" class="about-modal">
+			<div class="about-modal-content">
+				<button id="closeAboutModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-clock"></i>
+					<h2>О KF WATCH FACE</h2>
+				</div>
+				<div class="about-modal-body">
+					<div class="about-text">
+						<p>
+							<strong>Циферблаты от KF WATCH FACE</strong> : <br /><span
+								class="highlight"
+								>Стиль, Удобство и Информативность</span
+							>
+							на ваших часах.
+						</p>
+
+						<p>
+							Преобразите свои смарт-часы WearOS с нашей коллекцией цифровых
+							циферблатов! Мы предлагаем широкий выбор дизайнов, сочетающих в
+							себе элегантную классику, современный минимализм и продвинутую
+							функциональность.
+						</p>
+
+						<div class="feature-section">
+							<h3><i class="fas fa-star"></i> Удобство использования</h3>
+							<p>
+								Интуитивно понятный интерфейс и легко настраиваемые параметры
+								позволят вам адаптировать циферблат под свои нужды. Мгновенный
+								доступ к важной информации – дата, время, заряд батареи и многое
+								другое – всегда под рукой.
+							</p>
+						</div>
+
+						<div class="feature-section">
+							<h3><i class="fas fa-chart-line"></i> Информативность</h3>
+							<p>
+								Получайте всю необходимую информацию прямо на экране часов.
+								Отображение уведомлений, данные о физической активности, прогноз
+								погоды – все это поможет вам оставаться в курсе событий и
+								контролировать свой день.
+							</p>
+						</div>
+
+						<div class="feature-section">
+							<h3><i class="fas fa-sliders-h"></i> Настройки</h3>
+							<p>
+								Персонализируйте циферблат, выбирая цвета, стрелки, виджеты и
+								другие элементы под свои предпочтения.
+							</p>
+						</div>
+
+						<div class="platform-info">
+							<h3><i class="fab fa-android"></i> Совместимость</h3>
+							<p>
+								Циферблаты для смарт-часов под управлением операционной системы
+								<strong>WearOS</strong>.
+							</p>
+						</div>
+
+						<div class="final-message">
+							<p>
+								<i class="fas fa-gem"></i> Подчеркните Вашу индивидуальность с
+								циферблатами <strong>KF WATCH FACE</strong>.
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
 		<!-- Подключаем JS файлы -->
 		<script src="../js/firebase-config.js"></script>

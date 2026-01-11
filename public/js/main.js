@@ -440,6 +440,44 @@ function showPlaceholderImage(container, index) {
 	container.appendChild(icon)
 }
 
+// Функция для работы с модальным окном "О нас"
+function initAboutModal() {
+	const aboutLink = document.getElementById('aboutLink')
+	const aboutModal = document.getElementById('aboutModal')
+	const closeAboutModal = document.getElementById('closeAboutModal')
+
+	if (!aboutLink || !aboutModal) return
+
+	// Открытие модального окна
+	aboutLink.addEventListener('click', function (e) {
+		e.preventDefault()
+		aboutModal.classList.add('show')
+		document.body.style.overflow = 'hidden' // Блокируем скролл на фоне
+	})
+
+	// Закрытие модального окна
+	closeAboutModal.addEventListener('click', function () {
+		aboutModal.classList.remove('show')
+		document.body.style.overflow = 'auto'
+	})
+
+	// Закрытие при клике на фон
+	aboutModal.addEventListener('click', function (e) {
+		if (e.target === aboutModal) {
+			aboutModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && aboutModal.classList.contains('show')) {
+			aboutModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
 // Создание точки карусели
 function createCarouselDot(index) {
 	const dot = document.createElement('button')
@@ -1145,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	const { products, latestProduct } = await loadProductsFromWatch()
 
 	allProducts = products
-
+	initAboutModal()
 	// Инициализируем карусель для новинки
 	initNewProductCarousel(latestProduct)
 
