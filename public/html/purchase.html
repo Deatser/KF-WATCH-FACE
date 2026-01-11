@@ -21,6 +21,234 @@
 		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+		<!-- Добавляем стили для модального окна "О нас" -->
+		<style>
+			/* Стили для модального окна "О нас" */
+			.about-modal {
+				display: none;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.7);
+				z-index: 2000;
+				opacity: 0;
+				transition: opacity 0.3s ease;
+				backdrop-filter: blur(5px);
+			}
+
+			.about-modal.show {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 1;
+			}
+
+			.about-modal-content {
+				background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
+				border-radius: 20px;
+				width: 90%;
+				max-width: 600px;
+				max-height: 80vh;
+				overflow-y: auto;
+				padding: 30px;
+				position: relative;
+				box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+				border: 2px solid #8b7355;
+				animation: modalSlideIn 0.4s ease;
+			}
+
+			@keyframes modalSlideIn {
+				from {
+					opacity: 0;
+					transform: translateY(-30px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.about-modal-close {
+				position: absolute;
+				top: 15px;
+				right: 15px;
+				background: #8b7355;
+				color: white;
+				border: none;
+				border-radius: 50%;
+				width: 32px;
+				height: 32px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				font-size: 1rem;
+				transition: all 0.3s ease;
+				z-index: 10;
+			}
+
+			.about-modal-close:hover {
+				background: #a89176;
+				transform: rotate(90deg);
+			}
+
+			.about-modal-header {
+				text-align: center;
+				margin-bottom: 25px;
+				padding-bottom: 15px;
+				border-bottom: 2px solid rgba(139, 115, 85, 0.3);
+			}
+
+			.about-modal-header i {
+				font-size: 2.5rem;
+				color: #8b7355;
+				margin-bottom: 10px;
+			}
+
+			.about-modal-header h2 {
+				color: #1a1a1a;
+				font-size: 1.8rem;
+				font-weight: 700;
+				letter-spacing: 0.5px;
+			}
+
+			.about-modal-body {
+				color: #4a4a4a;
+			}
+
+			.about-text {
+				line-height: 1.7;
+			}
+
+			.about-text p {
+				margin-bottom: 20px;
+				text-align: justify;
+			}
+
+			.highlight {
+				color: #8b7355;
+				font-weight: 600;
+				font-size: 1.1rem;
+				background: rgba(139, 115, 85, 0.1);
+				padding: 2px 8px;
+				border-radius: 4px;
+			}
+
+			.feature-section {
+				background: rgba(255, 255, 255, 0.5);
+				border-radius: 12px;
+				padding: 20px;
+				margin-bottom: 20px;
+				border-left: 4px solid #8b7355;
+				transition: transform 0.3s ease;
+			}
+
+			.feature-section:hover {
+				transform: translateX(5px);
+				background: rgba(255, 255, 255, 0.7);
+			}
+
+			.feature-section h3 {
+				color: #1a1a1a;
+				font-size: 1.2rem;
+				margin-bottom: 10px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+
+			.feature-section h3 i {
+				color: #8b7355;
+				font-size: 1rem;
+			}
+
+			.platform-info {
+				background: linear-gradient(
+					135deg,
+					rgba(139, 115, 85, 0.1) 0%,
+					rgba(168, 145, 118, 0.1) 100%
+				);
+				border-radius: 12px;
+				padding: 20px;
+				margin-bottom: 20px;
+				text-align: center;
+			}
+
+			.platform-info h3 {
+				color: #1a1a1a;
+				font-size: 1.2rem;
+				margin-bottom: 10px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+			}
+
+			.platform-info h3 i {
+				color: #8b7355;
+				font-size: 1.2rem;
+			}
+
+			.final-message {
+				text-align: center;
+				padding: 20px;
+				background: rgba(139, 115, 85, 0.1);
+				border-radius: 12px;
+				margin-top: 25px;
+				border: 1px solid rgba(139, 115, 85, 0.2);
+			}
+
+			.final-message p {
+				font-size: 1.1rem;
+				color: #1a1a1a;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				margin-bottom: 0;
+			}
+
+			.final-message i {
+				color: #8b7355;
+			}
+
+			.about-text strong {
+				color: #8b7355;
+				font-weight: 600;
+			}
+
+			/* Адаптивность для модального окна */
+			@media (max-width: 768px) {
+				.about-modal-content {
+					width: 95%;
+					padding: 20px;
+					max-height: 85vh;
+				}
+
+				.about-modal-header h2 {
+					font-size: 1.5rem;
+				}
+
+				.feature-section,
+				.platform-info {
+					padding: 15px;
+				}
+
+				.feature-section h3,
+				.platform-info h3 {
+					font-size: 1.1rem;
+				}
+
+				.final-message p {
+					font-size: 1rem;
+					flex-direction: column;
+					gap: 5px;
+				}
+			}
+		</style>
 	</head>
 	<body>
 		<!-- Хедер -->
@@ -40,8 +268,10 @@
 					>
 						<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
 					</a>
+					<!-- ИЗМЕНЕНО: Меняем порядок ссылок -->
 					<a href="/" class="nav-link">Главная</a>
 					<a href="/#catalog" class="nav-link">Каталог</a>
+					<a href="#" class="nav-link" id="aboutLink">О нас</a>
 					<a href="https://t.me/krek_free" target="_blank" class="nav-link">
 						<i class="fab fa-telegram"></i>
 					</a>
@@ -286,6 +516,80 @@
 			</div>
 		</footer>
 
+		<!-- Модальное окно "О нас" -->
+		<div id="aboutModal" class="about-modal">
+			<div class="about-modal-content">
+				<button id="closeAboutModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-clock"></i>
+					<h2>О KF WATCH FACE</h2>
+				</div>
+				<div class="about-modal-body">
+					<div class="about-text">
+						<p>
+							<strong>Циферблаты от KF WATCH FACE</strong> : <br /><span
+								class="highlight"
+								>Стиль, Удобство и Информативность</span
+							>
+							на ваших часах.
+						</p>
+
+						<p>
+							Преобразите свои смарт-часы WearOS с нашей коллекцией цифровых
+							циферблатов! Мы предлагаем широкий выбор дизайнов, сочетающих в
+							себе элегантную классику, современный минимализм и продвинутую
+							функциональность.
+						</p>
+
+						<div class="feature-section">
+							<h3><i class="fas fa-star"></i> Удобство использования</h3>
+							<p>
+								Интуитивно понятный интерфейс и легко настраиваемые параметры
+								позволят вам адаптировать циферблат под свои нужды. Мгновенный
+								доступ к важной информации – дата, время, заряд батареи и многое
+								другое – всегда под рукой.
+							</p>
+						</div>
+
+						<div class="feature-section">
+							<h3><i class="fas fa-chart-line"></i> Информативность</h3>
+							<p>
+								Получайте всю необходимую информацию прямо на экране часов.
+								Отображение уведомлений, данные о физической активности, прогноз
+								погоды – все это поможет вам оставаться в курсе событий и
+								контролировать свой день.
+							</p>
+						</div>
+
+						<div class="feature-section">
+							<h3><i class="fas fa-sliders-h"></i> Настройки</h3>
+							<p>
+								Персонализируйте циферблат, выбирая цвета, стрелки, виджеты и
+								другие элементы под свои предпочтения.
+							</p>
+						</div>
+
+						<div class="platform-info">
+							<h3><i class="fab fa-android"></i> Совместимость</h3>
+							<p>
+								Циферблаты для смарт-часов под управлением операционной системы
+								<strong>WearOS</strong>.
+							</p>
+						</div>
+
+						<div class="final-message">
+							<p>
+								<i class="fas fa-gem"></i> Подчеркните Вашу индивидуальность с
+								циферблатами <strong>KF WATCH FACE</strong>.
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<!-- Подключаем JS файлы -->
 		<script src="/public/js/firebase-config.js"></script>
 		<script src="/public/js/auth.js"></script>
@@ -457,7 +761,48 @@
 				})
 
 				console.log('Обработчики меню установлены')
+
+				// Инициализация модального окна "О нас"
+				initAboutModal()
 			})
+
+			// Функция для работы с модальным окном "О нас"
+			function initAboutModal() {
+				const aboutLink = document.getElementById('aboutLink')
+				const aboutModal = document.getElementById('aboutModal')
+				const closeAboutModal = document.getElementById('closeAboutModal')
+
+				if (!aboutLink || !aboutModal) return
+
+				// Открытие модального окна
+				aboutLink.addEventListener('click', function (e) {
+					e.preventDefault()
+					aboutModal.classList.add('show')
+					document.body.style.overflow = 'hidden' // Блокируем скролл на фоне
+				})
+
+				// Закрытие модального окна
+				closeAboutModal.addEventListener('click', function () {
+					aboutModal.classList.remove('show')
+					document.body.style.overflow = 'auto'
+				})
+
+				// Закрытие при клике на фон
+				aboutModal.addEventListener('click', function (e) {
+					if (e.target === aboutModal) {
+						aboutModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+
+				// Закрытие по клавише Escape
+				document.addEventListener('keydown', function (e) {
+					if (e.key === 'Escape' && aboutModal.classList.contains('show')) {
+						aboutModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+			}
 		</script>
 	</body>
 </html>
