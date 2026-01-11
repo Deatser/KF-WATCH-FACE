@@ -31,7 +31,13 @@
 						<i class="fas fa-clock"></i>
 						<span>KF WATCH FACE</span>
 					</a>
-					<nav class="nav">
+
+					<!-- Кнопка бургер-меню для мобильных -->
+					<button class="mobile-menu-toggle" id="mobileMenuToggle">
+						<i class="fas fa-bars"></i>
+					</button>
+
+					<nav class="nav" id="mainNav">
 						<!-- Ссылка для админов (изначально скрыта) -->
 						<a
 							href="/public/html/admin.html"
@@ -90,6 +96,60 @@
 							</div>
 						</div>
 					</nav>
+
+					<!-- Мобильное меню (поверх всего) -->
+					<div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+					<div class="mobile-menu" id="mobileMenu">
+						<button class="mobile-menu-close" id="mobileMenuClose">
+							<i class="fas fa-times"></i>
+						</button>
+						<div class="mobile-menu-content">
+							<a href="#catalog" class="mobile-menu-link">Каталог</a>
+							<a href="#" class="mobile-menu-link" id="aboutLinkMobile"
+								>О нас</a
+							>
+							<a
+								href="https://t.me/krek_free"
+								target="_blank"
+								class="mobile-menu-link"
+							>
+								<i class="fab fa-telegram"></i> Telegram
+							</a>
+							<div class="mobile-menu-user-section">
+								<div id="mobileUserInfo" style="display: none">
+									<p id="mobileUserEmailDisplay"></p>
+									<button id="mobileLogoutBtn" class="btn-logout">Выйти</button>
+								</div>
+								<div id="mobileAuthForm">
+									<h3>Вход / Регистрация</h3>
+									<div id="mobileAuthError" class="auth-error"></div>
+									<input
+										type="email"
+										id="mobileAuthEmail"
+										placeholder="Email"
+										class="auth-input"
+									/>
+									<input
+										type="password"
+										id="mobileAuthPassword"
+										placeholder="Пароль"
+										class="auth-input"
+									/>
+									<div class="auth-buttons">
+										<button id="mobileLoginBtn" class="auth-btn btn-login">
+											Войти
+										</button>
+										<button
+											id="mobileRegisterBtn"
+											class="auth-btn btn-register"
+										>
+											Регистрация
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</header>
 
@@ -172,8 +232,8 @@
 					<!-- Товары будут добавляться через JS -->
 				</div>
 
-				<!-- Индикатор загрузки -->
-				<div class="loading" id="loadingIndicator">
+				<!-- Индикатор загрузки (теперь всегда скрыт) -->
+				<div class="loading" id="loadingIndicator" style="display: none">
 					<div class="spinner"></div>
 					<p>Загружаем больше товаров...</p>
 				</div>

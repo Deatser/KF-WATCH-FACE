@@ -14,6 +14,12 @@ const loadingIndicator = document.getElementById('loadingIndicator')
 const newProductCarousel = document.getElementById('newProductCarousel')
 const newProductDots = document.getElementById('newProductDots')
 
+// Элементы мобильного меню
+const mobileMenuToggle = document.getElementById('mobileMenuToggle')
+const mobileMenuOverlay = document.getElementById('mobileMenuOverlay')
+const mobileMenu = document.getElementById('mobileMenu')
+const mobileMenuClose = document.getElementById('mobileMenuClose')
+
 // Добавляем плавный скролл для ссылок каталога
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 	anchor.addEventListener('click', function (e) {
@@ -28,20 +34,28 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 				top: targetElement.offsetTop - 80,
 				behavior: 'smooth',
 			})
+
+			// Закрываем мобильное меню если оно открыто
+			if (mobileMenu.classList.contains('active')) {
+				closeMobileMenu()
+			}
 		}
 	})
 })
 
 // Переменные состояния
-let currentPage = 1
-const itemsPerPage = 10
-let isLoading = false
 let allProducts = [] // Теперь будем хранить товары из папки watch
 let latestProduct = null // Товар-новинка
 
 // Карусель новинки
 let newProductCurrentSlide = 0
 let newProductTotalSlides = 0
+
+// Переменные для свайпов
+let touchStartX = 0
+let touchEndX = 0
+let touchStartY = 0
+let touchEndY = 0
 
 // Функция для извлечения номера из имени папки KF###
 function extractFolderNumber(folderName) {
@@ -165,7 +179,70 @@ function calculatePriceFromFolderName(folderName) {
 	return 150
 }
 
-// Инициализация карусели для новинки с реальными изображениями и кликабельностью
+// Инициализация мобильного меню
+function initMobileMenu() {
+	if (
+		!mobileMenuToggle ||
+		!mobileMenuOverlay ||
+		!mobileMenu ||
+		!mobileMenuClose
+	)
+		return
+
+	// Открытие меню
+	mobileMenuToggle.addEventListener('click', function (e) {
+		e.stopPropagation()
+		openMobileMenu()
+	})
+
+	// Закрытие меню
+	mobileMenuClose.addEventListener('click', closeMobileMenu)
+	mobileMenuOverlay.addEventListener('click', closeMobileMenu)
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+			closeMobileMenu()
+		}
+	})
+
+	// Обработка кликов по ссылкам в мобильном меню
+	document.querySelectorAll('.mobile-menu-link').forEach(link => {
+		link.addEventListener('click', function (e) {
+			if (this.href && !this.href.includes('#') && !this.target) {
+				// Если это внешняя ссылка, ждем немного перед переходом
+				setTimeout(() => {
+					closeMobileMenu()
+				}, 300)
+			}
+		})
+	})
+
+	// Синхронизация состояния авторизации с мобильным меню
+	syncMobileMenuAuth()
+}
+
+// Открытие мобильного меню
+function openMobileMenu() {
+	mobileMenuOverlay.classList.add('active')
+	mobileMenu.classList.add('active')
+	document.body.style.overflow = 'hidden'
+}
+
+// Закрытие мобильного меню
+function closeMobileMenu() {
+	mobileMenuOverlay.classList.remove('active')
+	mobileMenu.classList.remove('active')
+	document.body.style.overflow = 'auto'
+}
+
+// Синхронизация состояния авторизации с мобильным меню
+function syncMobileMenuAuth() {
+	// Эта функция будет вызываться из auth.js
+	// Для простоты, просто скопируем логику из auth.js
+}
+
+// Инициализация карусели для новинки с реальными изображениями, кликабельностью и свайпами
 function initNewProductCarousel(product) {
 	// Если нет товара-новинки, используем заглушку
 	if (!product) {
@@ -242,14 +319,14 @@ function initNewProductCarousel(product) {
 	// Добавляем обработчики для кнопок навигации
 	document.querySelectorAll('.carousel-btn.prev-btn').forEach(btn => {
 		btn.addEventListener('click', e => {
-			e.stopPropagation() // Останавливаем всплытие, чтобы не срабатывал клик на карусель
+			e.stopPropagation()
 			goToNewProductSlide(newProductCurrentSlide - 1)
 		})
 	})
 
 	document.querySelectorAll('.carousel-btn.next-btn').forEach(btn => {
 		btn.addEventListener('click', e => {
-			e.stopPropagation() // Останавливаем всплытие
+			e.stopPropagation()
 			goToNewProductSlide(newProductCurrentSlide + 1)
 		})
 	})
@@ -320,7 +397,6 @@ function initNewProductCarousel(product) {
 			this.style.transform = 'translateY(-6px)'
 			hoverOverlay.style.opacity = '1'
 			viewIcon.style.opacity = '1'
-			// Добавляем тень как у обычных карточек
 			this.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.15)'
 		})
 
@@ -328,7 +404,6 @@ function initNewProductCarousel(product) {
 			this.style.transform = 'translateY(0)'
 			hoverOverlay.style.opacity = '0'
 			viewIcon.style.opacity = '0'
-			// Возвращаем стандартную тень
 			this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)'
 		})
 
@@ -404,6 +479,9 @@ function initNewProductCarousel(product) {
 		})
 	}
 
+	// === ДОБАВЛЯЕМ ПОДДЕРЖКУ СВАЙПОВ ДЛЯ КАРУСЕЛИ НОВИНКИ ===
+	initSwipeForCarousel(newProductCarousel, 'new')
+
 	// Автопрокрутка карусели
 	startNewProductCarouselAutoPlay()
 
@@ -414,6 +492,17 @@ function initNewProductCarousel(product) {
 
 	newProductCarousel.addEventListener('mouseleave', () => {
 		startNewProductCarouselAutoPlay()
+	})
+
+	// Также останавливаем автопрокрутку при касании на мобильных
+	newProductCarousel.addEventListener('touchstart', () => {
+		clearInterval(newProductCarouselInterval)
+	})
+
+	newProductCarousel.addEventListener('touchend', () => {
+		setTimeout(() => {
+			startNewProductCarouselAutoPlay()
+		}, 5000) // Возобновляем через 5 секунд
 	})
 }
 
@@ -443,31 +532,46 @@ function showPlaceholderImage(container, index) {
 // Функция для работы с модальным окном "О нас"
 function initAboutModal() {
 	const aboutLink = document.getElementById('aboutLink')
+	const aboutLinkMobile = document.getElementById('aboutLinkMobile')
 	const aboutModal = document.getElementById('aboutModal')
 	const closeAboutModal = document.getElementById('closeAboutModal')
 
-	if (!aboutLink || !aboutModal) return
+	// Открытие модального окна с десктопной ссылки
+	if (aboutLink) {
+		aboutLink.addEventListener('click', function (e) {
+			e.preventDefault()
+			aboutModal.classList.add('show')
+			document.body.style.overflow = 'hidden'
+		})
+	}
 
-	// Открытие модального окна
-	aboutLink.addEventListener('click', function (e) {
-		e.preventDefault()
-		aboutModal.classList.add('show')
-		document.body.style.overflow = 'hidden' // Блокируем скролл на фоне
-	})
+	// Открытие модального окна с мобильной ссылки
+	if (aboutLinkMobile) {
+		aboutLinkMobile.addEventListener('click', function (e) {
+			e.preventDefault()
+			aboutModal.classList.add('show')
+			document.body.style.overflow = 'hidden'
+			closeMobileMenu() // Закрываем мобильное меню
+		})
+	}
 
 	// Закрытие модального окна
-	closeAboutModal.addEventListener('click', function () {
-		aboutModal.classList.remove('show')
-		document.body.style.overflow = 'auto'
-	})
-
-	// Закрытие при клике на фон
-	aboutModal.addEventListener('click', function (e) {
-		if (e.target === aboutModal) {
+	if (closeAboutModal) {
+		closeAboutModal.addEventListener('click', function () {
 			aboutModal.classList.remove('show')
 			document.body.style.overflow = 'auto'
-		}
-	})
+		})
+	}
+
+	// Закрытие при клике на фон
+	if (aboutModal) {
+		aboutModal.addEventListener('click', function (e) {
+			if (e.target === aboutModal) {
+				aboutModal.classList.remove('show')
+				document.body.style.overflow = 'auto'
+			}
+		})
+	}
 
 	// Закрытие по клавише Escape
 	document.addEventListener('keydown', function (e) {
@@ -627,6 +731,9 @@ function initNewProductCarouselPlaceholder() {
 		)
 	})
 
+	// Добавляем поддержку свайпов для заглушки
+	initSwipeForCarousel(newProductCarousel, 'new')
+
 	// Автопрокрутка карусели
 	startNewProductCarouselAutoPlay()
 }
@@ -675,11 +782,132 @@ function startNewProductCarouselAutoPlay() {
 	}, 5000)
 }
 
-// Функция для отображения товаров
-function renderProducts(productsToRender) {
+// Функция для отображения ВСЕХ товаров сразу
+function renderAllProducts(productsToRender) {
 	productsToRender.forEach(product => {
 		renderProductCard(product)
 	})
+	// После отрисовки всех товаров инициализируем свайпы для всех каруселей
+	initSwipeForAllProductCarousels()
+}
+
+// Инициализация свайпов для всех карточек товаров
+function initSwipeForAllProductCarousels() {
+	document.querySelectorAll('.product-carousel').forEach(carousel => {
+		const productId = carousel.dataset.productId
+		if (productId) {
+			initSwipeForCarousel(carousel, 'product', productId)
+		}
+	})
+}
+
+// Инициализация свайпов для карусели
+function initSwipeForCarousel(carousel, type, productId = null) {
+	if (!carousel) return
+
+	carousel.addEventListener('touchstart', function (e) {
+		touchStartX = e.changedTouches[0].screenX
+		touchStartY = e.changedTouches[0].screenY
+	})
+
+	carousel.addEventListener('touchend', function (e) {
+		touchEndX = e.changedTouches[0].screenX
+		touchEndY = e.changedTouches[0].screenY
+		handleSwipeGesture(type, productId)
+	})
+
+	// Также добавим поддержку мыши для тестирования
+	let mouseDownX = 0
+	let mouseUpX = 0
+
+	carousel.addEventListener('mousedown', function (e) {
+		mouseDownX = e.clientX
+	})
+
+	carousel.addEventListener('mouseup', function (e) {
+		mouseUpX = e.clientX
+		handleMouseSwipe(mouseDownX, mouseUpX, type, productId)
+	})
+}
+
+// Обработка жеста свайпа
+function handleSwipeGesture(type, productId) {
+	const swipeThreshold = 50 // минимальное расстояние для свайпа
+	const swipeDistance = touchEndX - touchStartX
+	const verticalDistance = Math.abs(touchEndY - touchStartY)
+
+	// Игнорируем вертикальные свайпы (скролл страницы)
+	if (Math.abs(swipeDistance) < verticalDistance) {
+		return
+	}
+
+	if (Math.abs(swipeDistance) > swipeThreshold) {
+		if (swipeDistance > 0) {
+			// Свайп вправо
+			if (type === 'new') {
+				goToNewProductSlide(newProductCurrentSlide - 1)
+			} else if (type === 'product' && productId) {
+				const currentSlide = getCurrentProductSlide(productId)
+				const slides = document.querySelectorAll(
+					`[data-product-id="${productId}"] .product-slide`
+				)
+				const totalSlides = slides.length
+				goToProductSlide(
+					productId,
+					(currentSlide - 1 + totalSlides) % totalSlides
+				)
+			}
+		} else {
+			// Свайп влево
+			if (type === 'new') {
+				goToNewProductSlide(newProductCurrentSlide + 1)
+			} else if (type === 'product' && productId) {
+				const currentSlide = getCurrentProductSlide(productId)
+				const slides = document.querySelectorAll(
+					`[data-product-id="${productId}"] .product-slide`
+				)
+				const totalSlides = slides.length
+				goToProductSlide(productId, (currentSlide + 1) % totalSlides)
+			}
+		}
+	}
+}
+
+// Обработка свайпа мышью (для тестирования)
+function handleMouseSwipe(startX, endX, type, productId) {
+	const swipeThreshold = 50
+	const swipeDistance = endX - startX
+
+	if (Math.abs(swipeDistance) > swipeThreshold) {
+		if (swipeDistance > 0) {
+			// Свайп вправо
+			if (type === 'new') {
+				goToNewProductSlide(newProductCurrentSlide - 1)
+			} else if (type === 'product' && productId) {
+				const currentSlide = getCurrentProductSlide(productId)
+				const slides = document.querySelectorAll(
+					`[data-product-id="${productId}"] .product-slide`
+				)
+				const totalSlides = slides.length
+				goToProductSlide(
+					productId,
+					(currentSlide - 1 + totalSlides) % totalSlides
+				)
+			}
+		} else {
+			// Свайп влево
+			if (type === 'new') {
+				goToNewProductSlide(newProductCurrentSlide + 1)
+			} else if (type === 'product' && productId) {
+				const currentSlide = getCurrentProductSlide(productId)
+				const slides = document.querySelectorAll(
+					`[data-product-id="${productId}"] .product-slide`
+				)
+				const totalSlides = slides.length
+				goToProductSlide(productId, (currentSlide + 1) % totalSlides)
+			}
+		}
+	}
 }
 
 function renderProductCard(product) {
@@ -1076,46 +1304,6 @@ function adjustColor(color, amount) {
 	return color
 }
 
-// Функция для загрузки следующей порции товаров
-function loadMoreProducts() {
-	if (isLoading) return
-
-	isLoading = true
-	loadingIndicator.style.display = 'block'
-
-	// Загружаем порцию товаров
-	setTimeout(() => {
-		const startIndex = (currentPage - 1) * itemsPerPage
-		const endIndex = startIndex + itemsPerPage
-
-		const productsToRender = allProducts.slice(startIndex, endIndex)
-
-		if (productsToRender.length > 0) {
-			renderProducts(productsToRender)
-			currentPage++
-		} else {
-			// Если товаров больше нет, скрываем индикатор загрузки
-			loadingIndicator.innerHTML = '<p>Все товары загружены</p>'
-		}
-
-		isLoading = false
-		if (productsToRender.length < itemsPerPage) {
-			loadingIndicator.style.display = 'none'
-		}
-	}, 500)
-}
-
-// Функция для обработки бесконечной прокрутки
-function handleInfiniteScroll() {
-	const scrollPosition = window.innerHeight + window.scrollY
-	const pageHeight = document.documentElement.scrollHeight
-	const threshold = 300
-
-	if (scrollPosition >= pageHeight - threshold && !isLoading) {
-		loadMoreProducts()
-	}
-}
-
 // Функция для отображения сообщения о пустом каталоге
 function showEmptyCatalogMessage() {
 	productsContainer.innerHTML = `
@@ -1163,6 +1351,7 @@ function showErrorMessage(message) {
 		newArrivalSection.style.display = 'none'
 	}
 }
+
 // Фиксация хедера и эффект при скролле
 function initFixedHeader() {
 	const header = document.querySelector('.header')
@@ -1176,67 +1365,61 @@ function initFixedHeader() {
 		}
 	})
 }
+
+// Функция для адаптации каталога под 65% ширины
+function adjustCatalogLayout() {
+	const catalogContainer = document.querySelector('.catalog-container')
+	const productsGrid = document.querySelector('.products-container')
+
+	if (!catalogContainer || !productsGrid) return
+
+	if (window.innerWidth >= 1600) {
+		catalogContainer.style.width = '65%'
+		productsGrid.style.gridTemplateColumns = 'repeat(5, 1fr)'
+	} else if (window.innerWidth >= 1400) {
+		catalogContainer.style.width = '75%'
+		productsGrid.style.gridTemplateColumns = 'repeat(5, 1fr)'
+	} else if (window.innerWidth >= 1200) {
+		catalogContainer.style.width = '80%'
+		productsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)'
+	} else if (window.innerWidth >= 1100) {
+		catalogContainer.style.width = '85%'
+		productsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)'
+	} else if (window.innerWidth >= 992) {
+		catalogContainer.style.width = '90%'
+		productsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)'
+	} else if (window.innerWidth >= 768) {
+		catalogContainer.style.width = '95%'
+		productsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)'
+	} else {
+		catalogContainer.style.width = '100%'
+		productsGrid.style.gridTemplateColumns = '1fr'
+	}
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
 	initFixedHeader()
+	initMobileMenu()
+	initAboutModal()
+
 	// Загружаем товары из папки watch
 	const { products, latestProduct } = await loadProductsFromWatch()
 
 	allProducts = products
-	initAboutModal()
+
 	// Инициализируем карусель для новинки
 	initNewProductCarousel(latestProduct)
 
 	if (allProducts.length > 0) {
-		// Загружаем первую порцию товаров
-		loadMoreProducts()
+		// Загружаем ВСЕ товары сразу (без бесконечной прокрутки)
+		renderAllProducts(allProducts)
 
-		// Добавляем обработчик бесконечной прокрутки
-		window.addEventListener('scroll', handleInfiniteScroll)
+		// Скрываем индикатор загрузки
+		loadingIndicator.style.display = 'none'
 	} else if (latestProduct) {
 		// Если есть только новинка, но нет других товаров
-		loadingIndicator.innerHTML = '<p>Новинка загружена</p>'
 		loadingIndicator.style.display = 'none'
-	}
-
-	// Останавливаем автопрокрутку при наведении на карусель новинки
-	newProductCarousel.addEventListener('mouseenter', () => {
-		clearInterval(newProductCarouselInterval)
-	})
-
-	newProductCarousel.addEventListener('mouseleave', () => {
-		startNewProductCarouselAutoPlay()
-	})
-
-	// Функция для адаптации каталога под 65% ширины
-	function adjustCatalogLayout() {
-		const catalogContainer = document.querySelector('.catalog-container')
-		const productsGrid = document.querySelector('.products-container')
-
-		if (!catalogContainer || !productsGrid) return
-
-		if (window.innerWidth >= 1600) {
-			catalogContainer.style.width = '65%'
-			productsGrid.style.gridTemplateColumns = 'repeat(5, 1fr)'
-		} else if (window.innerWidth >= 1400) {
-			catalogContainer.style.width = '75%'
-			productsGrid.style.gridTemplateColumns = 'repeat(5, 1fr)'
-		} else if (window.innerWidth >= 1200) {
-			catalogContainer.style.width = '80%'
-			productsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)'
-		} else if (window.innerWidth >= 1100) {
-			catalogContainer.style.width = '85%'
-			productsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)'
-		} else if (window.innerWidth >= 992) {
-			catalogContainer.style.width = '90%'
-			productsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)'
-		} else if (window.innerWidth >= 768) {
-			catalogContainer.style.width = '95%'
-			productsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)'
-		} else {
-			catalogContainer.style.width = '100%'
-			productsGrid.style.gridTemplateColumns = '1fr'
-		}
 	}
 
 	// Вызываем при загрузке и изменении размера окна
