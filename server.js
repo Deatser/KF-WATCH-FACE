@@ -1,5 +1,3 @@
-// server.js
-
 const express = require('express')
 const fs = require('fs')
 const path = require('path')
@@ -131,8 +129,6 @@ function calculateStats(folders) {
 // API для создания папки
 app.post('/api/create-folder', (req, res) => {
 	try {
-		console.log('Создание папки. Body:', req.body)
-
 		const { folderName, description } = req.body
 
 		if (!folderName) {
@@ -168,8 +164,6 @@ app.post('/api/create-folder', (req, res) => {
 		const pricePath = path.join(folderPath, 'price.txt')
 		fs.writeFileSync(pricePath, '0')
 
-		console.log(`✅ Создана папка: ${folderPath}`)
-
 		res.json({
 			success: true,
 			message: 'Папка успешно создана',
@@ -185,9 +179,6 @@ app.post('/api/create-folder', (req, res) => {
 // API для загрузки файлов
 app.post('/api/upload-files', upload.array('files'), (req, res) => {
 	try {
-		console.log('Загрузка файлов. Body:', req.body)
-		console.log('Files:', req.files)
-
 		const folderName = req.body.folderName
 		const files = req.files
 
@@ -236,8 +227,6 @@ app.post('/api/upload-files', upload.array('files'), (req, res) => {
 			}
 		})
 
-		console.log(`📁 Загружено ${uploadedCount} файлов в ${folderPath}`)
-
 		res.json({
 			success: true,
 			message: 'Файлы успешно загружены',
@@ -253,8 +242,6 @@ app.post('/api/upload-files', upload.array('files'), (req, res) => {
 // API для переименования папки
 app.post('/api/rename-folder', (req, res) => {
 	try {
-		console.log('Переименование папки. Body:', req.body)
-
 		const { oldName, newName } = req.body
 
 		if (!oldName || !newName) {
@@ -283,8 +270,6 @@ app.post('/api/rename-folder', (req, res) => {
 
 		fs.renameSync(oldPath, newPath)
 
-		console.log(`✏️ Переименовано: ${oldName} → ${newName}`)
-
 		res.json({
 			success: true,
 			message: 'Папка успешно переименована',
@@ -300,8 +285,6 @@ app.post('/api/rename-folder', (req, res) => {
 // API для удаления папки
 app.post('/api/delete-folder', (req, res) => {
 	try {
-		console.log('Удаление папки. Body:', req.body)
-
 		const { folderName } = req.body
 
 		if (!folderName) {
@@ -317,8 +300,6 @@ app.post('/api/delete-folder', (req, res) => {
 		// Рекурсивное удаление папки со всеми файлами
 		fs.rmSync(folderPath, { recursive: true, force: true })
 
-		console.log(`🗑️ Удалена папка: ${folderName}`)
-
 		res.json({
 			success: true,
 			message: 'Папка успешно удалена',
@@ -333,8 +314,6 @@ app.post('/api/delete-folder', (req, res) => {
 // API для удаления файла
 app.post('/api/delete-file', (req, res) => {
 	try {
-		console.log('Удаление файла. Body:', req.body)
-
 		const { folderName, fileName } = req.body
 
 		if (!folderName || !fileName) {
@@ -356,8 +335,6 @@ app.post('/api/delete-file', (req, res) => {
 		// Удаляем файл
 		fs.unlinkSync(filePath)
 
-		console.log(`🗑️ Удален файл: ${folderName}/${fileName}`)
-
 		res.json({
 			success: true,
 			message: 'Файл успешно удален',
@@ -370,7 +347,7 @@ app.post('/api/delete-file', (req, res) => {
 	}
 })
 
-// API для просмотра файла
+// API для просмотра файла - УБРАЛИ console.log
 app.get('/api/view-file', (req, res) => {
 	try {
 		const { folder, file } = req.query
@@ -424,14 +401,14 @@ app.get('/api/view-file', (req, res) => {
 
 		fileStream.pipe(res)
 
-		console.log(`👁️ Просмотр файла: ${folder}/${file}`)
+		// УБРАЛИ: console.log(`👁️ Просмотр файла: ${folder}/${file}`)
 	} catch (error) {
 		console.error('❌ Ошибка просмотра файла:', error)
 		res.status(500).json({ error: error.message })
 	}
 })
 
-// API для скачивания файла
+// API для скачивания файла - УБРАЛИ console.log
 app.get('/api/download-file', (req, res) => {
 	try {
 		const { folder, file } = req.query
@@ -454,7 +431,7 @@ app.get('/api/download-file', (req, res) => {
 			}
 		})
 
-		console.log(`📥 Скачивание файла: ${folder}/${file}`)
+		// УБРАЛИ: console.log(`📥 Скачивание файла: ${folder}/${file}`)
 	} catch (error) {
 		console.error('❌ Ошибка скачивания файла:', error)
 		res.status(500).json({ error: error.message })
@@ -476,6 +453,7 @@ app.post('/api/scan-watch', (req, res) => {
 			path: watchPath,
 		})
 	} catch (error) {
+		console.error('❌ Ошибка сканирования:', error)
 		res.status(500).json({ error: error.message })
 	}
 })
@@ -551,20 +529,9 @@ app.use((err, req, res, next) => {
 
 // Запуск сервера
 app.listen(PORT, () => {
-	console.log(`🚀 Сервер запущен: http://localhost:${PORT}`)
-	console.log(`📁 Админ панель: http://localhost:${PORT}/admin`)
-	console.log(`🛒 Страница покупки: http://localhost:${PORT}/purchase/1`)
+	console.log(`🚀 Сервер запущен на порту: ${PORT}`)
+	console.log(`📁 Админ панель: /admin`)
+	console.log(`🛒 Страница покупки: /purchase/1`)
 	console.log(`👁️ Папка watch: ${path.join(__dirname, 'public', 'watch')}`)
 	console.log(`📁 Папка uploads: ${path.join(__dirname, 'uploads')}`)
-	console.log('\n📋 Доступные API endpoints:')
-	console.log('  GET  /api/watch-content     - получить содержимое папки watch')
-	console.log('  POST /api/create-folder     - создать новую папку')
-	console.log('  POST /api/upload-files      - загрузить файлы в папку')
-	console.log('  POST /api/rename-folder     - переименовать папку')
-	console.log('  POST /api/delete-folder     - удалить папку')
-	console.log('  POST /api/delete-file       - удалить файл')
-	console.log('  GET  /api/view-file         - просмотреть содержимое файла')
-	console.log('  GET  /api/download-file     - скачать файл')
-	console.log('  POST /api/scan-watch        - сканировать папку watch')
-	console.log('  GET  /purchase/:id          - страница покупки товара')
 })
