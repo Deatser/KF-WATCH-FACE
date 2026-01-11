@@ -126,12 +126,26 @@ app.get('/api/product/:productId', (req, res) => {
 			return res.status(404).json({ error: 'Товары не найдены' })
 		}
 
+		// ДОБАВЬТЕ ЭТО перед поиском товара:
+		// Получаем папки в исходном порядке (без сортировки)
+		const rawFolders = fs
+			.readdirSync(watchPath, { withFileTypes: true })
+			.filter(dirent => dirent.isDirectory())
+			.map(dirent => dirent.name)
+
+		// Сортируем папки для определения новинки
+		const sortedFolders = [...rawFolders].sort((a, b) => {
+			const numA = extractFolderNumber(a)
+			const numB = extractFolderNumber(b)
+			return numB - numA // Новые первыми
+		})
+
 		// Логика поиска товара
 		let folderName = null
 
-		// Вариант 1: По номеру в URL (индексу)
-		if (productId > 0 && productId <= folders.length) {
-			folderName = folders[productId - 1]
+		// Вариант 1: По номеру в URL (индексу) - используем ИСХОДНЫЙ порядок
+		if (productId > 0 && productId <= rawFolders.length) {
+			folderName = rawFolders[productId - 1] // ← Берем из исходного массива
 		}
 
 		// Вариант 2: По KFXXX номеру
@@ -188,7 +202,8 @@ app.get('/api/product/:productId', (req, res) => {
 		}
 
 		// Определяем новинку
-		const isNew = isProductNew(folderName, folders)
+		// Определяем новинку
+		const isNew = isProductNew(folderName, sortedFolders) // ← Используем отсортированный массив
 
 		res.json({
 			id: productId,
