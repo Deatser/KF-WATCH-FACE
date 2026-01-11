@@ -420,12 +420,12 @@ body {
 
 /* Стили блока с новинкой - новая структура */
 .new-arrival {
-	padding-top: 10%; /* Отступ сверху */
+	padding-top: 10%; /* Уменьшить или убрать */
 	padding-bottom: 20px;
 	position: relative;
 	width: 100%;
-	height: auto;
-	min-height: 400px;
+	height: auto; /* Заменить на фиксированную высоту для ПК */
+	min-height: 400px; /* Уменьшить для ПК */
 	max-height: none;
 	display: flex;
 	align-items: center;
@@ -1472,15 +1472,31 @@ body {
 		font-size: 1.3rem;
 	}
 
-	/* Блок новинки */
 	.new-arrival {
-		min-height: 550px;
-		padding-top: 20%;
+		min-height: auto; /* Убрать фиксированную высоту */
+		height: auto; /* Автоматическая высота */
+		padding-top: 25%;
+		padding-bottom: 40px;
+		display: block; /* Изменить flex на block */
 	}
 
 	.new-product {
-		padding: 20px;
-		min-height: 500px;
+		min-height: auto; /* Убрать фиксированную высоту */
+		height: auto; /* Автоматическая высота */
+		margin: 0 auto;
+		padding: 30px 20px;
+	}
+
+	.new-product-content {
+		height: auto;
+	}
+
+	.new-product-visual {
+		flex-direction: column;
+		height: auto;
+		min-height: 400px; /* Минимальная высота чтобы фото уместилось */
+		gap: 30px;
+		margin-bottom: 20px;
 	}
 
 	.new-product-title {
@@ -1597,16 +1613,17 @@ body {
 		width: 100%;
 	}
 
-	/* Блок новинки */
 	.new-arrival {
-		min-height: 600px;
-		padding-top: 25%;
+		padding-top: 30%;
+		padding-bottom: 30px;
 	}
 
 	.new-product {
-		padding: 15px;
-		min-height: 550px;
-		border-radius: 15px;
+		padding: 25px 15px;
+	}
+
+	.new-product-visual {
+		min-height: 350px;
 	}
 
 	.new-product-content {
