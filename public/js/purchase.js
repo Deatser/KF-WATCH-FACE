@@ -1,10 +1,23 @@
-// purchase.js - Исправленная версия с кнопками навигации ВНЕ точек
+// purchase.js - Оптимизированная версия с быстрой загрузкой всех изображений
 
 // Глобальные переменные
 let currentProduct = null
 let currentSlide = 0
 let totalSlides = 0
 let carouselInterval = null
+let imagesPreloaded = false
+
+// Функция предзагрузки изображений
+function preloadImages(imageUrls) {
+	if (imagesPreloaded) return
+
+	imageUrls.forEach(url => {
+		const img = new Image()
+		img.src = url
+	})
+
+	imagesPreloaded = true
+}
 
 // Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', async function () {
@@ -19,27 +32,153 @@ document.addEventListener('DOMContentLoaded', async function () {
 		return
 	}
 
-	// Загружаем данные товара
-	await loadProductData(productId)
+	// Загружаем ВСЕ данные товара одним запросом
+	await loadProductDataOptimized(productId)
 
-	// Инициализируем карусель
-	initCarousel()
-
-	// Загружаем описание товара
-	await loadProductDescription()
-
-	// Инициализируем форму
-	initForm()
-
-	// Добавляем обработчики событий
-	initEventListeners()
-
-	// Автопрокрутка карусели
-	startCarouselAutoPlay()
-
-	// Инициализация фиксированного хедера
+	// Инициализируем фиксированный хедер
 	initFixedHeader()
 })
+
+// Оптимизированная загрузка данных товара
+async function loadProductDataOptimized(productId) {
+	try {
+		// Показываем индикатор загрузки
+		showLoadingIndicator(true)
+
+		const response = await fetch(`/api/product/${productId}`)
+
+		if (!response.ok) {
+			throw new Error(`Ошибка загрузки: ${response.status}`)
+		}
+
+		const product = await response.json()
+		currentProduct = product
+
+		// Обновляем UI
+		updateProductUI()
+
+		// Предзагружаем все изображения
+		if (product.images && product.images.length > 0) {
+			const imageUrls = product.images.map(img => img.url)
+			preloadImages(imageUrls)
+
+			// Создаем карусель с уже готовыми данными
+			createCarouselFromData(product.images)
+		} else {
+			// Если нет изображений, показываем заглушку
+			showCarouselPlaceholder()
+		}
+
+		// Отображаем описание
+		if (product.description) {
+			displayProductDescription(product.description)
+		} else {
+			// Пробуем загрузить описание отдельно
+			await loadProductDescription()
+		}
+
+		// Инициализируем форму
+		initForm()
+
+		// Добавляем обработчики событий
+		initEventListeners()
+
+		// Запускаем автопрокрутку
+		startCarouselAutoPlay()
+
+		// Скрываем индикатор загрузки
+		showLoadingIndicator(false)
+	} catch (error) {
+		console.error('Ошибка загрузки товара:', error)
+		showError('Ошибка загрузки данных товара')
+		showLoadingIndicator(false)
+	}
+}
+
+// Функция для отображения/скрытия индикатора загрузки
+function showLoadingIndicator(show) {
+	const carouselContainer = document.getElementById('productCarousel')
+	const descriptionContent = document.getElementById('descriptionContent')
+
+	if (show) {
+		// Показываем индикатор загрузки в карусели
+		if (carouselContainer) {
+			carouselContainer.innerHTML = `
+                <div class="loading-indicator" style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    flex-direction: column;
+                    gap: 20px;
+                ">
+                    <div class="spinner" style="
+                        width: 50px;
+                        height: 50px;
+                        border: 5px solid #f3f3f3;
+                        border-top: 5px solid #8b7355;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                    "></div>
+                    <p style="color: #8b7355; font-weight: 500;">Загрузка изображений...</p>
+                </div>
+            `
+		}
+
+		// Показываем индикатор в описании
+		if (descriptionContent) {
+			descriptionContent.innerHTML = `
+                <div class="loading-text" style="
+                    padding: 20px;
+                    text-align: center;
+                    color: #666;
+                ">
+                    <i class="fas fa-spinner fa-spin"></i> Загрузка описания...
+                </div>
+            `
+		}
+	}
+}
+
+// Создание карусели из готовых данных
+function createCarouselFromData(images) {
+	const carouselContainer = document.getElementById('productCarousel')
+	const dotsContainer = document.getElementById('carouselDots')
+
+	// Очищаем контейнеры
+	carouselContainer.innerHTML = ''
+	dotsContainer.innerHTML = ''
+
+	totalSlides = images.length
+
+	// Создаем все слайды сразу
+	images.forEach((image, index) => {
+		// Создаем слайд
+		const slide = document.createElement('div')
+		slide.className = `carousel-slide-large ${index === 0 ? 'active' : ''}`
+		slide.dataset.index = index
+
+		const img = document.createElement('img')
+		img.src = image.url
+		img.alt = `Фото циферблата ${index + 1}`
+		img.loading = index === 0 ? 'eager' : 'lazy' // Оптимизация загрузки
+
+		// Предзагрузка следующего изображения
+		if (index === 1) {
+			const nextImg = new Image()
+			nextImg.src = images[1].url
+		}
+
+		slide.appendChild(img)
+		carouselContainer.appendChild(slide)
+
+		// Создаем точку
+		createCarouselDot(dotsContainer, index)
+	})
+
+	// Устанавливаем первый слайд активным
+	goToSlide(0)
+}
 
 // Инициализация авторизации
 async function initAuth() {
@@ -327,94 +466,14 @@ function getProductIdFromURL() {
 	return null
 }
 
-// Загрузка данных товара
+// Загрузка данных товара (старая версия - заменена на loadProductDataOptimized)
 async function loadProductData(productId) {
 	try {
-		const response = await fetch('/api/watch-content')
-
-		if (!response.ok) {
-			throw new Error(`Ошибка загрузки: ${response.status}`)
-		}
-
-		const data = await response.json()
-
-		if (!data.folders || data.folders.length === 0) {
-			throw new Error('Товары не найдены')
-		}
-
-		// Ищем папку с номером, соответствующим productId
-		let foundFolder = null
-
-		data.folders.forEach(folder => {
-			const folderNumber = extractFolderNumber(folder.name)
-			if (folderNumber === productId) {
-				foundFolder = folder
-			}
-		})
-
-		// Если не нашли по номеру, используем индекс
-		if (!foundFolder && productId <= data.folders.length) {
-			foundFolder = data.folders[productId - 1]
-		}
-
-		// Если все еще не нашли, берем первую папку
-		if (!foundFolder && data.folders.length > 0) {
-			foundFolder = data.folders[0]
-		}
-
-		if (!foundFolder) {
-			throw new Error('Товар не найден')
-		}
-
-		// Проверяем, является ли этот товар новинкой
-		let isNewProduct = false
-		const folderNumber = extractFolderNumber(foundFolder.name)
-
-		if (folderNumber > 0) {
-			let maxNumber = 0
-			data.folders.forEach(f => {
-				const num = extractFolderNumber(f.name)
-				if (num > maxNumber) maxNumber = num
-			})
-
-			isNewProduct = folderNumber === maxNumber
-		}
-
-		// Сохраняем данные товара
-		currentProduct = {
-			id: productId,
-			name: foundFolder.name,
-			folderName: foundFolder.name,
-			folderNumber: folderNumber,
-			isNewProduct: isNewProduct,
-			price: 150,
-			oldPrice: isNewProduct ? 190 : null,
-			images: [],
-		}
-
-		// Получаем изображения из папки
-		if (foundFolder.files) {
-			const imageFiles = foundFolder.files.filter(f =>
-				['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(f.type.toLowerCase())
-			)
-
-			if (imageFiles.length > 0) {
-				imageFiles.sort((a, b) => a.name.localeCompare(b.name))
-
-				currentProduct.images = imageFiles.map(file => ({
-					name: file.name,
-					url: `/api/view-file?folder=${encodeURIComponent(
-						foundFolder.name
-					)}&file=${encodeURIComponent(file.name)}`,
-				}))
-			}
-		}
-
-		// Обновляем UI
-		updateProductUI()
+		// Используем оптимизированный метод
+		return await loadProductDataOptimized(productId)
 	} catch (error) {
 		console.error('Ошибка загрузки товара:', error)
-		showError('Ошибка загрузки данных товара')
+		throw error
 	}
 }
 
@@ -432,7 +491,9 @@ function updateProductUI() {
 	if (!currentProduct) return
 
 	// Форматируем название (KF194 → KF 194)
-	const formattedName = currentProduct.name.replace(/(KF)(\d{3})/i, '$1 $2')
+	const formattedName =
+		currentProduct.displayName ||
+		currentProduct.name.replace(/(KF)(\d{3})/i, '$1 $2')
 
 	// Обновляем заголовки
 	document.getElementById(
@@ -474,30 +535,15 @@ function updateProductUI() {
 	}
 }
 
-// Инициализация карусели
+// Инициализация карусели (адаптированная)
 function initCarousel() {
-	const carouselContainer = document.getElementById('productCarousel')
-	const dotsContainer = document.getElementById('carouselDots')
-
-	// Очищаем контейнеры
-	carouselContainer.innerHTML = ''
-	dotsContainer.innerHTML = ''
-
-	if (!currentProduct || currentProduct.images.length === 0) {
-		// Если нет изображений, показываем заглушку
-		showCarouselPlaceholder(carouselContainer)
-		totalSlides = 1
+	// Если данные уже загружены, создаем карусель из них
+	if (currentProduct && currentProduct.images) {
+		createCarouselFromData(currentProduct.images)
 	} else {
-		// Создаем слайды с реальными изображениями
-		currentProduct.images.forEach((image, index) => {
-			createCarouselSlide(carouselContainer, image, index)
-			createCarouselDot(dotsContainer, index)
-		})
-		totalSlides = currentProduct.images.length
+		// Иначе показываем заглушку
+		showCarouselPlaceholder()
 	}
-
-	// Устанавливаем первый слайд активным
-	goToSlide(0)
 }
 
 // Создание слайда карусели
@@ -513,20 +559,20 @@ function createCarouselSlide(container, image, index) {
 		this.style.display = 'none'
 		const placeholder = document.createElement('div')
 		placeholder.style.cssText = `
-			width: 100%;
-			height: 100%;
-			background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		`
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `
 		const icon = document.createElement('i')
 		icon.className = 'fas fa-image'
 		icon.style.cssText = `
-			font-size: 3rem;
-			color: #8b7355;
-			opacity: 0.5;
-		`
+            font-size: 3rem;
+            color: #8b7355;
+            opacity: 0.5;
+        `
 		placeholder.appendChild(icon)
 		slide.appendChild(placeholder)
 	}
@@ -545,32 +591,41 @@ function createCarouselDot(container, index) {
 }
 
 // Заглушка для карусели (когда нет изображений)
-function showCarouselPlaceholder(container) {
+function showCarouselPlaceholder() {
+	const carouselContainer = document.getElementById('productCarousel')
+	const dotsContainer = document.getElementById('carouselDots')
+
+	if (!carouselContainer) return
+
+	carouselContainer.innerHTML = ''
+	dotsContainer.innerHTML = ''
+
 	const slide = document.createElement('div')
 	slide.className = 'carousel-slide-large active'
 	slide.style.cssText = `
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
-	`
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+    `
 
 	const icon = document.createElement('i')
 	icon.className = 'fas fa-clock'
 	icon.style.cssText = `
-		font-size: 4rem;
-		color: #8b7355;
-		opacity: 0.8;
-	`
+        font-size: 4rem;
+        color: #8b7355;
+        opacity: 0.8;
+    `
 
 	slide.appendChild(icon)
-	container.appendChild(slide)
+	carouselContainer.appendChild(slide)
 
 	// Создаем одну точку
-	const dotsContainer = document.getElementById('carouselDots')
 	const dot = document.createElement('button')
 	dot.className = 'carousel-dot-large active'
 	dotsContainer.appendChild(dot)
+
+	totalSlides = 1
 }
 
 // Переход к указанному слайду
@@ -590,6 +645,15 @@ function goToSlide(index) {
 	document.querySelectorAll('.carousel-dot-large').forEach((dot, i) => {
 		dot.classList.toggle('active', i === index)
 	})
+
+	// Предзагружаем следующее изображение
+	if (currentProduct && currentProduct.images) {
+		const nextIndex = (index + 1) % totalSlides
+		if (nextIndex !== index && currentProduct.images[nextIndex]) {
+			const nextImg = new Image()
+			nextImg.src = currentProduct.images[nextIndex].url
+		}
+	}
 
 	// Сбрасываем автопрокрутку
 	resetCarouselAutoPlay()
@@ -660,7 +724,6 @@ async function loadProductDescription() {
 	}
 }
 
-// Отображение описания товара
 // Отображение описания товара с форматированием
 function displayProductDescription(text) {
 	const descriptionContent = document.getElementById('descriptionContent')
@@ -771,29 +834,32 @@ function displayProductDescription(text) {
 // Стандартное описание
 function showDefaultDescription() {
 	const descriptionContent = document.getElementById('descriptionContent')
-	const formattedName = currentProduct.name.replace(/(KF)(\d{3})/i, '$1 $2')
+	const formattedName = currentProduct
+		? currentProduct.displayName ||
+		  currentProduct.name.replace(/(KF)(\d{3})/i, '$1 $2')
+		: ''
 
 	descriptionContent.innerHTML = `
-		<p><strong>Циферблат ${formattedName}</strong> - это цифровой циферблат для умных часов под управлением операционной системы WearOS 4 и выше.</p>
-		
-		<p>Циферблаты KF WATCH FACE - это современные циферблаты для Wear OS с максимальной функциональностью.</p>
-		
-		<h4>Основные функции:</h4>
-		<ul>
-			<li>Настройка циферблата непосредственно с часов (больше настроек, чем в программе на телефоне Wearable)</li>
-			<li>Частота сердечных сокращений BPM (ударов в минуту)</li>
-			<li>День недели, дата, месяц</li>
-			<li>Дистанция, км (посменно отображается с количеством шагов)</li>
-			<li>Процент заряда батареи</li>
-			<li>Настраиваемые ярлыки с возможностью маскировки под стиль</li>
-			<li>Предустановленные ярлыки</li>
-			<li>Настраиваемые поля/усложнения (зависит от часов)</li>
-			<li>AOD (2 режима: полный и минимальный)</li>
-			<li>Изменяемые цвета</li>
-		</ul>
-		
-		<p>При покупке циферблата вы получите ссылку на файл циферблата в формате *.apk, а также ссылки по инструкции на установку (через ADB App Control или Bugjaeger).</p>
-	`
+        <p><strong>Циферблат ${formattedName}</strong> - это цифровой циферблат для умных часов под управлением операционной системы WearOS 4 и выше.</p>
+        
+        <p>Циферблаты KF WATCH FACE - это современные циферблаты для Wear OS с максимальной функциональностью.</p>
+        
+        <h4>Основные функции:</h4>
+        <ul>
+            <li>Настройка циферблата непосредственно с часов (больше настроек, чем в программе на телефоне Wearable)</li>
+            <li>Частота сердечных сокращений BPM (ударов в минуту)</li>
+            <li>День недели, дата, месяц</li>
+            <li>Дистанция, км (посменно отображается с количеством шагов)</li>
+            <li>Процент заряда батареи</li>
+            <li>Настраиваемые ярлыки с возможностью маскировки под стиль</li>
+            <li>Предустановленные ярлыки</li>
+            <li>Настраиваемые поля/усложнения (зависит от часов)</li>
+            <li>AOD (2 режима: полный и минимальный)</li>
+            <li>Изменяемые цвета</li>
+        </ul>
+        
+        <p>При покупке циферблата вы получите ссылку на файл циферблата в формате *.apk, а также ссылки по инструкции на установку (через ADB App Control или Bugjaeger).</p>
+    `
 }
 
 // Инициализация формы
@@ -915,15 +981,15 @@ function processPayment() {
 function showError(message) {
 	const descriptionContent = document.getElementById('descriptionContent')
 	descriptionContent.innerHTML = `
-		<div class="error-message" style="text-align: center; padding: 40px 20px; color: #ff6b6b;">
-			<i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
-			<h3 style="margin-bottom: 10px;">Ошибка</h3>
-			<p>${message}</p>
-			<button onclick="window.location.href='/'" class="btn-buy" style="margin-top: 20px; padding: 10px 30px;">
-				Вернуться в каталог
-			</button>
-		</div>
-	`
+        <div class="error-message" style="text-align: center; padding: 40px 20px; color: #ff6b6b;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px;">Ошибка</h3>
+            <p>${message}</p>
+            <button onclick="window.location.href='/'" class="btn-buy" style="margin-top: 20px; padding: 10px 30px;">
+                Вернуться в каталог
+            </button>
+        </div>
+    `
 
 	// Скрываем кнопку оплаты
 	const payButton = document.getElementById('payButton')
@@ -960,3 +1026,31 @@ function initFixedHeader() {
 		}
 	})
 }
+
+// Добавляем CSS анимацию для спиннера
+const style = document.createElement('style')
+style.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .carousel-slide-large img {
+        transition: opacity 0.3s ease;
+    }
+    
+    .carousel-slide-large:not(.active) img {
+        opacity: 0;
+    }
+    
+    .carousel-slide-large.active img {
+        opacity: 1;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+`
+document.head.appendChild(style)

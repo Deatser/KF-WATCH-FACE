@@ -2,10 +2,12 @@ const express = require('express')
 const fs = require('fs')
 const path = require('path')
 const multer = require('multer')
+const compression = require('compression') // Добавляем сжатие
 const app = express()
-const PORT = process.env.PORT || 3000 // Render сам назначает порт
+const PORT = process.env.PORT || 3000
 
 // Middleware
+app.use(compression()) // Включаем сжатие GZIP
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static('public'))
@@ -31,55 +33,26 @@ if (!fs.existsSync('uploads')) {
 	fs.mkdirSync('uploads', { recursive: true })
 }
 
-// API для получения содержимого папки watch
-app.get('/api/watch-content', (req, res) => {
-	try {
-		const watchPath = path.join(__dirname, 'public', 'watch')
+// Вспомогательная функция для извлечения номера из KF###
+function extractFolderNumber(folderName) {
+	const match = folderName.match(/KF(\d{3})/i)
+	return match ? parseInt(match[1]) : 0
+}
 
-		// Проверяем существует ли папка
-		if (!fs.existsSync(watchPath)) {
-			return res.json({
-				folders: [],
-				stats: {
-					totalFolders: 0,
-					totalFiles: 0,
-					totalImages: 0,
-				},
-				message: 'Папка watch не существует',
-			})
-		}
+// Вспомогательная функция для проверки, новинка ли товар
+function isProductNew(folderName, allFolders) {
+	const currentNum = extractFolderNumber(folderName)
+	if (currentNum === 0) return false
 
-		// Читаем содержимое папки
-		const folders = fs
-			.readdirSync(watchPath, { withFileTypes: true })
-			.filter(dirent => dirent.isDirectory())
-			.map(dirent => {
-				const folderPath = path.join(watchPath, dirent.name)
-				const files = getFolderFiles(folderPath)
-
-				return {
-					name: dirent.name,
-					path: folderPath,
-					files: files,
-				}
-			})
-
-		// Подсчитываем статистику
-		const stats = calculateStats(folders)
-
-		res.json({
-			folders: folders,
-			stats: stats,
-			path: watchPath,
-		})
-	} catch (error) {
-		console.error('Ошибка чтения папки watch:', error)
-		res.status(500).json({
-			error: 'Ошибка чтения папки',
-			message: error.message,
-		})
+	// Находим максимальный номер среди всех папок
+	let maxNum = 0
+	for (const folder of allFolders) {
+		const num = extractFolderNumber(folder)
+		if (num > maxNum) maxNum = num
 	}
-})
+
+	return currentNum === maxNum
+}
 
 // Вспомогательная функция для получения файлов папки
 function getFolderFiles(folderPath) {
@@ -126,6 +99,272 @@ function calculateStats(folders) {
 	}
 }
 
+// ==================== НОВЫЕ ОПТИМИЗИРОВАННЫЕ API ====================
+
+// API для получения конкретного товара (все данные сразу)
+app.get('/api/product/:productId', (req, res) => {
+	try {
+		const productId = parseInt(req.params.productId)
+		const watchPath = path.join(__dirname, 'public', 'watch')
+
+		if (!fs.existsSync(watchPath)) {
+			return res.status(404).json({ error: 'Товар не найден' })
+		}
+
+		// Получаем все папки
+		const folders = fs
+			.readdirSync(watchPath, { withFileTypes: true })
+			.filter(dirent => dirent.isDirectory())
+			.map(dirent => dirent.name)
+			.sort((a, b) => {
+				const numA = extractFolderNumber(a)
+				const numB = extractFolderNumber(b)
+				return numB - numA // Сортируем по убыванию (новые первыми)
+			})
+
+		if (folders.length === 0) {
+			return res.status(404).json({ error: 'Товары не найдены' })
+		}
+
+		// Логика поиска товара
+		let folderName = null
+
+		// Вариант 1: По номеру в URL (индексу)
+		if (productId > 0 && productId <= folders.length) {
+			folderName = folders[productId - 1]
+		}
+
+		// Вариант 2: По KFXXX номеру
+		if (!folderName) {
+			for (const folder of folders) {
+				const folderNumber = extractFolderNumber(folder)
+				if (folderNumber === productId) {
+					folderName = folder
+					break
+				}
+			}
+		}
+
+		// Если не нашли, берем первый товар
+		if (!folderName) {
+			folderName = folders[0]
+		}
+
+		const folderPath = path.join(watchPath, folderName)
+		const files = getFolderFiles(folderPath)
+
+		// Получаем все изображения сразу
+		const images = files
+			.filter(file => ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.type))
+			.sort((a, b) => a.name.localeCompare(b.name))
+			.map(file => ({
+				name: file.name,
+				type: file.type,
+				url: `/api/view-file?folder=${encodeURIComponent(
+					folderName
+				)}&file=${encodeURIComponent(file.name)}`,
+				size: file.size,
+			}))
+
+		// Получаем описание
+		let description = ''
+		const descFile = files.find(
+			f =>
+				f.name.toLowerCase() === 'описание.txt' ||
+				f.name.toLowerCase() === 'description.txt'
+		)
+		if (descFile) {
+			const descPath = path.join(folderPath, descFile.name)
+			description = fs.readFileSync(descPath, 'utf-8')
+		}
+
+		// Получаем цену
+		let price = 150
+		const priceFile = files.find(f => f.name.toLowerCase() === 'price.txt')
+		if (priceFile) {
+			const pricePath = path.join(folderPath, priceFile.name)
+			const priceContent = fs.readFileSync(pricePath, 'utf-8').trim()
+			price = parseInt(priceContent) || 150
+		}
+
+		// Определяем новинку
+		const isNew = isProductNew(folderName, folders)
+
+		res.json({
+			id: productId,
+			folderId: extractFolderNumber(folderName),
+			name: folderName,
+			displayName: folderName.replace(/(KF)(\d{3})/i, '$1 $2'),
+			price: price,
+			oldPrice: isNew ? 190 : null,
+			isNewProduct: isNew,
+			images: images,
+			description: description,
+			folderName: folderName,
+			totalImages: images.length,
+			hasDescription: description.length > 0,
+		})
+	} catch (error) {
+		console.error('Ошибка загрузки товара:', error)
+		res
+			.status(500)
+			.json({ error: 'Ошибка загрузки товара', details: error.message })
+	}
+})
+
+// API для получения всех товаров с оптимизацией (для главной страницы)
+app.get('/api/products', async (req, res) => {
+	try {
+		const watchPath = path.join(__dirname, 'public', 'watch')
+
+		if (!fs.existsSync(watchPath)) {
+			return res.json({
+				products: [],
+				latestProduct: null,
+				stats: { total: 0 },
+			})
+		}
+
+		// Получаем все папки
+		const folders = fs
+			.readdirSync(watchPath, { withFileTypes: true })
+			.filter(dirent => dirent.isDirectory())
+			.map(dirent => dirent.name)
+			.sort((a, b) => {
+				const numA = extractFolderNumber(a)
+				const numB = extractFolderNumber(b)
+				return numB - numA // Сортируем по убыванию (новые первыми)
+			})
+
+		if (folders.length === 0) {
+			return res.json({
+				products: [],
+				latestProduct: null,
+				stats: { total: 0 },
+			})
+		}
+
+		// Берем первую папку как новинку
+		const latestFolder = folders[0]
+		const latestFolderPath = path.join(watchPath, latestFolder)
+		const latestFiles = getFolderFiles(latestFolderPath)
+
+		// Получаем изображения для новинки
+		const latestImages = latestFiles
+			.filter(file => ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.type))
+			.sort((a, b) => a.name.localeCompare(b.name))
+			.slice(0, 5) // Ограничиваем 5 изображениями для превью
+			.map(file => ({
+				name: file.name,
+				url: `/api/view-file?folder=${encodeURIComponent(
+					latestFolder
+				)}&file=${encodeURIComponent(file.name)}`,
+			}))
+
+		// Формируем данные новинки
+		const latestProduct = {
+			id: 1,
+			name: latestFolder,
+			displayName: latestFolder.replace(/(KF)(\d{3})/i, '$1 $2'),
+			price: 150,
+			oldPrice: 190,
+			isNewProduct: true,
+			images: latestImages,
+			folderName: latestFolder,
+			totalImages: latestImages.length,
+		}
+
+		// Формируем остальные товары (без детальной загрузки изображений для скорости)
+		const otherProducts = folders.slice(1).map((folder, index) => {
+			const folderPath = path.join(watchPath, folder)
+			const files = getFolderFiles(folderPath)
+
+			// Берем только первое изображение для превью
+			const firstImage = files.find(file =>
+				['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.type)
+			)
+
+			return {
+				id: index + 2,
+				name: folder,
+				displayName: folder.replace(/(KF)(\d{3})/i, '$1 $2'),
+				price: 150,
+				folderName: folder,
+				hasImage: !!firstImage,
+				imageUrl: firstImage
+					? `/api/view-file?folder=${encodeURIComponent(
+							folder
+					  )}&file=${encodeURIComponent(firstImage.name)}`
+					: null,
+				folderNumber: extractFolderNumber(folder),
+			}
+		})
+
+		res.json({
+			products: otherProducts,
+			latestProduct: latestProduct,
+			stats: {
+				total: folders.length,
+				latestFolder: latestFolder,
+			},
+		})
+	} catch (error) {
+		console.error('Ошибка загрузки товаров:', error)
+		res.status(500).json({
+			error: 'Ошибка загрузки товаров',
+			products: [],
+			latestProduct: null,
+		})
+	}
+})
+
+// Оригинальный API для обратной совместимости
+app.get('/api/watch-content', (req, res) => {
+	try {
+		const watchPath = path.join(__dirname, 'public', 'watch')
+
+		if (!fs.existsSync(watchPath)) {
+			return res.json({
+				folders: [],
+				stats: {
+					totalFolders: 0,
+					totalFiles: 0,
+					totalImages: 0,
+				},
+				message: 'Папка watch не существует',
+			})
+		}
+
+		const folders = fs
+			.readdirSync(watchPath, { withFileTypes: true })
+			.filter(dirent => dirent.isDirectory())
+			.map(dirent => {
+				const folderPath = path.join(watchPath, dirent.name)
+				const files = getFolderFiles(folderPath)
+
+				return {
+					name: dirent.name,
+					path: folderPath,
+					files: files,
+				}
+			})
+
+		const stats = calculateStats(folders)
+
+		res.json({
+			folders: folders,
+			stats: stats,
+			path: watchPath,
+		})
+	} catch (error) {
+		console.error('Ошибка чтения папки watch:', error)
+		res.status(500).json({
+			error: 'Ошибка чтения папки',
+			message: error.message,
+		})
+	}
+})
+
 // API для создания папки
 app.post('/api/create-folder', (req, res) => {
 	try {
@@ -135,7 +374,6 @@ app.post('/api/create-folder', (req, res) => {
 			return res.status(400).json({ error: 'Не указано название папки' })
 		}
 
-		// Проверка имени на безопасность
 		if (!/^[a-zA-Z0-9_\-]+$/.test(folderName)) {
 			return res.status(400).json({
 				error:
@@ -151,18 +389,15 @@ app.post('/api/create-folder', (req, res) => {
 				.json({ error: 'Папка с таким именем уже существует' })
 		}
 
-		// Создаем папку
 		fs.mkdirSync(folderPath, { recursive: true })
 
-		// Создаем файл описания если указано
 		if (description) {
 			const descPath = path.join(folderPath, 'description.txt')
 			fs.writeFileSync(descPath, description)
 		}
 
-		// Создаем файл цены по умолчанию
 		const pricePath = path.join(folderPath, 'price.txt')
-		fs.writeFileSync(pricePath, '0')
+		fs.writeFileSync(pricePath, '150')
 
 		res.json({
 			success: true,
@@ -199,15 +434,12 @@ app.post('/api/upload-files', upload.array('files'), (req, res) => {
 		let uploadedCount = 0
 		const uploadedFiles = []
 
-		// Перемещаем файлы из временной папки в целевую
 		files.forEach(file => {
 			try {
 				const originalName = file.originalname
 				const targetPath = path.join(folderPath, originalName)
 
-				// Проверяем, не существует ли уже файл с таким именем
 				if (fs.existsSync(targetPath)) {
-					// Добавляем timestamp к имени файла
 					const timestamp = Date.now()
 					const nameWithoutExt = path.parse(originalName).name
 					const ext = path.parse(originalName).ext
@@ -297,7 +529,6 @@ app.post('/api/delete-folder', (req, res) => {
 			return res.status(404).json({ error: 'Папка не найдена' })
 		}
 
-		// Рекурсивное удаление папки со всеми файлами
 		fs.rmSync(folderPath, { recursive: true, force: true })
 
 		res.json({
@@ -332,7 +563,6 @@ app.post('/api/delete-file', (req, res) => {
 			return res.status(404).json({ error: 'Файл не найден' })
 		}
 
-		// Удаляем файл
 		fs.unlinkSync(filePath)
 
 		res.json({
@@ -347,7 +577,7 @@ app.post('/api/delete-file', (req, res) => {
 	}
 })
 
-// API для просмотра файла - УБРАЛИ console.log
+// API для просмотра файла с оптимизацией кеширования
 app.get('/api/view-file', (req, res) => {
 	try {
 		const { folder, file } = req.query
@@ -364,7 +594,6 @@ app.get('/api/view-file', (req, res) => {
 
 		const fileExt = path.extname(file).toLowerCase().replace('.', '')
 
-		// Определяем Content-Type в зависимости от расширения файла
 		const contentTypes = {
 			jpg: 'image/jpeg',
 			jpeg: 'image/jpeg',
@@ -381,34 +610,25 @@ app.get('/api/view-file', (req, res) => {
 
 		const contentType = contentTypes[fileExt] || 'application/octet-stream'
 
-		// Читаем файл и отправляем
-		const fileStream = fs.createReadStream(filePath)
-
-		res.setHeader('Content-Type', contentType)
-
-		// Для текстовых файлов добавляем заголовки для правильного отображения
-		if (
-			contentType.includes('text/') ||
-			contentType.includes('application/json')
-		) {
-			res.setHeader('Content-Disposition', 'inline')
-		} else {
-			res.setHeader(
-				'Content-Disposition',
-				`inline; filename="${encodeURIComponent(file)}"`
-			)
+		// Оптимизация кеширования для изображений
+		if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+			// Кешируем изображения на 7 дней
+			res.setHeader('Cache-Control', 'public, max-age=604800, immutable')
+			res.setHeader('Expires', new Date(Date.now() + 604800000).toUTCString())
 		}
 
-		fileStream.pipe(res)
+		// Включаем сжатие для всех типов файлов
+		res.setHeader('Content-Type', contentType)
 
-		// УБРАЛИ: console.log(`👁️ Просмотр файла: ${folder}/${file}`)
+		const fileStream = fs.createReadStream(filePath)
+		fileStream.pipe(res)
 	} catch (error) {
 		console.error('❌ Ошибка просмотра файла:', error)
 		res.status(500).json({ error: error.message })
 	}
 })
 
-// API для скачивания файла - УБРАЛИ console.log
+// API для скачивания файла
 app.get('/api/download-file', (req, res) => {
 	try {
 		const { folder, file } = req.query
@@ -423,15 +643,12 @@ app.get('/api/download-file', (req, res) => {
 			return res.status(404).json({ error: 'Файл не найден' })
 		}
 
-		// Отправляем файл для скачивания
 		res.download(filePath, file, err => {
 			if (err) {
 				console.error('❌ Ошибка скачивания файла:', err)
 				res.status(500).json({ error: err.message })
 			}
 		})
-
-		// УБРАЛИ: console.log(`📥 Скачивание файла: ${folder}/${file}`)
 	} catch (error) {
 		console.error('❌ Ошибка скачивания файла:', error)
 		res.status(500).json({ error: error.message })
@@ -460,12 +677,10 @@ app.post('/api/scan-watch', (req, res) => {
 
 // ==================== МАРШРУТЫ ДЛЯ СТРАНИЦЫ ПОКУПКИ ====================
 
-// Роут для страницы покупки
 app.get('/purchase/:id', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'purchase.html'))
 })
 
-// Маршрут для статики страницы покупки
 app.get('/public/css/purchase.css', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'css', 'purchase.css'))
 })
@@ -474,24 +689,20 @@ app.get('/public/js/purchase.js', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'js', 'purchase.js'))
 })
 
-// Альтернативный маршрут для purchase.html (если открывается напрямую)
 app.get('/purchase.html', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'purchase.html'))
 })
 
 // ==================== ОСНОВНЫЕ МАРШРУТЫ ====================
 
-// Роут для админ панели
 app.get('/admin', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'admin.html'))
 })
 
-// Главная страница
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'))
 })
 
-// Если запрашивают файлы напрямую из html папки
 app.get('/public/html/:filename', (req, res) => {
 	const filePath = path.join(__dirname, 'public', 'html', req.params.filename)
 	if (fs.existsSync(filePath)) {
@@ -501,7 +712,6 @@ app.get('/public/html/:filename', (req, res) => {
 	}
 })
 
-// Если запрашивают css/js файлы напрямую
 app.get('/public/:folder/:filename', (req, res) => {
 	const filePath = path.join(
 		__dirname,
@@ -534,4 +744,5 @@ app.listen(PORT, () => {
 	console.log(`🛒 Страница покупки: /purchase/1`)
 	console.log(`👁️ Папка watch: ${path.join(__dirname, 'public', 'watch')}`)
 	console.log(`📁 Папка uploads: ${path.join(__dirname, 'uploads')}`)
+	console.log(`⚡ Используется сжатие GZIP для ускорения загрузки`)
 })
