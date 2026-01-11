@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Оформление заказа - KREK_FREE</title>
+
+		<!-- Стили -->
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/purchase.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<!-- Firebase SDK -->
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+	</head>
+	<body>
+		<!-- Хедер -->
+		<header class="header purchase-header">
+			<div class="container">
+				<a href="/" class="logo">
+					<i class="fas fa-clock"></i>
+					<span>KREK_FREE</span>
+				</a>
+				<nav class="nav">
+					<!-- Ссылка для админов (скрыта по умолчанию) -->
+					<a
+						href="/admin"
+						class="nav-link admin-link"
+						id="adminPanelLink"
+						style="display: none"
+					>
+						<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
+					</a>
+					<a href="/" class="nav-link">Главная</a>
+					<a href="/#catalog" class="nav-link">Каталог</a>
+					<a href="https://t.me/krek_free" target="_blank" class="nav-link">
+						<i class="fab fa-telegram"></i>
+					</a>
+
+					<!-- Иконка рабочего кабинета -->
+					<div class="user-menu-container">
+						<button id="userMenuBtn" class="nav-link user-menu-btn">
+							<i class="fas fa-user-circle"></i>
+						</button>
+						<div id="userMenu" class="user-menu">
+							<div id="userInfo" style="display: none">
+								<p
+									id="userEmailDisplay"
+									style="margin-bottom: 10px; font-weight: 500"
+								></p>
+								<button id="logoutBtn" class="btn-logout">Выйти</button>
+							</div>
+							<div id="authForm">
+								<h3 style="margin-bottom: 15px; font-size: 1.1rem">
+									Вход / Регистрация
+								</h3>
+								<div id="authError" class="auth-error"></div>
+								<input
+									type="email"
+									id="authEmail"
+									placeholder="Email"
+									class="auth-input"
+								/>
+								<input
+									type="password"
+									id="authPassword"
+									placeholder="Пароль"
+									class="auth-input"
+								/>
+								<div class="auth-buttons">
+									<button id="loginBtn" class="auth-btn btn-login">
+										Войти
+									</button>
+									<button id="registerBtn" class="auth-btn btn-register">
+										Регистрация
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
+			</div>
+		</header>
+
+		<!-- Основной контент -->
+		<main class="purchase-container">
+			<div class="container">
+				<!-- Хлебные крошки -->
+				<div class="breadcrumbs">
+					<a href="/">Главная</a>
+					<i class="fas fa-chevron-right"></i>
+					<a href="/#catalog">Каталог</a>
+					<i class="fas fa-chevron-right"></i>
+					<span id="productNameBreadcrumb">Циферблат</span>
+				</div>
+
+				<!-- Основная информация о товаре -->
+				<div class="purchase-content">
+					<!-- Левая часть: информация о товаре -->
+					<div class="product-details">
+						<div class="product-header">
+							<h1 id="productTitle" class="product-title">
+								<i class="fas fa-clock"></i> Циферблат
+							</h1>
+							<div class="product-badge" id="newBadge" style="display: none">
+								НОВИНКА
+							</div>
+						</div>
+
+						<!-- Карусель товара с кнопками ВНЕ точек -->
+						<div class="product-carousel-large">
+							<div class="carousel-container-large" id="productCarousel">
+								<!-- Изображения будут загружены через JS -->
+							</div>
+
+							<!-- Навигация карусели - кнопки снаружи точек (как на главной) -->
+							<div class="carousel-controls-large">
+								<button class="carousel-nav-btn-outer prev-btn">
+									<i class="fas fa-chevron-left"></i>
+								</button>
+
+								<div class="carousel-dots-container" id="carouselDots">
+									<!-- Точки карусели -->
+								</div>
+
+								<button class="carousel-nav-btn-outer next-btn">
+									<i class="fas fa-chevron-right"></i>
+								</button>
+							</div>
+						</div>
+
+						<!-- Описание товара -->
+						<div class="product-description-section">
+							<h2><i class="fas fa-file-alt"></i> Описание циферблата</h2>
+							<div class="description-content" id="descriptionContent">
+								<!-- Описание загрузится из файла -->
+								<div class="loading-description">
+									<div class="spinner-small"></div>
+									<p>Загрузка описания...</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Правая часть: оформление заказа -->
+					<div class="order-section">
+						<div class="order-card">
+							<h2><i class="fas fa-shopping-cart"></i> Ваш заказ</h2>
+
+							<div class="order-summary">
+								<div class="order-item">
+									<div class="order-item-title">
+										<span id="orderProductName">Циферблат</span>
+										<span class="order-quantity">1 шт.</span>
+									</div>
+									<div class="order-item-price">
+										<span class="current-price">150 ₽</span>
+										<span class="old-price" id="oldPrice" style="display: none"
+											>190 ₽</span
+										>
+									</div>
+								</div>
+							</div>
+
+							<!-- Форма для email -->
+							<div class="email-form">
+								<h3><i class="fas fa-envelope"></i> Куда отправить файл?</h3>
+								<input
+									type="email"
+									id="customerEmail"
+									placeholder="Ваш email"
+									class="email-input"
+									required
+								/>
+								<p class="email-notice">
+									<i class="fas fa-info-circle"></i>
+									Ссылка на скачивание циферблата в формате *.apk будет
+									отправлена на указанный email.
+								</p>
+							</div>
+
+							<!-- Рекомендация по регистрации (будет показана только если пользователь не авторизован) -->
+							<div class="auth-suggestion" id="authSuggestion">
+								<i class="fas fa-lightbulb"></i>
+								<p>
+									<strong>Рекомендуем:</strong>
+									<a href="#" class="auth-link" id="loginLink"
+										>Войдите в аккаунт</a
+									>
+									или
+									<a href="#" class="auth-link" id="registerLink"
+										>зарегистрируйтесь</a
+									>, чтобы все покупки хранились в одном месте и их было удобно
+									скачивать в любое время.
+								</p>
+							</div>
+
+							<!-- Кнопка оплаты -->
+							<button id="payButton" class="btn-pay" disabled>
+								<i class="fas fa-lock"></i> Оплатить
+							</button>
+
+							<!-- Уведомление об оплате -->
+							<div class="payment-notice">
+								<p>
+									<i class="fas fa-info-circle"></i>
+									Нажимая кнопку «Оплатить», вы соглашаетесь с
+									<a href="#" class="terms-link">Условиями использования</a>
+									и
+									<a href="#" class="terms-link">Политикой конфиденциальности</a
+									>.
+								</p>
+							</div>
+
+							<!-- Информация о доставке -->
+							<div class="delivery-info">
+								<h3>
+									<i class="fas fa-shipping-fast"></i> Что вы получите после
+									оплаты
+								</h3>
+								<ul>
+									<li>
+										<i class="fas fa-link"></i> Ссылку на файл циферблата в
+										формате *.apk
+									</li>
+									<li>
+										<i class="fas fa-book"></i> Инструкцию по установке (через
+										ADB App Control или Bugjaeger)
+									</li>
+									<li>
+										<i class="fas fa-headset"></i> Поддержку по установке в
+										Telegram
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Футер (точно такой же как на главной странице) -->
+		<footer class="footer">
+			<div class="container">
+				<div class="footer-content">
+					<div class="footer-section">
+						<h3>KREK_FREE</h3>
+						<p>Эксклюзивные циферблаты<br />для часовых механизмов WearOS</p>
+						<p class="footer-contact">order@krekfree.ru</p>
+					</div>
+					<div class="footer-section">
+						<h4>Навигация</h4>
+						<a href="/" class="footer-link">Главная</a>
+						<a href="/#catalog" class="footer-link">Каталог</a>
+					</div>
+					<div class="footer-section">
+						<h4>Помощь</h4>
+						<a href="#" class="footer-link">Установка</a>
+						<a href="https://t.me/krek_free" target="_blank" class="footer-link"
+							>Telegram поддержка</a
+						>
+					</div>
+					<div class="footer-section">
+						<h4>Мы в соцсетях</h4>
+						<div class="social-links">
+							<a
+								href="https://t.me/krek_free"
+								target="_blank"
+								class="social-link"
+								><i class="fab fa-telegram"></i
+							></a>
+						</div>
+						<p class="footer-newsletter">
+							Подпишитесь на наш канал в Telegram, чтобы быть в курсе новинок.
+						</p>
+					</div>
+				</div>
+				<p class="copyright">© 2026 KREK_FREE. Все права защищены.</p>
+			</div>
+		</footer>
+
+		<!-- Подключаем JS файлы -->
+		<script src="/public/js/firebase-config.js"></script>
+		<script src="/public/js/auth.js"></script>
+		<script src="/public/js/purchase.js"></script>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				console.log('Инициализация меню пользователя...')
+
+				// Функция для открытия/закрытия меню
+				function toggleUserMenu(event) {
+					if (event) {
+						event.preventDefault()
+						event.stopPropagation()
+						event.stopImmediatePropagation() // Останавливаем ВСЕ другие обработчики
+					}
+
+					const menu = document.getElementById('userMenu')
+					if (menu) {
+						menu.classList.toggle('show')
+						console.log(
+							'Меню переключено. show =',
+							menu.classList.contains('show')
+						)
+
+						// Фокус на поле email при открытии
+						if (menu.classList.contains('show')) {
+							setTimeout(() => {
+								const authEmail = document.getElementById('authEmail')
+								if (authEmail) {
+									authEmail.focus()
+									console.log('Фокус на поле email')
+								}
+							}, 100)
+						}
+					}
+				}
+
+				// 1. Обработчик для иконки пользователя
+				const userIcon = document.getElementById('userMenuBtn')
+				if (userIcon) {
+					console.log('Найдена иконка пользователя')
+					// Удаляем все старые обработчики
+					const newUserIcon = userIcon.cloneNode(true)
+					userIcon.parentNode.replaceChild(newUserIcon, userIcon)
+
+					// Добавляем новый обработчик
+					document
+						.getElementById('userMenuBtn')
+						.addEventListener('click', function (e) {
+							console.log('Клик по иконке пользователя')
+							toggleUserMenu(e)
+						})
+				}
+
+				// 2. Обработчики для ссылок "Войдите в аккаунт" и "зарегистрируйтесь"
+				const loginLink = document.getElementById('loginLink')
+				const registerLink = document.getElementById('registerLink')
+
+				console.log('loginLink найден:', !!loginLink)
+				console.log('registerLink найден:', !!registerLink)
+
+				if (loginLink) {
+					// Удаляем старый элемент и создаем новый (чтобы сбросить все обработчики)
+					const newLoginLink = loginLink.cloneNode(true)
+					loginLink.parentNode.replaceChild(newLoginLink, loginLink)
+
+					// Добавляем обработчик на новый элемент
+					document
+						.getElementById('loginLink')
+						.addEventListener('click', function (e) {
+							console.log('Клик по "Войдите в аккаунт"')
+							toggleUserMenu(e)
+						})
+
+					// Также добавляем обработчик на mousedown/mouseup для надежности
+					document
+						.getElementById('loginLink')
+						.addEventListener('mousedown', function (e) {
+							e.stopPropagation()
+						})
+
+					document
+						.getElementById('loginLink')
+						.addEventListener('mouseup', function (e) {
+							e.stopPropagation()
+						})
+				}
+
+				if (registerLink) {
+					// Удаляем старый элемент и создаем новый
+					const newRegisterLink = registerLink.cloneNode(true)
+					registerLink.parentNode.replaceChild(newRegisterLink, registerLink)
+
+					// Добавляем обработчик на новый элемент
+					document
+						.getElementById('registerLink')
+						.addEventListener('click', function (e) {
+							console.log('Клик по "зарегистрируйтесь"')
+							toggleUserMenu(e)
+						})
+
+					document
+						.getElementById('registerLink')
+						.addEventListener('mousedown', function (e) {
+							e.stopPropagation()
+						})
+
+					document
+						.getElementById('registerLink')
+						.addEventListener('mouseup', function (e) {
+							e.stopPropagation()
+						})
+				}
+
+				// 3. Закрытие меню при клике вне его
+				document.addEventListener('click', function (e) {
+					const menu = document.getElementById('userMenu')
+					const btn = document.getElementById('userMenuBtn')
+
+					if (menu && menu.classList.contains('show')) {
+						// Проверяем, кликнули ли мы вне меню и вне кнопки
+						const isClickInsideMenu = menu.contains(e.target)
+						const isClickOnButton =
+							btn && (btn === e.target || btn.contains(e.target))
+
+						if (!isClickInsideMenu && !isClickOnButton) {
+							menu.classList.remove('show')
+							console.log('Меню закрыто (клик вне)')
+						}
+					}
+				})
+
+				// 4. Делегирование событий для надежности
+				// Этот обработчик будет работать даже если что-то сломается выше
+				document.body.addEventListener('click', function (e) {
+					// Проверяем, кликнули ли на ссылки "Войдите в аккаунт" или "зарегистрируйтесь"
+					const target = e.target
+					const isLoginLink =
+						target.id === 'loginLink' ||
+						target.closest('#loginLink') ||
+						(target.classList &&
+							target.classList.contains('auth-link') &&
+							target.textContent.includes('Войдите'))
+
+					const isRegisterLink =
+						target.id === 'registerLink' ||
+						target.closest('#registerLink') ||
+						(target.classList &&
+							target.classList.contains('auth-link') &&
+							target.textContent.includes('зарегистрируйтесь'))
+
+					if (isLoginLink || isRegisterLink) {
+						console.log('Делегирование: клик по ссылке авторизации')
+						e.preventDefault()
+						e.stopPropagation()
+
+						const menu = document.getElementById('userMenu')
+						if (menu) {
+							menu.classList.add('show')
+							console.log('Меню открыто через делегирование')
+
+							setTimeout(() => {
+								const authEmail = document.getElementById('authEmail')
+								if (authEmail) authEmail.focus()
+							}, 100)
+						}
+					}
+				})
+
+				console.log('Обработчики меню установлены')
+			})
+		</script>
+	</body>
+</html>

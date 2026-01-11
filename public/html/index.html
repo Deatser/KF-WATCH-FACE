@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>KREK_FREE - Магазин эксклюзивных циферблатов</title>
+
+		<!-- Стили -->
+		<link rel="stylesheet" href="../css/style.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<!-- Firebase SDK -->
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+	</head>
+	<body>
+		<!-- Общий фон для хедера и новинок -->
+		<div class="hero-background">
+			<!-- Хедер с навигацией -->
+			<header class="header">
+				<div class="container">
+					<a href="#" class="logo">
+						<i class="fas fa-clock"></i>
+						<span>KREK_FREE</span>
+					</a>
+					<nav class="nav">
+						<!-- Ссылка для админов (изначально скрыта) -->
+						<a
+							href="/public/html/admin.html"
+							class="nav-link admin-link"
+							id="adminPanelLink"
+							style="display: none"
+						>
+							<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
+						</a>
+						<a href="#catalog" class="nav-link">Каталог</a>
+						<a href="#" class="nav-link">О нас</a>
+
+						<a href="https://t.me/krek_free" target="_blank" class="nav-link">
+							<i class="fab fa-telegram"></i>
+						</a>
+
+						<!-- Иконка рабочего кабинета -->
+						<div class="user-menu-container">
+							<button id="userMenuBtn" class="nav-link user-menu-btn">
+								<i class="fas fa-user-circle"></i>
+							</button>
+							<div id="userMenu" class="user-menu">
+								<div id="userInfo" style="display: none">
+									<p
+										id="userEmailDisplay"
+										style="margin-bottom: 10px; font-weight: 500"
+									></p>
+									<button id="logoutBtn" class="btn-logout">Выйти</button>
+								</div>
+								<div id="authForm">
+									<h3 style="margin-bottom: 15px; font-size: 1.1rem">
+										Вход / Регистрация
+									</h3>
+									<div id="authError" class="auth-error"></div>
+									<input
+										type="email"
+										id="authEmail"
+										placeholder="Email"
+										class="auth-input"
+									/>
+									<input
+										type="password"
+										id="authPassword"
+										placeholder="Пароль"
+										class="auth-input"
+									/>
+									<div class="auth-buttons">
+										<button id="loginBtn" class="auth-btn btn-login">
+											Войти
+										</button>
+										<button id="registerBtn" class="auth-btn btn-register">
+											Регистрация
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</nav>
+				</div>
+			</header>
+
+			<!-- Блок с новинкой -->
+			<section class="new-arrival">
+				<div class="container">
+					<div class="new-product">
+						<div class="new-product-content">
+							<span class="new-badge">НОВИНКА</span>
+							<h1 class="new-product-title">AETHER 2026</h1>
+							<p class="new-product-description">
+								Текст заглушка ваще блин крута да
+							</p>
+
+							<div class="new-product-visual">
+								<!-- Карусель для новинки -->
+								<div class="new-product-carousel">
+									<div class="carousel-container" id="newProductCarousel">
+										<!-- Фотографии будут добавляться через JS -->
+									</div>
+
+									<!-- Навигация карусели -->
+									<div class="carousel-controls">
+										<button class="carousel-btn prev-btn">
+											<i class="fas fa-chevron-left"></i>
+										</button>
+
+										<!-- Точки навигации -->
+										<div class="carousel-dots" id="newProductDots">
+											<!-- Точки будут добавляться через JS -->
+										</div>
+
+										<button class="carousel-btn next-btn">
+											<i class="fas fa-chevron-right"></i>
+										</button>
+									</div>
+								</div>
+
+								<div class="new-product-details">
+									<div class="new-product-price">
+										<span class="price">24 900 ₽</span>
+										<span class="price-old">31 200 ₽</span>
+									</div>
+									<a href="/purchase/1" class="btn btn-primary">
+										<i class="fas fa-shopping-bag"></i>
+										Купить сейчас
+									</a>
+									<div class="new-product-stats">
+										<div class="stat">
+											<i class="fas fa-gem"></i>
+											<span>Сапфировое стекло</span>
+										</div>
+										<div class="stat">
+											<i class="fas fa-bolt"></i>
+											<span>Сверхъяркая люминесценция</span>
+										</div>
+										<div class="stat">
+											<i class="fas fa-award"></i>
+											<span>Ручная гравировка</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+
+		<!-- Основной каталог -->
+		<main class="catalog" id="catalog">
+			<div class="catalog-container">
+				<h2 class="section-title">Коллекция циферблатов</h2>
+				<p class="section-subtitle">
+					Эксклюзивные дизайны для истинных ценителей часового искусства
+				</p>
+
+				<!-- Контейнер для товаров -->
+				<div class="products-container" id="productsContainer">
+					<!-- Товары будут добавляться через JS -->
+				</div>
+
+				<!-- Индикатор загрузки -->
+				<div class="loading" id="loadingIndicator">
+					<div class="spinner"></div>
+					<p>Загружаем больше товаров...</p>
+				</div>
+			</div>
+		</main>
+
+		<!-- Футер -->
+		<footer class="footer">
+			<div class="container">
+				<div class="footer-content">
+					<div class="footer-section">
+						<h3>KREK_FREE</h3>
+						<p>Эксклюзивные циферблаты<br />для часовых механизмов</p>
+						<p class="footer-contact">
+							+7 (495) 123-45-67<br />order@KREK_FREE.ru
+						</p>
+					</div>
+					<div class="footer-section">
+						<h4>Навигация</h4>
+						<a href="#" class="footer-link">Главная</a>
+						<a href="#catalog" class="footer-link">Каталог</a>
+					</div>
+					<div class="footer-section">
+						<h4>Помощь</h4>
+						<a href="#" class="footer-link">Установка</a>
+					</div>
+					<div class="footer-section">
+						<h4>Мы в соцсетях</h4>
+						<div class="social-links">
+							<a
+								href="https://t.me/krek_free"
+								target="_blank"
+								class="social-link"
+								><i class="fab fa-telegram"></i
+							></a>
+						</div>
+					</div>
+				</div>
+				<p class="copyright">© 2026 KREK_FREE. Все права защищены.</p>
+			</div>
+		</footer>
+
+		<!-- Подключаем JS файлы -->
+		<script src="../js/firebase-config.js"></script>
+		<script src="../js/auth.js"></script>
+		<script src="../js/main.js"></script>
+	</body>
+</html>
