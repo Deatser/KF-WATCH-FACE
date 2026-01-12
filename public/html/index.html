@@ -37,6 +37,7 @@
 						<i class="fas fa-bars"></i>
 					</button>
 
+					<!-- ЗАМЕНИТЬ ТЕКУЩИЙ NAV НА ЭТОТ КОД -->
 					<nav class="nav" id="mainNav">
 						<!-- Ссылка для админов (изначально скрыта) -->
 						<a
@@ -47,9 +48,12 @@
 						>
 							<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
 						</a>
+						<!-- Измененный порядок ссылок -->
+						<a href="#" class="nav-link" id="installGuideLink"
+							>Инструкция по установке</a
+						>
 						<a href="#catalog" class="nav-link">Каталог</a>
 						<a href="#" class="nav-link" id="aboutLink">О нас</a>
-
 						<a href="https://t.me/krek_free" target="_blank" class="nav-link">
 							<i class="fab fa-telegram"></i>
 						</a>
@@ -103,7 +107,11 @@
 						<button class="mobile-menu-close" id="mobileMenuClose">
 							<i class="fas fa-times"></i>
 						</button>
+						<!-- ЗАМЕНИТЬ МОБИЛЬНОЕ МЕНЮ НА ЭТОТ КОД -->
 						<div class="mobile-menu-content">
+							<a href="#" class="mobile-menu-link" id="installGuideLinkMobile"
+								>Инструкция по установке</a
+							>
 							<a href="#catalog" class="mobile-menu-link">Каталог</a>
 							<a href="#" class="mobile-menu-link" id="aboutLinkMobile"
 								>О нас</a
@@ -247,19 +255,18 @@
 					<div class="footer-section">
 						<h3>KF WATCH FACE</h3>
 						<p>Эксклюзивные циферблаты<br />для смарт-часов</p>
-						<p class="footer-contact">lavrov_dima@mail.ru<br /></p>
+						<p class="footer-contact">lavrov_dima@mail.ru</p>
 					</div>
 					<div class="footer-section">
 						<h4>Навигация</h4>
-						<a href="#" class="footer-link">Главная</a>
+						<a href="#" class="footer-link" id="installGuideLinkFooter"
+							>Инструкция по установке</a
+						>
 						<a href="#catalog" class="footer-link">Каталог</a>
+						<a href="#" class="footer-link" id="aboutLinkFooter">О нас</a>
 					</div>
 					<div class="footer-section">
-						<h4>Помощь</h4>
-						<a href="#" class="footer-link">Установка</a>
-					</div>
-					<div class="footer-section">
-						<h4>Мы в соцсетях</h4>
+						<h4>Связаться с продавцом</h4>
 						<div class="social-links">
 							<a
 								href="https://t.me/krek_free"
@@ -267,12 +274,48 @@
 								class="social-link"
 								><i class="fab fa-telegram"></i
 							></a>
+							<a
+								href="mailto:lavrov_dima@mail.ru"
+								class="social-link email-link"
+							>
+								<i class="fas fa-envelope"></i>
+							</a>
 						</div>
 					</div>
 				</div>
 				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
 			</div>
 		</footer>
+
+		<!-- ДОБАВИТЬ ПОСЛЕ ФУТЕРА, ПЕРЕД ПОДКЛЮЧЕНИЕМ JS -->
+		<!-- Модальное окно выбора способа установки -->
+		<div id="installMethodModal" class="about-modal">
+			<div class="about-modal-content">
+				<button id="closeInstallMethodModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-download"></i>
+					<h2>СПОСОБ УСТАНОВКИ ЦИФЕРБЛАТОВ</h2>
+				</div>
+				<div class="about-modal-body">
+					<p>Выберите предпочтительный способ установки:</p>
+					<div class="install-methods">
+						<button class="install-method-btn" data-method="wearload">
+							Установка через WearLoad (смартфон)
+						</button>
+						<button class="install-method-btn" data-method="adb">
+							Установка через ADBAppControl (ПК)
+						</button>
+						<button class="install-method-btn" data-method="bugjaeger">
+							Установка через Bugjaeger (смартфон)
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Модальные окна с гайдами (можно добавить позже при необходимости) -->
 
 		<!-- Модальное окно "О нас" -->
 		<div id="aboutModal" class="about-modal">

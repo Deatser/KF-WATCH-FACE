@@ -1402,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	initFixedHeader()
 	initMobileMenu()
 	initAboutModal()
+	initInstallGuideLinks()
 
 	// Загружаем товары из папки watch
 	const { products, latestProduct } = await loadProductsFromWatch()
@@ -1434,3 +1435,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 		})
 	}, 100)
 })
+
+function initInstallGuideLinks() {
+	const installGuideLinks = [
+		'installGuideLink',
+		'installGuideLinkMobile',
+		'installGuideLinkFooter',
+	]
+
+	installGuideLinks.forEach(id => {
+		const link = document.getElementById(id)
+		if (link) {
+			link.addEventListener('click', function (e) {
+				e.preventDefault()
+				const installMethodModal = document.getElementById('installMethodModal')
+				if (installMethodModal) {
+					installMethodModal.classList.add('show')
+					document.body.style.overflow = 'hidden'
+				}
+			})
+		}
+	})
+
+	// Закрытие модального окна
+	const closeInstallMethodModal = document.getElementById(
+		'closeInstallMethodModal'
+	)
+	if (closeInstallMethodModal) {
+		closeInstallMethodModal.addEventListener('click', function () {
+			const installMethodModal = document.getElementById('installMethodModal')
+			if (installMethodModal) {
+				installMethodModal.classList.remove('show')
+				document.body.style.overflow = 'auto'
+			}
+		})
+	}
+
+	// Закрытие при клике на фон
+	const installMethodModal = document.getElementById('installMethodModal')
+	if (installMethodModal) {
+		installMethodModal.addEventListener('click', function (e) {
+			if (e.target === installMethodModal) {
+				installMethodModal.classList.remove('show')
+				document.body.style.overflow = 'auto'
+			}
+		})
+	}
+}
