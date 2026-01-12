@@ -1067,6 +1067,240 @@
 			</div>
 		</div>
 
+		<!-- Модальное окно "Гайд по установке через ADBAppControl" -->
+		<div id="adbGuideModal" class="about-modal">
+			<div class="about-modal-content">
+				<button id="closeAdbGuideModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-desktop"></i>
+					<h2>УСТАНОВКА ЦИФЕРБЛАТОВ ЧЕРЕЗ ADBAPPCONTROL</h2>
+				</div>
+				<div class="about-modal-body">
+					<div class="guide-content">
+						<ol>
+							<li>
+								<strong
+									>Подключите ваши часы и смартфон к одной сети Wi-Fi</strong
+								>
+							</li>
+
+							<li>
+								<strong>Включите режим разработчика на часах.</strong> Для этого
+								зайдите в настройки, пролистайте список настроек вниз, перейдите
+								в раздел «О Galaxy Watch» и примерно 10 раз нажмите на пункт
+								«Версия ПО»
+								<br />
+								<img
+									src="/guide/ADBAppControl/1.jpeg"
+									alt="Включение режима разработчика"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong>Вернитесь в список настроек</strong> и увидите, что
+								появился еще один пункт «Параметры разработчика»
+								<br />
+								<img
+									src="/guide/ADBAppControl/2.jpeg"
+									alt="Параметры разработчика"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong>Перейдите в пункт меню «Параметры разработчика»</strong>
+								и включите ползунок «Отладка ADB»
+								<br />
+								<img
+									src="/guide/ADBAppControl/3.jpeg"
+									alt="Включение отладки ADB"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong>Перейдите в пункт «Беспроводная отладка»</strong> и
+								включите ползунок «Беспроводная отладка»
+								<br />
+								<img
+									src="/guide/ADBAppControl/4.jpeg"
+									alt="Включение беспроводной отладки"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>Теперь скачайте с сайта разработчика программу
+									ADBAppControl.</strong
+								>
+								<br />
+								<a
+									href="https://adbappcontrol.com/ru/#download"
+									target="_blank"
+									class="guide-link"
+									>https://adbappcontrol.com/ru/#download</a
+								>
+								– ссылка на скачивание программы ADPAppControl
+								<br />
+								Установите ее, следуя указаниями инсталлятора. Если программа
+								предложит установить дополнение для того, чтобы значки
+								приложений с часов отображались в программе – устанавливайте, но
+								это никак не влияет на дальнейшую работу.
+							</li>
+
+							<li>
+								<strong>Запустите приложение на компьютере</strong>
+								<br />
+								<img
+									src="/guide/ADBAppControl/5.jpeg"
+									alt="Запуск ADBAppControl"
+									class="guide-image"
+								/>
+								<br />
+								Так выглядит основное окно программы.
+								<br />
+								<img
+									src="/guide/ADBAppControl/6.jpeg"
+									alt="Основное окно программы"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>Нажмите на кнопку установки соединения с часами в правом
+									верхнем углу</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/7.jpeg"
+									alt="Кнопка подключения"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>На часах в пункте меню «Беспроводная отладка» выберите пункт
+									«Подключить к новому устройству»</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/8.jpeg"
+									alt="Подключить к новому устройству"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>В открывшемся окне будут данные порта и кода подключения,
+									которые необходимо будет ввести в окно приложения
+									ADBAppControl</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/9.jpeg"
+									alt="Данные для подключения"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>В открывшемся окне сопряжения программы ADBAPPControl впишите
+									код сопряжения и порт и нажмите кнопку Сопряжение.</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/10.jpeg"
+									alt="Окно сопряжения"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>Дождитесь загрузки данных и нажмите кнопку Установить</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/11.jpeg"
+									alt="Кнопка установки"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>Далее либо воспользуйтесь функцией Быстрая установка
+									(выберите установочный файл на компьютере, обычно это .apk или
+									.aab), либо функцией Добавить APK, либо скопируйте нужный файл
+									в папку Install, которая расположена в той же папке, где и
+									программа ADB AppControl.</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/12.jpeg"
+									alt="Способы установки"
+									class="guide-image"
+								/>
+							</li>
+
+							<li>
+								<strong
+									>Установочный файл появится в списке программ для установки на
+									смартфон, далее выберите нужное приложение и нажмите кнопку
+									Установить.</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/13.jpeg"
+									alt="Список приложений"
+									class="guide-image"
+								/>
+								<br />
+								Установка приложения не займет много времени, обычно меньше 20
+								секунд. Если все пройдет успешно – вы получите уведомление об
+								этом. Установка может завершиться неудачно (например,
+								"Установлено приложений 0/1").
+								<br />
+								<img
+									src="/guide/ADBAppControl/14.jpeg"
+									alt="Уведомление об установке"
+									class="guide-image"
+								/>
+								<br />
+								Повторно начните установку. Теперь циферблат установлен в ваши
+								часы. Активировать и настроить его вы можете привычными
+								способами напрямую в часах или через приложение Wearable.
+								<br />
+								Часто ADB AppControl не с первого раза может подключиться к
+								часам. В таком случае стоит повторно пытаться подключиться.
+							</li>
+
+							<li>
+								<strong
+									>После успешной установки вы увидите циферблат в общем списке
+									циферблатов на часах в разделе «Загруженное»</strong
+								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/15.jpeg"
+									alt="Установленный циферблат"
+									class="guide-image"
+								/>
+							</li>
+						</ol>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<!-- Модальное окно "Условия использования" -->
 		<div id="termsModal" class="about-modal">
 			<div class="about-modal-content">
@@ -1886,6 +2120,7 @@
 				initAboutModal()
 				initInstallMethodModal()
 				initWearloadGuideModal()
+				initAdbGuideModal()
 				initTermsModal()
 				initPrivacyModal()
 
@@ -2059,9 +2294,12 @@
 								wearLoadModal.classList.add('show')
 							}
 						} else if (method === 'adb') {
-							alert(
-								'Гайд по установке через ADBAppControl будет добавлен позже.'
-							)
+							// Закрываем окно выбора и открываем гайд ADBAppControl
+							installMethodModal.classList.remove('show')
+							const adbGuideModal = document.getElementById('adbGuideModal')
+							if (adbGuideModal) {
+								adbGuideModal.classList.add('show')
+							}
 						} else if (method === 'bugjaeger') {
 							alert('Гайд по установке через Bugjaeger будет добавлен позже.')
 						}
@@ -2107,6 +2345,36 @@
 				document.addEventListener('keydown', function (e) {
 					if (e.key === 'Escape' && wearLoadModal.classList.contains('show')) {
 						wearLoadModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+			}
+
+			// Функция для работы с модальным окном "Гайд по установке через ADBAppControl"
+			function initAdbGuideModal() {
+				const adbGuideModal = document.getElementById('adbGuideModal')
+				const closeAdbGuideModal = document.getElementById('closeAdbGuideModal')
+
+				if (!adbGuideModal) return
+
+				// Закрытие модального окна
+				closeAdbGuideModal.addEventListener('click', function () {
+					adbGuideModal.classList.remove('show')
+					document.body.style.overflow = 'auto'
+				})
+
+				// Закрытие при клике на фон
+				adbGuideModal.addEventListener('click', function (e) {
+					if (e.target === adbGuideModal) {
+						adbGuideModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+
+				// Закрытие по клавише Escape
+				document.addEventListener('keydown', function (e) {
+					if (e.key === 'Escape' && adbGuideModal.classList.contains('show')) {
+						adbGuideModal.classList.remove('show')
 						document.body.style.overflow = 'auto'
 					}
 				})
