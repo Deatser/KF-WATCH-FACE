@@ -271,6 +271,97 @@
 				margin-top: 0;
 			}
 
+			/* Стили для модального окна выбора способа установки */
+			.install-methods {
+				display: flex;
+				flex-direction: column;
+				gap: 15px;
+				margin: 20px 0;
+			}
+
+			.install-method-btn {
+				background: white;
+				border: 2px solid #8b7355;
+				border-radius: 12px;
+				padding: 20px;
+				font-family: 'Comfortaa', cursive;
+				font-size: 1.1rem;
+				font-weight: 600;
+				color: #1a1a1a;
+				cursor: pointer;
+				transition: all 0.3s ease;
+				text-align: center;
+				display: block;
+				width: 100%;
+			}
+
+			.install-method-btn:hover {
+				background: #8b7355;
+				color: white;
+				transform: translateY(-2px);
+				box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
+			}
+
+			.install-method-btn.active {
+				background: #8b7355;
+				color: white;
+			}
+
+			/* Стили для детального гайда */
+			.guide-content {
+				line-height: 1.7;
+				color: #333;
+			}
+
+			.guide-content h3 {
+				color: #1a1a1a;
+				margin: 25px 0 15px 0;
+				font-size: 1.3rem;
+			}
+
+			.guide-content p {
+				margin-bottom: 15px;
+				text-align: left;
+			}
+
+			.guide-content ol {
+				margin: 15px 0 15px 20px;
+				padding-left: 0;
+			}
+
+			.guide-content li {
+				margin-bottom: 20px;
+				position: relative;
+				padding-left: 15px;
+				text-align: left;
+			}
+
+			.guide-content strong {
+				color: #8b7355;
+				font-weight: 600;
+			}
+
+			.guide-image {
+				width: 100%;
+				max-width: 300px;
+				border-radius: 10px;
+				margin: 10px auto;
+				display: block;
+				box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+			}
+
+			.guide-link {
+				color: #8b7355;
+				text-decoration: none;
+				font-weight: 600;
+				display: inline-block;
+				margin: 5px 0;
+			}
+
+			.guide-link:hover {
+				text-decoration: underline;
+			}
+
 			/* Адаптивность для модального окна */
 			@media (max-width: 768px) {
 				.about-modal-content {
@@ -310,6 +401,15 @@
 				.legal-text h4 {
 					font-size: 1rem;
 				}
+
+				.install-method-btn {
+					padding: 15px;
+					font-size: 1rem;
+				}
+
+				.guide-image {
+					max-width: 100%;
+				}
 			}
 		</style>
 	</head>
@@ -331,7 +431,10 @@
 					>
 						<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
 					</a>
-					<!-- ИЗМЕНЕНО: Меняем порядок ссылок -->
+					<!-- Измененный порядок ссылок -->
+					<a href="#" class="nav-link" id="installGuideLink"
+						>Инструкция по установке</a
+					>
 					<a href="/#catalog" class="nav-link">Каталог</a>
 					<a href="#" class="nav-link" id="aboutLink">О нас</a>
 					<a href="https://t.me/krek_free" target="_blank" class="nav-link">
@@ -480,22 +583,6 @@
 								</p>
 							</div>
 
-							<!-- Рекомендация по регистрации (будет показана только если пользователь не авторизован) -->
-							<div class="auth-suggestion" id="authSuggestion">
-								<i class="fas fa-lightbulb"></i>
-								<p>
-									<strong>Рекомендуем:</strong>
-									<a href="#" class="auth-link" id="loginLink"
-										>Войдите в аккаунт</a
-									>
-									или
-									<a href="#" class="auth-link" id="registerLink"
-										>зарегистрируйтесь</a
-									>, чтобы все покупки хранились в одном месте и их было удобно
-									скачивать в любое время.
-								</p>
-							</div>
-
 							<!-- Кнопка оплаты -->
 							<button id="payButton" class="btn-pay" disabled>
 								<i class="fas fa-lock"></i> Оплатить
@@ -543,7 +630,7 @@
 			</div>
 		</main>
 
-		<!-- Футер (точно такой же как на главной странице) -->
+		<!-- Футер -->
 		<footer class="footer">
 			<div class="container">
 				<div class="footer-content">
@@ -554,18 +641,14 @@
 					</div>
 					<div class="footer-section">
 						<h4>Навигация</h4>
-						<a href="/" class="footer-link">Главная</a>
-						<a href="/#catalog" class="footer-link">Каталог</a>
-					</div>
-					<div class="footer-section">
-						<h4>Помощь</h4>
-						<a href="#" class="footer-link">Установка</a>
-						<a href="https://t.me/krek_free" target="_blank" class="footer-link"
-							>Telegram поддержка</a
+						<a href="#" class="footer-link" id="installGuideLinkFooter"
+							>Инструкция по установке</a
 						>
+						<a href="/#catalog" class="footer-link">Каталог</a>
+						<a href="#" class="footer-link" id="aboutLinkFooter">О нас</a>
 					</div>
 					<div class="footer-section">
-						<h4>Мы в соцсетях</h4>
+						<h4>Связаться с продавцом</h4>
 						<div class="social-links">
 							<a
 								href="https://t.me/krek_free"
@@ -573,8 +656,13 @@
 								class="social-link"
 								><i class="fab fa-telegram"></i
 							></a>
+							<a
+								href="mailto:lavrov_dima@mail.ru"
+								class="social-link email-link"
+							>
+								<i class="fas fa-envelope"></i>
+							</a>
 						</div>
-						<p class="footer-newsletter"></p>
 					</div>
 				</div>
 				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
@@ -643,6 +731,271 @@
 								<strong>WearOS</strong>.
 							</p>
 						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Модальное окно выбора способа установки -->
+		<div id="installMethodModal" class="about-modal">
+			<div class="about-modal-content">
+				<button id="closeInstallMethodModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-download"></i>
+					<h2>СПОСОБ УСТАНОВКИ ЦИФЕРБЛАТОВ</h2>
+				</div>
+				<div class="about-modal-body">
+					<p>Выберите предпочтительный способ установки:</p>
+
+					<div class="install-methods">
+						<button class="install-method-btn" data-method="wearload">
+							Установка циферблатов через приложение WearLoad
+						</button>
+						<button class="install-method-btn" data-method="adb">
+							Установка циферблатов через приложение ADBAppControl
+						</button>
+						<button class="install-method-btn" data-method="bugjaeger">
+							Установка циферблатов через приложение Bugjaeger
+						</button>
+					</div>
+
+					<div
+						class="install-description"
+						style="
+							margin-top: 20px;
+							padding: 20px;
+							background: rgba(139, 115, 85, 0.05);
+							border-radius: 12px;
+						"
+					>
+						<p>
+							<strong>WearLoad</strong> - Мы рекомендуем использовать именно
+							этот способ установки через смартфон как самый простой, быстрый и
+							автоматизированный.
+						</p>
+						<p>
+							<strong>ADBAppControl</strong> - Если вы предпочитаете
+							устанавливать циферблаты через ПК, то выбирайте этот способ
+							установки.
+						</p>
+						<p>
+							<strong>Bugjaeger</strong> - Если вы предпочитаете устанавливать
+							циферблаты через смартфон, то выбирайте этот способ установки.
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Модальное окно "Гайд по установке через WearLoad" -->
+		<div id="wearloadGuideModal" class="about-modal">
+			<div class="about-modal-content">
+				<button id="closeWearloadGuideModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-mobile-alt"></i>
+					<h2>УСТАНОВКА ЧЕРЕЗ WEARLOAD</h2>
+				</div>
+				<div class="about-modal-body">
+					<div class="guide-content">
+						<ol>
+							<li>
+								<strong
+									>Подключите ваши часы и смартфон к одной сети Wi-Fi</strong
+								>
+								<img
+									src="/public/guide/WearLoad/1.jpeg"
+									alt="Подключение к Wi-Fi"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong>Включите режим разработчика на часах.</strong> Для этого
+								зайдите в настройки, пролистайте список настроек вниз, перейдите
+								в раздел «О Galaxy Watch» и примерно 10 раз нажмите на пункт
+								«Версия ПО»
+								<img
+									src="/public/guide/WearLoad/2.jpeg"
+									alt="Включение режима разработчика"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong>Вернитесь в список настроек</strong> и увидите, что
+								появился еще один пункт «Параметры разработчика»
+								<img
+									src="/public/guide/WearLoad/3.jpeg"
+									alt="Параметры разработчика"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong>Перейдите в пункт меню «Параметры разработчика»</strong>
+								и включите ползунок «Отладка ADB»
+								<img
+									src="/public/guide/WearLoad/4.jpeg"
+									alt="Включение отладки ADB"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong>Перейдите в пункт «Беспроводная отладка»</strong> и
+								включите ползунок «Беспроводная отладка»
+								<img
+									src="/public/guide/WearLoad/5.jpeg"
+									alt="Включение беспроводной отладки"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong>Установите приложение WearLoad на смартфон</strong>
+								<br />
+								<a
+									href="https://disk.yandex.ru/d/rbjAE9Wu5KlVFA"
+									target="_blank"
+									class="guide-link"
+									>https://disk.yandex.ru/d/rbjAE9Wu5KlVFA</a
+								>
+								- ссылка на скачивание программы WearLoad
+								<br />
+								<a
+									href="https://wearload.github.io/"
+									target="_blank"
+									class="guide-link"
+									>https://wearload.github.io/</a
+								>
+								- прямая ссылка на сайт разработчика приложения WearLoad
+							</li>
+							<li>
+								<strong
+									>Скачайте APK-файл с циферблатом на свой смартфон</strong
+								>
+							</li>
+							<li>
+								<strong>Запустите приложение WearLoad</strong>
+								<img
+									src="/public/guide/WearLoad/6.jpeg"
+									alt="Запуск WearLoad"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong
+									>Для установки компаньона на часы нажмите шестеренку
+									настройки</strong
+								>
+								<br />
+								В открывшемся меню выберите пункт «Клиент для часов»
+								<br />
+								Нажмите «Альтернатива (ADB)»
+								<br />
+								А затем кнопку Нового подключения
+								<img
+									src="/public/guide/WearLoad/7.jpeg"
+									alt="Настройка подключения"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong
+									>На часах в пункте меню «Беспроводная отладка» выберите пункт
+									«Подключить к новому устройству»</strong
+								>
+								<img
+									src="/public/guide/WearLoad/8.jpeg"
+									alt="Подключение к новому устройству"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong
+									>В открывшемся окне будут данные порта и кода подключения,
+									которые необходимо будет ввести в окно приложения
+									WearLoad.</strong
+								>
+								<br />
+								Для автоматического поиска IP-адреса и порта можно нажать кнопку
+								«Сканировать для сопряжения», а после успешного поиска останется
+								только ввести код подключения (6 цифр) в соответствующее поле и
+								нажать кнопку «Выполнить сопряжение»
+								<img
+									src="/public/guide/WearLoad/9.jpeg"
+									alt="Данные для подключения"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong
+									>На часах откроется окно с данными для подключения</strong
+								>
+								<img
+									src="/public/guide/WearLoad/10.jpeg"
+									alt="Данные подключения на часах"
+									class="guide-image"
+								/>
+								<br />
+								<strong
+									>Эти данные нужно ввести в открывшемся окне программы WearLoad
+									и нажать кнопку «Подключить»</strong
+								>
+							</li>
+							<li>
+								<strong>Затем необходимо подтвердить установку</strong>
+								<img
+									src="/public/guide/WearLoad/11.jpeg"
+									alt="Подтверждение установки"
+									class="guide-image"
+								/>
+								<br />
+								<strong>И завершить установку компаньона</strong>
+							</li>
+							<li>
+								<strong
+									>После успешного подключения на экране приложения будет
+									отображаться список установленных на часах приложений</strong
+								>
+								<img
+									src="/public/guide/WearLoad/12.jpeg"
+									alt="Список приложений"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong
+									>Для установки нового циферблата нажмите на скрепку, выберите
+									скачанный файл</strong
+								>
+								<img
+									src="/public/guide/WearLoad/13.jpeg"
+									alt="Выбор файла"
+									class="guide-image"
+								/>
+								<br />
+								<strong>и подтвердите установку</strong>
+							</li>
+							<li>
+								<strong
+									>После успешной установки вы увидите циферблат в общем списке
+									циферблатов на часах в разделе «Загруженное»</strong
+								>
+								<img
+									src="/public/guide/WearLoad/14.jpeg"
+									alt="Установленный циферблат"
+									class="guide-image"
+								/>
+							</li>
+							<li>
+								<strong
+									>При последующих запусках приложения WearLoad подключение
+									будет производиться автоматически</strong
+								>
+								и необходимо будет просто дождаться подключения к часам, выбрать
+								файл циферблата и подтвердить установку.
+							</li>
+						</ol>
 					</div>
 				</div>
 			</div>
@@ -1029,7 +1382,7 @@
 						</p>
 						<p>
 							<strong>10.5.</strong> Бездействие одной из Сторон в случае
-							нарушения условий настоящей Оферты не лишает права
+							нарушения условий настоящей Оферта не лишает права
 							заинтересованной Стороны осуществлять защиту своих интересов
 							позднее, а также не означает отказа от своих прав в случае
 							совершения одной из Сторон подобных либо сходных нарушений в
@@ -1463,64 +1816,40 @@
 						})
 				}
 
-				// 2. Обработчики для ссылок "Войдите в аккаунт" и "зарегистрируйтесь"
-				const loginLink = document.getElementById('loginLink')
-				const registerLink = document.getElementById('registerLink')
+				// 2. Инициализация модальных окон
+				initAboutModal()
+				initInstallMethodModal()
+				initWearloadGuideModal()
+				initTermsModal()
+				initPrivacyModal()
 
-				console.log('loginLink найден:', !!loginLink)
-				console.log('registerLink найден:', !!registerLink)
+				// Инициализация обработчиков ссылок в футере
+				const installGuideLinkFooter = document.getElementById(
+					'installGuideLinkFooter'
+				)
+				const aboutLinkFooter = document.getElementById('aboutLinkFooter')
 
-				if (loginLink) {
-					// Удаляем старый элемент и создаем новый (чтобы сбросить все обработчики)
-					const newLoginLink = loginLink.cloneNode(true)
-					loginLink.parentNode.replaceChild(newLoginLink, loginLink)
-
-					// Добавляем обработчик на новый элемент
-					document
-						.getElementById('loginLink')
-						.addEventListener('click', function (e) {
-							console.log('Клик по "Войдите в аккаунт"')
-							toggleUserMenu(e)
-						})
-
-					// Также добавляем обработчик на mousedown/mouseup для надежности
-					document
-						.getElementById('loginLink')
-						.addEventListener('mousedown', function (e) {
-							e.stopPropagation()
-						})
-
-					document
-						.getElementById('loginLink')
-						.addEventListener('mouseup', function (e) {
-							e.stopPropagation()
-						})
+				if (installGuideLinkFooter) {
+					installGuideLinkFooter.addEventListener('click', function (e) {
+						e.preventDefault()
+						const installMethodModal =
+							document.getElementById('installMethodModal')
+						if (installMethodModal) {
+							installMethodModal.classList.add('show')
+							document.body.style.overflow = 'hidden'
+						}
+					})
 				}
 
-				if (registerLink) {
-					// Удаляем старый элемент и создаем новый
-					const newRegisterLink = registerLink.cloneNode(true)
-					registerLink.parentNode.replaceChild(newRegisterLink, registerLink)
-
-					// Добавляем обработчик на новый элемент
-					document
-						.getElementById('registerLink')
-						.addEventListener('click', function (e) {
-							console.log('Клик по "зарегистрируйтесь"')
-							toggleUserMenu(e)
-						})
-
-					document
-						.getElementById('registerLink')
-						.addEventListener('mousedown', function (e) {
-							e.stopPropagation()
-						})
-
-					document
-						.getElementById('registerLink')
-						.addEventListener('mouseup', function (e) {
-							e.stopPropagation()
-						})
+				if (aboutLinkFooter) {
+					aboutLinkFooter.addEventListener('click', function (e) {
+						e.preventDefault()
+						const aboutModal = document.getElementById('aboutModal')
+						if (aboutModal) {
+							aboutModal.classList.add('show')
+							document.body.style.overflow = 'hidden'
+						}
+					})
 				}
 
 				// 3. Закрытие меню при клике вне его
@@ -1579,13 +1908,6 @@
 				})
 
 				console.log('Обработчики меню установлены')
-
-				// Инициализация модального окна "О нас"
-				initAboutModal()
-
-				// Инициализация модальных окон "Условия использования" и "Политика конфиденциальности"
-				initTermsModal()
-				initPrivacyModal()
 			})
 
 			// Функция для работы с модальным окном "О нас"
@@ -1626,6 +1948,104 @@
 				})
 			}
 
+			// Функция для работы с модальным окном выбора способа установки
+			function initInstallMethodModal() {
+				const installGuideLink = document.getElementById('installGuideLink')
+				const installMethodModal = document.getElementById('installMethodModal')
+				const closeInstallMethodModal = document.getElementById(
+					'closeInstallMethodModal'
+				)
+				const wearLoadModal = document.getElementById('wearloadGuideModal')
+
+				if (!installGuideLink || !installMethodModal) return
+
+				// Открытие модального окна
+				installGuideLink.addEventListener('click', function (e) {
+					e.preventDefault()
+					installMethodModal.classList.add('show')
+					document.body.style.overflow = 'hidden'
+				})
+
+				// Закрытие модального окна
+				closeInstallMethodModal.addEventListener('click', function () {
+					installMethodModal.classList.remove('show')
+					document.body.style.overflow = 'auto'
+				})
+
+				// Закрытие при клике на фон
+				installMethodModal.addEventListener('click', function (e) {
+					if (e.target === installMethodModal) {
+						installMethodModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+
+				// Обработчики кнопок выбора метода установки
+				const methodButtons = document.querySelectorAll('.install-method-btn')
+				methodButtons.forEach(button => {
+					button.addEventListener('click', function () {
+						const method = this.getAttribute('data-method')
+
+						if (method === 'wearload') {
+							// Закрываем окно выбора и открываем гайд WearLoad
+							installMethodModal.classList.remove('show')
+							if (wearLoadModal) {
+								wearLoadModal.classList.add('show')
+							}
+						} else if (method === 'adb') {
+							alert(
+								'Гайд по установке через ADBAppControl будет добавлен позже.'
+							)
+						} else if (method === 'bugjaeger') {
+							alert('Гайд по установке через Bugjaeger будет добавлен позже.')
+						}
+					})
+				})
+
+				// Закрытие по клавише Escape
+				document.addEventListener('keydown', function (e) {
+					if (
+						e.key === 'Escape' &&
+						installMethodModal.classList.contains('show')
+					) {
+						installMethodModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+			}
+
+			// Функция для работы с модальным окном "Гайд по установке через WearLoad"
+			function initWearloadGuideModal() {
+				const wearLoadModal = document.getElementById('wearloadGuideModal')
+				const closeWearloadGuideModal = document.getElementById(
+					'closeWearloadGuideModal'
+				)
+
+				if (!wearLoadModal) return
+
+				// Закрытие модального окна
+				closeWearloadGuideModal.addEventListener('click', function () {
+					wearLoadModal.classList.remove('show')
+					document.body.style.overflow = 'auto'
+				})
+
+				// Закрытие при клике на фон
+				wearLoadModal.addEventListener('click', function (e) {
+					if (e.target === wearLoadModal) {
+						wearLoadModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+
+				// Закрытие по клавише Escape
+				document.addEventListener('keydown', function (e) {
+					if (e.key === 'Escape' && wearLoadModal.classList.contains('show')) {
+						wearLoadModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+			}
+
 			// Функция для работы с модальным окном "Условия использования"
 			function initTermsModal() {
 				const termsLink = document.getElementById('termsLink')
@@ -1638,7 +2058,7 @@
 				termsLink.addEventListener('click', function (e) {
 					e.preventDefault()
 					termsModal.classList.add('show')
-					document.body.style.overflow = 'hidden' // Блокируем скролл на фоне
+					document.body.style.overflow = 'hidden'
 				})
 
 				// Закрытие модального окна
@@ -1676,7 +2096,7 @@
 				privacyLink.addEventListener('click', function (e) {
 					e.preventDefault()
 					privacyModal.classList.add('show')
-					document.body.style.overflow = 'hidden' // Блокируем скролл на фоне
+					document.body.style.overflow = 'hidden'
 				})
 
 				// Закрытие модального окна

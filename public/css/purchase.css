@@ -594,11 +594,105 @@ body {
 	font-size: 0.9rem;
 }
 
+/* Стили для футера */
+.footer {
+	background: #1a1a1a;
+	color: #f9f5f0;
+	padding: 60px 0 30px;
+	margin-top: 80px;
+}
+
+.footer-content {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 40px;
+	margin-bottom: 40px;
+}
+
+.footer-section h3 {
+	font-size: 1.5rem;
+	font-weight: 700;
+	margin-bottom: 20px;
+	color: #f9f5f0;
+}
+
+.footer-section h4 {
+	font-size: 1.2rem;
+	font-weight: 600;
+	margin-bottom: 20px;
+	color: #8b7355;
+}
+
+.footer-section p {
+	color: #cccccc;
+	line-height: 1.6;
+	margin-bottom: 15px;
+}
+
+.footer-contact {
+	color: #8b7355 !important;
+	font-weight: 500;
+}
+
+.footer-link {
+	display: block;
+	color: #cccccc;
+	text-decoration: none;
+	margin-bottom: 12px;
+	transition: color 0.3s ease;
+	font-size: 0.95rem;
+}
+
+.footer-link:hover {
+	color: #8b7355;
+}
+
+.social-links {
+	display: flex;
+	gap: 15px;
+	margin-top: 15px;
+}
+
+.social-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 50%;
+	color: #f9f5f0;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	font-size: 1.2rem;
+}
+
+.social-link:hover {
+	background: #8b7355;
+	transform: translateY(-3px);
+}
+
+.social-link.email-link {
+	font-size: 1rem;
+}
+
+.copyright {
+	text-align: center;
+	color: #999;
+	font-size: 0.9rem;
+	padding-top: 30px;
+	border-top: 1px solid #333;
+}
+
 /* Адаптивность */
 @media (max-width: 1200px) {
 	.purchase-content {
 		grid-template-columns: 1fr 350px;
 		gap: 30px;
+	}
+
+	.footer-content {
+		grid-template-columns: repeat(3, 1fr);
 	}
 }
 
@@ -617,6 +711,11 @@ body {
 
 	.carousel-controls-large {
 		max-width: 400px;
+	}
+
+	.footer-content {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 30px;
 	}
 }
 
@@ -661,6 +760,24 @@ body {
 	.old-price {
 		font-size: 1rem;
 	}
+
+	.footer {
+		padding: 40px 0 20px;
+		margin-top: 60px;
+	}
+
+	.footer-content {
+		grid-template-columns: 1fr;
+		gap: 30px;
+	}
+
+	.footer-section {
+		text-align: center;
+	}
+
+	.social-links {
+		justify-content: center;
+	}
 }
 
 @media (max-width: 576px) {
@@ -700,6 +817,14 @@ body {
 	.carousel-dot-large {
 		width: 8px;
 		height: 8px;
+	}
+
+	.footer-section h3 {
+		font-size: 1.3rem;
+	}
+
+	.footer-section h4 {
+		font-size: 1.1rem;
 	}
 }
 
