@@ -2572,47 +2572,47 @@
 					}
 				})
 
-				// Функция для работы с модальным окном "Гайд по установке через Bugjaeger"
-				function initBugjaegerGuideModal() {
-					const bugjaegerGuideModal = document.getElementById(
-						'bugjaegerGuideModal'
-					)
-					const closeBugjaegerGuideModal = document.getElementById(
-						'closeBugjaegerGuideModal'
-					)
-
-					if (!bugjaegerGuideModal) return
-
-					// Закрытие модального окна
-					closeBugjaegerGuideModal.addEventListener('click', function () {
-						bugjaegerGuideModal.classList.remove('show')
-						document.body.style.overflow = 'auto'
-					})
-
-					// Закрытие при клике на фон
-					bugjaegerGuideModal.addEventListener('click', function (e) {
-						if (e.target === bugjaegerGuideModal) {
-							bugjaegerGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-
-					// Закрытие по клавише Escape
-					document.addEventListener('keydown', function (e) {
-						if (
-							e.key === 'Escape' &&
-							bugjaegerGuideModal.classList.contains('show')
-						) {
-							bugjaegerGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-				}
-
 				// Закрытие по клавише Escape
 				document.addEventListener('keydown', function (e) {
 					if (e.key === 'Escape' && wearLoadModal.classList.contains('show')) {
 						wearLoadModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+			}
+
+			// Функция для работы с модальным окном "Гайд по установке через Bugjaeger"
+			function initBugjaegerGuideModal() {
+				const bugjaegerGuideModal = document.getElementById(
+					'bugjaegerGuideModal'
+				)
+				const closeBugjaegerGuideModal = document.getElementById(
+					'closeBugjaegerGuideModal'
+				)
+
+				if (!bugjaegerGuideModal) return
+
+				// Закрытие модального окна
+				closeBugjaegerGuideModal.addEventListener('click', function () {
+					bugjaegerGuideModal.classList.remove('show')
+					document.body.style.overflow = 'auto'
+				})
+
+				// Закрытие при клике на фон
+				bugjaegerGuideModal.addEventListener('click', function (e) {
+					if (e.target === bugjaegerGuideModal) {
+						bugjaegerGuideModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+
+				// Закрытие по клавише Escape
+				document.addEventListener('keydown', function (e) {
+					if (
+						e.key === 'Escape' &&
+						bugjaegerGuideModal.classList.contains('show')
+					) {
+						bugjaegerGuideModal.classList.remove('show')
 						document.body.style.overflow = 'auto'
 					}
 				})
