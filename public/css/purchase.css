@@ -613,14 +613,14 @@ body {
 	font-size: 1.5rem;
 	font-weight: 700;
 	margin-bottom: 20px;
-	color: #f9f5f0;
+	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
 }
 
 .footer-section h4 {
 	font-size: 1.2rem;
 	font-weight: 600;
 	margin-bottom: 20px;
-	color: #8b7355;
+	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
 }
 
 .footer-section p {

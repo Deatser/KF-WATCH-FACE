@@ -11,6 +11,10 @@ app.use(compression()) // Включаем сжатие GZIP
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static('public'))
+// Добавляем статическую раздачу для папки guide
+app.use('/guide', express.static(path.join(__dirname, 'public', 'guide')))
+// Дополнительно для всего public через /static (опционально)
+app.use('/static', express.static(path.join(__dirname, 'public')))
 
 // Конфигурация multer для загрузки файлов
 const storage = multer.diskStorage({
@@ -31,6 +35,20 @@ const upload = multer({ storage: storage })
 // Создаем папку uploads если ее нет
 if (!fs.existsSync('uploads')) {
 	fs.mkdirSync('uploads', { recursive: true })
+}
+
+// Создаем папку guide если ее нет
+const guidePath = path.join(__dirname, 'public', 'guide')
+if (!fs.existsSync(guidePath)) {
+	fs.mkdirSync(guidePath, { recursive: true })
+	console.log('✓ Создана папка для гайдов:', guidePath)
+}
+
+// Создаем папку WearLoad внутри guide если ее нет
+const wearLoadPath = path.join(guidePath, 'WearLoad')
+if (!fs.existsSync(wearLoadPath)) {
+	fs.mkdirSync(wearLoadPath, { recursive: true })
+	console.log('✓ Создана папка для гайда WearLoad:', wearLoadPath)
 }
 
 // Вспомогательная функция для извлечения номера из KF###
@@ -595,16 +613,53 @@ app.post('/api/delete-file', (req, res) => {
 // API для просмотра файла с оптимизацией кеширования
 app.get('/api/view-file', (req, res) => {
 	try {
-		const { folder, file } = req.query
+		const { folder, file, type } = req.query
 
-		if (!folder || !file) {
-			return res.status(400).json({ error: 'Не указаны папка или файл' })
+		if (!file) {
+			return res.status(400).json({ error: 'Не указан файл' })
 		}
 
-		const filePath = path.join(__dirname, 'public', 'watch', folder, file)
+		let filePath
+
+		// Если type === 'guide' - ищем в папке guide (для обратной совместимости)
+		if (type === 'guide' && folder) {
+			filePath = path.join(__dirname, 'public', 'guide', folder, file)
+		}
+		// Иначе ищем в папке watch (старый способ для изображений часов)
+		else if (folder) {
+			filePath = path.join(__dirname, 'public', 'watch', folder, file)
+		}
+		// Если нет folder, возможно это файл из guide
+		else {
+			// Пробуем найти в guide
+			filePath = path.join(__dirname, 'public', 'guide', file)
+		}
 
 		if (!fs.existsSync(filePath)) {
-			return res.status(404).json({ error: 'Файл не найден' })
+			// Пробуем альтернативные пути для обратной совместимости
+			if (folder) {
+				// Пробуем с префиксом public/
+				const altPath = path.join(__dirname, 'public', folder, file)
+				if (fs.existsSync(altPath)) {
+					filePath = altPath
+				} else {
+					// Пробуем в guide/WearLoad
+					const guidePath = path.join(
+						__dirname,
+						'public',
+						'guide',
+						'WearLoad',
+						file
+					)
+					if (fs.existsSync(guidePath)) {
+						filePath = guidePath
+					} else {
+						return res.status(404).json({ error: 'Файл не найден' })
+					}
+				}
+			} else {
+				return res.status(404).json({ error: 'Файл не найден' })
+			}
 		}
 
 		const fileExt = path.extname(file).toLowerCase().replace('.', '')
@@ -708,6 +763,75 @@ app.get('/purchase.html', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'purchase.html'))
 })
 
+// ==================== МАРШРУТЫ ДЛЯ ГАЙДОВ ====================
+
+// API для проверки существования гайдов
+app.get('/api/guides/check', (req, res) => {
+	try {
+		const guidePath = path.join(__dirname, 'public', 'guide')
+		const wearLoadPath = path.join(guidePath, 'WearLoad')
+
+		const guides = {
+			wearload: {
+				exists: fs.existsSync(wearLoadPath),
+				files: fs.existsSync(wearLoadPath) ? fs.readdirSync(wearLoadPath) : [],
+				path: wearLoadPath,
+			},
+		}
+
+		res.json({
+			success: true,
+			guides: guides,
+			totalGuides: Object.keys(guides).length,
+		})
+	} catch (error) {
+		console.error('❌ Ошибка проверки гайдов:', error)
+		res.status(500).json({ error: error.message })
+	}
+})
+
+// API для получения списка изображений гайда
+app.get('/api/guides/:guideName/images', (req, res) => {
+	try {
+		const guideName = req.params.guideName
+		const guidePath = path.join(__dirname, 'public', 'guide', guideName)
+
+		if (!fs.existsSync(guidePath)) {
+			return res.status(404).json({ error: 'Гайд не найден' })
+		}
+
+		const files = fs
+			.readdirSync(guidePath)
+			.filter(file => {
+				const ext = path.extname(file).toLowerCase().replace('.', '')
+				return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)
+			})
+			.sort((a, b) => {
+				// Сортируем по номеру в названии
+				const numA = parseInt(a.match(/\d+/)?.[0]) || 0
+				const numB = parseInt(b.match(/\d+/)?.[0]) || 0
+				return numA - numB
+			})
+			.map(file => ({
+				name: file,
+				url: `/guide/${guideName}/${file}`,
+				apiUrl: `/api/view-file?type=guide&folder=${encodeURIComponent(
+					guideName
+				)}&file=${encodeURIComponent(file)}`,
+			}))
+
+		res.json({
+			success: true,
+			guideName: guideName,
+			images: files,
+			totalImages: files.length,
+		})
+	} catch (error) {
+		console.error('❌ Ошибка получения изображений гайда:', error)
+		res.status(500).json({ error: error.message })
+	}
+})
+
 // ==================== ОСНОВНЫЕ МАРШРУТЫ ====================
 
 app.get('/admin', (req, res) => {
@@ -741,6 +865,41 @@ app.get('/public/:folder/:filename', (req, res) => {
 	}
 })
 
+// Статические маршруты для гайдов (дублируем для надежности)
+app.get('/guide/:guideName/:fileName', (req, res) => {
+	const filePath = path.join(
+		__dirname,
+		'public',
+		'guide',
+		req.params.guideName,
+		req.params.fileName
+	)
+	if (fs.existsSync(filePath)) {
+		// Определяем Content-Type
+		const ext = path.extname(req.params.fileName).toLowerCase().replace('.', '')
+		const contentTypes = {
+			jpg: 'image/jpeg',
+			jpeg: 'image/jpeg',
+			png: 'image/png',
+			gif: 'image/gif',
+			webp: 'image/webp',
+			txt: 'text/plain',
+		}
+
+		const contentType = contentTypes[ext] || 'application/octet-stream'
+		res.setHeader('Content-Type', contentType)
+
+		// Кеширование
+		if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+			res.setHeader('Cache-Control', 'public, max-age=604800')
+		}
+
+		res.sendFile(filePath)
+	} else {
+		res.status(404).send('Файл гайда не найден')
+	}
+})
+
 // Обработка ошибок 404
 app.use((req, res, next) => {
 	res.status(404).send('Страница не найдена')
@@ -758,6 +917,12 @@ app.listen(PORT, () => {
 	console.log(`📁 Админ панель: /admin`)
 	console.log(`🛒 Страница покупки: /purchase/1`)
 	console.log(`👁️ Папка watch: ${path.join(__dirname, 'public', 'watch')}`)
+	console.log(`📚 Папка guide: ${path.join(__dirname, 'public', 'guide')}`)
 	console.log(`📁 Папка uploads: ${path.join(__dirname, 'uploads')}`)
 	console.log(`⚡ Используется сжатие GZIP для ускорения загрузки`)
+	console.log(`🔗 Статические маршруты:`)
+	console.log(`   • /guide/:guideName/:fileName - для гайдов`)
+	console.log(`   • /static/:folder/:fileName - для всех файлов из public`)
+	console.log(`   • /api/guides/check - проверка гайдов`)
+	console.log(`   • /api/guides/WearLoad/images - список изображений WearLoad`)
 })
