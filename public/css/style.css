@@ -1432,7 +1432,156 @@ body {
 		min-width: 200px;
 		max-width: 250px;
 	}
+	/* Добавьте эти стили в конец style.css */
 
+	/* Стили для модального окна выбора способа установки */
+	.install-methods {
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+		margin: 20px 0;
+	}
+
+	.install-method-btn {
+		background: white;
+		border: 2px solid #8b7355;
+		border-radius: 12px;
+		padding: 20px;
+		font-family: 'Comfortaa', cursive;
+		font-size: 1.1rem;
+		font-weight: 600;
+		color: #1a1a1a;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		text-align: center;
+		display: block;
+		width: 100%;
+	}
+
+	.install-method-btn:hover {
+		background: #8b7355;
+		color: white;
+		transform: translateY(-2px);
+		box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
+	}
+
+	.install-method-btn.active {
+		background: #8b7355;
+		color: white;
+	}
+
+	/* Стили для детального гайда */
+	.guide-content {
+		line-height: 1.7;
+		color: #333;
+	}
+
+	.guide-content h3 {
+		color: #1a1a1a;
+		margin: 25px 0 15px 0;
+		font-size: 1.3rem;
+	}
+
+	.guide-content p {
+		margin-bottom: 15px;
+		text-align: left;
+	}
+
+	.guide-content ol {
+		margin: 15px 0 15px 20px;
+		padding-left: 0;
+	}
+
+	.guide-content li {
+		margin-bottom: 20px;
+		position: relative;
+		padding-left: 15px;
+		text-align: left;
+	}
+
+	.guide-content strong {
+		color: #8b7355;
+		font-weight: 600;
+	}
+
+	.guide-image {
+		width: 100%;
+		max-width: 300px;
+		border-radius: 10px;
+		margin: 10px auto;
+		display: block;
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+	}
+
+	.guide-link {
+		color: #8b7355;
+		text-decoration: none;
+		font-weight: 600;
+		display: inline-block;
+		margin: 5px 0;
+	}
+
+	.guide-link:hover {
+		text-decoration: underline;
+	}
+
+	/* Стили для длинных текстов в модальных окнах */
+	.legal-text {
+		line-height: 1.6;
+		font-size: 0.95rem;
+		color: #333;
+	}
+
+	.legal-text h3 {
+		color: #1a1a1a;
+		margin: 25px 0 15px 0;
+		font-size: 1.3rem;
+		border-bottom: 1px solid #e0e0e0;
+		padding-bottom: 8px;
+	}
+
+	.legal-text h4 {
+		color: #8b7355;
+		margin: 20px 0 10px 0;
+		font-size: 1.1rem;
+		font-weight: 600;
+	}
+
+	.legal-text p {
+		margin-bottom: 15px;
+		text-align: left;
+	}
+
+	.legal-text ul {
+		margin: 15px 0 15px 20px;
+		padding-left: 0;
+	}
+
+	.legal-text li {
+		margin-bottom: 8px;
+		position: relative;
+		padding-left: 15px;
+	}
+
+	.legal-text .contact-info {
+		background: rgba(139, 115, 85, 0.05);
+		border-radius: 10px;
+		padding: 20px;
+		margin-top: 30px;
+		border-left: 3px solid #8b7355;
+	}
+
+	.legal-text .contact-info h4 {
+		color: #1a1a1a;
+		margin-top: 0;
+	}
+
+	/* Адаптивность для модального окна */
+	@media (max-width: 768px) {
+		.guide-image {
+			max-width: 100%;
+		}
+	}
 	/* Каталог */
 	.catalog-container {
 		width: 90% !important;
@@ -1751,13 +1900,20 @@ body {
 	}
 
 	.footer-section h3 {
-		font-size: 1.5rem;
+		font-size: 1.8rem;
+		font-weight: 700;
+		margin-bottom: 20px;
+		color: #f9f5f0; /* Изменено с #ffffff на #f9f5f0 */
+		letter-spacing: 1px;
 	}
 
 	.footer-section h4 {
-		font-size: 1.1rem;
+		font-size: 1.2rem;
+		font-weight: 600;
+		margin-bottom: 25px;
+		color: #f9f5f0; /* Изменено с #ffffff на #f9f5f0 */
+		letter-spacing: 0.5px;
 	}
-
 	.social-links {
 		justify-content: center;
 	}

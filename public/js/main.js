@@ -533,8 +533,11 @@ function showPlaceholderImage(container, index) {
 function initAboutModal() {
 	const aboutLink = document.getElementById('aboutLink')
 	const aboutLinkMobile = document.getElementById('aboutLinkMobile')
+	const aboutLinkFooter = document.getElementById('aboutLinkFooter')
 	const aboutModal = document.getElementById('aboutModal')
 	const closeAboutModal = document.getElementById('closeAboutModal')
+
+	if (!aboutModal) return
 
 	// Открытие модального окна с десктопной ссылки
 	if (aboutLink) {
@@ -555,6 +558,15 @@ function initAboutModal() {
 		})
 	}
 
+	// Открытие модального окна с ссылки в футере
+	if (aboutLinkFooter) {
+		aboutLinkFooter.addEventListener('click', function (e) {
+			e.preventDefault()
+			aboutModal.classList.add('show')
+			document.body.style.overflow = 'hidden'
+		})
+	}
+
 	// Закрытие модального окна
 	if (closeAboutModal) {
 		closeAboutModal.addEventListener('click', function () {
@@ -564,14 +576,12 @@ function initAboutModal() {
 	}
 
 	// Закрытие при клике на фон
-	if (aboutModal) {
-		aboutModal.addEventListener('click', function (e) {
-			if (e.target === aboutModal) {
-				aboutModal.classList.remove('show')
-				document.body.style.overflow = 'auto'
-			}
-		})
-	}
+	aboutModal.addEventListener('click', function (e) {
+		if (e.target === aboutModal) {
+			aboutModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
 
 	// Закрытие по клавише Escape
 	document.addEventListener('keydown', function (e) {
@@ -1403,6 +1413,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 	initMobileMenu()
 	initAboutModal()
 	initInstallGuideLinks()
+	initInstallMethodModal()
+	initWearloadGuideModal()
+	initAdbGuideModal()
+	initBugjaegerGuideModal()
 
 	// Загружаем товары из папки watch
 	const { products, latestProduct } = await loadProductsFromWatch()
@@ -1456,29 +1470,167 @@ function initInstallGuideLinks() {
 			})
 		}
 	})
+}
 
-	// Закрытие модального окна
+// Функция для работы с модальным окном выбора способа установки
+function initInstallMethodModal() {
+	const installMethodModal = document.getElementById('installMethodModal')
 	const closeInstallMethodModal = document.getElementById(
 		'closeInstallMethodModal'
 	)
+
+	if (!installMethodModal) return
+
+	// Закрытие модального окна
 	if (closeInstallMethodModal) {
 		closeInstallMethodModal.addEventListener('click', function () {
-			const installMethodModal = document.getElementById('installMethodModal')
-			if (installMethodModal) {
-				installMethodModal.classList.remove('show')
-				document.body.style.overflow = 'auto'
-			}
+			installMethodModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
 		})
 	}
 
 	// Закрытие при клике на фон
-	const installMethodModal = document.getElementById('installMethodModal')
-	if (installMethodModal) {
-		installMethodModal.addEventListener('click', function (e) {
-			if (e.target === installMethodModal) {
-				installMethodModal.classList.remove('show')
-				document.body.style.overflow = 'auto'
+	installMethodModal.addEventListener('click', function (e) {
+		if (e.target === installMethodModal) {
+			installMethodModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Обработчики кнопок выбора метода установки
+	const methodButtons = document.querySelectorAll('.install-method-btn')
+	methodButtons.forEach(button => {
+		button.addEventListener('click', function () {
+			const method = this.getAttribute('data-method')
+
+			installMethodModal.classList.remove('show')
+
+			if (method === 'wearload') {
+				const wearLoadModal = document.getElementById('wearloadGuideModal')
+				if (wearLoadModal) {
+					wearLoadModal.classList.add('show')
+				}
+			} else if (method === 'adb') {
+				const adbGuideModal = document.getElementById('adbGuideModal')
+				if (adbGuideModal) {
+					adbGuideModal.classList.add('show')
+				}
+			} else if (method === 'bugjaeger') {
+				const bugjaegerGuideModal = document.getElementById(
+					'bugjaegerGuideModal'
+				)
+				if (bugjaegerGuideModal) {
+					bugjaegerGuideModal.classList.add('show')
+				}
 			}
 		})
+	})
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && installMethodModal.classList.contains('show')) {
+			installMethodModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
+// Функция для работы с модальным окном "Гайд по установке через WearLoad"
+function initWearloadGuideModal() {
+	const wearLoadModal = document.getElementById('wearloadGuideModal')
+	const closeWearloadGuideModal = document.getElementById(
+		'closeWearloadGuideModal'
+	)
+
+	if (!wearLoadModal) return
+
+	// Закрытие модального окна
+	if (closeWearloadGuideModal) {
+		closeWearloadGuideModal.addEventListener('click', function () {
+			wearLoadModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		})
 	}
+
+	// Закрытие при клике на фон
+	wearLoadModal.addEventListener('click', function (e) {
+		if (e.target === wearLoadModal) {
+			wearLoadModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && wearLoadModal.classList.contains('show')) {
+			wearLoadModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
+// Функция для работы с модальным окном "Гайд по установке через ADBAppControl"
+function initAdbGuideModal() {
+	const adbGuideModal = document.getElementById('adbGuideModal')
+	const closeAdbGuideModal = document.getElementById('closeAdbGuideModal')
+
+	if (!adbGuideModal) return
+
+	// Закрытие модального окна
+	if (closeAdbGuideModal) {
+		closeAdbGuideModal.addEventListener('click', function () {
+			adbGuideModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		})
+	}
+
+	// Закрытие при клике на фон
+	adbGuideModal.addEventListener('click', function (e) {
+		if (e.target === adbGuideModal) {
+			adbGuideModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && adbGuideModal.classList.contains('show')) {
+			adbGuideModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
+// Функция для работы с модальным окном "Гайд по установке через Bugjaeger"
+function initBugjaegerGuideModal() {
+	const bugjaegerGuideModal = document.getElementById('bugjaegerGuideModal')
+	const closeBugjaegerGuideModal = document.getElementById(
+		'closeBugjaegerGuideModal'
+	)
+
+	if (!bugjaegerGuideModal) return
+
+	// Закрытие модального окна
+	if (closeBugjaegerGuideModal) {
+		closeBugjaegerGuideModal.addEventListener('click', function () {
+			bugjaegerGuideModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		})
+	}
+
+	// Закрытие при клике на фон
+	bugjaegerGuideModal.addEventListener('click', function (e) {
+		if (e.target === bugjaegerGuideModal) {
+			bugjaegerGuideModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && bugjaegerGuideModal.classList.contains('show')) {
+			bugjaegerGuideModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
 }
