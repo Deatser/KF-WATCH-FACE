@@ -1075,58 +1075,53 @@ body {
 	font-weight: 300;
 }
 
-/* Стили футера */
+/* Стили для футера */
 .footer {
 	background: #1a1a1a;
-	color: #ffffff;
-	padding: 70px 0 30px;
-	width: 100%;
+	color: #f9f5f0;
+	padding: 60px 0 30px;
+	margin-top: 80px;
 }
 
 .footer-content {
 	display: grid;
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(3, 1fr);
 	gap: 40px;
-	margin-bottom: 50px;
+	margin-bottom: 40px;
 }
 
 .footer-section h3 {
-	font-size: 1.8rem;
+	font-size: 1.5rem;
 	font-weight: 700;
 	margin-bottom: 20px;
-	color: #f9f5f0;
-	letter-spacing: 1px;
+	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
 }
 
 .footer-section h4 {
 	font-size: 1.2rem;
 	font-weight: 600;
-	margin-bottom: 25px;
-	color: #f9f5f0;
-	letter-spacing: 0.5px;
+	margin-bottom: 20px;
+	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
 }
 
 .footer-section p {
-	color: #b3b3b3;
-	line-height: 1.7;
+	color: #cccccc;
+	line-height: 1.6;
 	margin-bottom: 15px;
-	font-size: 1rem;
-	font-weight: 300;
 }
 
 .footer-contact {
-	margin-top: 20px;
-	font-size: 0.95rem;
+	color: #8b7355 !important;
+	font-weight: 500;
 }
 
 .footer-link {
 	display: block;
-	color: #b3b3b3;
+	color: #cccccc;
 	text-decoration: none;
 	margin-bottom: 12px;
 	transition: color 0.3s ease;
 	font-size: 0.95rem;
-	font-weight: 300;
 }
 
 .footer-link:hover {
@@ -1629,11 +1624,17 @@ body {
 	.section-title {
 		font-size: 2.2rem;
 	}
+}
 
-	/* Футер */
-	.footer-content {
-		grid-template-columns: repeat(2, 1fr);
+/* Адаптивность */
+@media (max-width: 1200px) {
+	.purchase-content {
+		grid-template-columns: 1fr 350px;
 		gap: 30px;
+	}
+
+	.footer-content {
+		grid-template-columns: repeat(3, 1fr);
 	}
 }
 
@@ -1970,31 +1971,65 @@ body {
 		font-size: 1.15rem;
 	}
 
-	/* Футер */
-	.footer {
-		padding: 50px 0 20px;
-	}
+	@media (max-width: 768px) {
+		.purchase-container {
+			padding: 20px 0 40px;
+		}
 
-	.footer-content {
-		grid-template-columns: 1fr;
-		gap: 30px;
-		text-align: center;
-	}
+		.product-details,
+		.order-card {
+			padding: 20px;
+		}
 
-	.footer-section h3 {
-		font-size: 1.8rem;
-		font-weight: 700;
-		margin-bottom: 20px;
-		color: #f9f5f0;
-		letter-spacing: 1px;
-	}
+		.product-title {
+			font-size: 1.8rem;
+		}
 
-	.footer-section h4 {
-		font-size: 1.2rem;
-		font-weight: 600;
-		margin-bottom: 25px;
-		color: #f9f5f0;
-		letter-spacing: 0.5px;
+		.product-header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 15px;
+		}
+
+		.carousel-container-large {
+			max-width: 320px;
+		}
+
+		.carousel-controls-large {
+			max-width: 320px;
+		}
+
+		.carousel-nav-btn-outer {
+			width: 32px;
+			height: 32px;
+			font-size: 0.9rem;
+		}
+
+		.current-price {
+			font-size: 1.3rem;
+		}
+
+		.old-price {
+			font-size: 1rem;
+		}
+
+		.footer {
+			padding: 40px 0 20px;
+			margin-top: 60px;
+		}
+
+		.footer-content {
+			grid-template-columns: 1fr;
+			gap: 30px;
+		}
+
+		.footer-section {
+			text-align: center;
+		}
+
+		.social-links {
+			justify-content: center;
+		}
 	}
 
 	.social-links {
@@ -2078,14 +2113,6 @@ body {
 		padding: 10px;
 		font-size: 0.9rem;
 	}
-}
-
-/* Стили для логотипа в футере */
-.footer-logo {
-	width: 120px;
-	height: auto;
-	margin-bottom: 15px;
-	display: block;
 }
 
 .logo-section {
