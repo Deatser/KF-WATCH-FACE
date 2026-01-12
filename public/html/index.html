@@ -224,32 +224,6 @@
 		</footer>
 
 		<!-- ДОБАВИТЬ ПОСЛЕ ФУТЕРА, ПЕРЕД ПОДКЛЮЧЕНИЕМ JS -->
-		<!-- Модальное окно выбора способа установки -->
-		<div id="installMethodModal" class="about-modal">
-			<div class="about-modal-content">
-				<button id="closeInstallMethodModal" class="about-modal-close">
-					<i class="fas fa-times"></i>
-				</button>
-				<div class="about-modal-header">
-					<i class="fas fa-download"></i>
-					<h2>СПОСОБ УСТАНОВКИ ЦИФЕРБЛАТОВ</h2>
-				</div>
-				<div class="about-modal-body">
-					<p>Выберите предпочтительный способ установки:</p>
-					<div class="install-methods">
-						<button class="install-method-btn" data-method="wearload">
-							Установка через WearLoad (смартфон)
-						</button>
-						<button class="install-method-btn" data-method="adb">
-							Установка через ADBAppControl (ПК)
-						</button>
-						<button class="install-method-btn" data-method="bugjaeger">
-							Установка через Bugjaeger (смартфон)
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
 
 		<!-- Модальное окно выбора способа установки -->
 		<div id="installMethodModal" class="about-modal">
@@ -263,16 +237,42 @@
 				</div>
 				<div class="about-modal-body">
 					<p>Выберите предпочтительный способ установки:</p>
+
 					<div class="install-methods">
 						<button class="install-method-btn" data-method="wearload">
-							Установка через WearLoad (смартфон)
+							Установка циферблатов через приложение WearLoad
 						</button>
 						<button class="install-method-btn" data-method="adb">
-							Установка через ADBAppControl (ПК)
+							Установка циферблатов через приложение ADBAppControl
 						</button>
 						<button class="install-method-btn" data-method="bugjaeger">
-							Установка через Bugjaeger (смартфон)
+							Установка циферблатов через приложение Bugjaeger
 						</button>
+					</div>
+
+					<div
+						class="install-description"
+						style="
+							margin-top: 20px;
+							padding: 20px;
+							background: rgba(139, 115, 85, 0.05);
+							border-radius: 12px;
+						"
+					>
+						<p>
+							<strong>WearLoad</strong> - Мы рекомендуем использовать именно
+							этот способ установки через смартфон как самый простой, быстрый и
+							автоматизированный.
+						</p>
+						<p>
+							<strong>ADBAppControl</strong> - Если вы предпочитаете
+							устанавливать циферблаты через ПК, то выбирайте этот способ
+							установки.
+						</p>
+						<p>
+							<strong>Bugjaeger</strong> - Если вы предпочитаете устанавливать
+							циферблаты через смартфон, то выбирайте этот способ установки.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -296,24 +296,53 @@
 									>Подключите ваши часы и смартфон к одной сети Wi-Fi</strong
 								>
 							</li>
+
 							<li>
 								<strong>Включите режим разработчика на часах.</strong> Для этого
 								зайдите в настройки, пролистайте список настроек вниз, перейдите
 								в раздел «О Galaxy Watch» и примерно 10 раз нажмите на пункт
 								«Версия ПО»
+								<br />
+								<img
+									src="/guide/WearLoad/1.jpeg"
+									alt="Включение режима разработчика"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Вернитесь в список настроек</strong> и увидите, что
 								появился еще один пункт «Параметры разработчика»
+								<br />
+								<img
+									src="/guide/WearLoad/2.jpeg"
+									alt="Параметры разработчика"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Перейдите в пункт меню «Параметры разработчика»</strong>
 								и включите ползунок «Отладка ADB»
+								<br />
+								<img
+									src="/guide/WearLoad/3.jpeg"
+									alt="Включение отладки ADB"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Перейдите в пункт «Беспроводная отладка»</strong> и
 								включите ползунок «Беспроводная отладка»
+								<br />
+								<img
+									src="/guide/WearLoad/4.jpeg"
+									alt="Включение беспроводной отладки"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Установите приложение WearLoad на смартфон</strong>
 								<br />
@@ -333,59 +362,186 @@
 								>
 								- прямая ссылка на сайт разработчика приложения WearLoad
 							</li>
+
 							<li>
 								<strong
 									>Скачайте APK-файл с циферблатом на свой смартфон</strong
 								>
 							</li>
+
 							<li>
 								<strong>Запустите приложение WearLoad</strong>
+								<br />
+								<img
+									src="/guide/WearLoad/5.jpeg"
+									alt="Запуск WearLoad"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Для установки компаньона на часы нажмите шестеренку
 									настройки</strong
 								>
+								<br />
+								<img
+									src="/guide/WearLoad/6.jpeg"
+									alt="Шестеренка настроек"
+									class="guide-image"
+								/>
+								<br />
+								В открывшемся меню выберите пункт «Клиент для часов»
+								<br />
+								<img
+									src="/guide/WearLoad/7.jpeg"
+									alt="Клиент для часов"
+									class="guide-image"
+								/>
+								<br />
+								Нажмите «Альтернатива (ADB)»
+								<br />
+								<img
+									src="/guide/WearLoad/8.jpeg"
+									alt="Альтернатива ADB"
+									class="guide-image"
+								/>
+								<br />
+								А затем кнопку Нового подключения
+								<br />
+								<img
+									src="/guide/WearLoad/9.jpeg"
+									alt="Новое подключение"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>На часах в пункте меню «Беспроводная отладка» выберите пункт
 									«Подключить к новому устройству»</strong
 								>
+								<br />
+								<img
+									src="/guide/WearLoad/10.jpeg"
+									alt="Подключить к новому устройству"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>В открывшемся окне будут данные порта и кода подключения,
 									которые необходимо будет ввести в окно приложения
 									WearLoad.</strong
 								>
+								<br />
+								<img
+									src="/guide/WearLoad/11.jpeg"
+									alt="Данные для подключения"
+									class="guide-image"
+								/>
+								<br />
+								Для автоматического поиска IP-адреса и порта можно нажать кнопку
+								«Сканировать для сопряжения», а после успешного поиска останется
+								только ввести код подклюции (6 цифр) в соответствующее поле и
+								нажать кнопку «Выполнить сопряжение»
+								<br />
+								<img
+									src="/guide/WearLoad/12.jpeg"
+									alt="Сканирование и сопряжение"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>На часах откроется окно с данными для подключения</strong
 								>
+								<br />
+								<img
+									src="/guide/WearLoad/13.jpeg"
+									alt="Данные подключения на часах"
+									class="guide-image"
+								/>
+								<br />
+								<strong
+									>Эти данные нужно ввести в открывшемся окне программы WearLoad
+									и нажать кнопку «Подключить»</strong
+								>
+								<br />
+								<img
+									src="/guide/WearLoad/14.jpeg"
+									alt="Подключение в программе"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Затем необходимо подтвердить установку</strong>
+								<br />
+								<img
+									src="/guide/WearLoad/15.jpeg"
+									alt="Подтверждение установки"
+									class="guide-image"
+								/>
+								<br />
+								<strong>И завершить установку компаньона</strong>
+								<br />
+								<img
+									src="/guide/WearLoad/16.jpeg"
+									alt="Завершение установки компаньона"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>После успешного подключения на экране приложения будет
 									отображаться список установленных на часах приложений</strong
 								>
+								<br />
+								<img
+									src="/guide/WearLoad/17.jpeg"
+									alt="Список приложений"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Для установки нового циферблата нажмите на скрепку, выберите
 									скачанный файл</strong
 								>
+								<br />
+								<img
+									src="/guide/WearLoad/18.jpeg"
+									alt="Выбор файла циферблата"
+									class="guide-image"
+								/>
+								<br />
+								<strong>и подтвердите установку</strong>
+								<br />
+								<img
+									src="/guide/WearLoad/19.jpeg"
+									alt="Подтверждение установки циферблата"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>После успешной установки вы увидите циферблат в общем списке
 									циферблатов на часах в разделе «Загруженное»</strong
 								>
+								<br />
+								<img
+									src="/guide/WearLoad/20.jpeg"
+									alt="Установленный циферблат"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>При последующих запусках приложения WearLoad подключение
@@ -418,24 +574,53 @@
 									>Подключите ваши часы и смартфон к одной сети Wi-Fi</strong
 								>
 							</li>
+
 							<li>
 								<strong>Включите режим разработчика на часах.</strong> Для этого
 								зайдите в настройки, пролистайте список настроек вниз, перейдите
 								в раздел «О Galaxy Watch» и примерно 10 раз нажмите на пункт
 								«Версия ПО»
+								<br />
+								<img
+									src="/guide/ADBAppControl/1.jpeg"
+									alt="Включение режима разработчика"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Вернитесь в список настроек</strong> и увидите, что
 								появился еще один пункт «Параметры разработчика»
+								<br />
+								<img
+									src="/guide/ADBAppControl/2.jpeg"
+									alt="Параметры разработчика"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Перейдите в пункт меню «Параметры разработчика»</strong>
 								и включите ползунок «Отладка ADB»
+								<br />
+								<img
+									src="/guide/ADBAppControl/3.jpeg"
+									alt="Включение отладки ADB"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Перейдите в пункт «Беспроводная отладка»</strong> и
 								включите ползунок «Беспроводная отладка»
+								<br />
+								<img
+									src="/guide/ADBAppControl/4.jpeg"
+									alt="Включение беспроводной отладки"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Теперь скачайте с сайта разработчика программу
@@ -449,40 +634,96 @@
 									>https://adbappcontrol.com/ru/#download</a
 								>
 								– ссылка на скачивание программы ADPAppControl
+								<br />
+								Установите ее, следуя указаниями инсталлятора. Если программа
+								предложит установить дополнение для того, чтобы значки
+								приложений с часов отображались в программе – устанавливайте, но
+								это никак не влияет на дальнейшую работу.
 							</li>
+
 							<li>
 								<strong>Запустите приложение на компьютере</strong>
+								<br />
+								<img
+									src="/guide/ADBAppControl/5.jpeg"
+									alt="Запуск ADBAppControl"
+									class="guide-image"
+								/>
+								<br />
+								Так выглядит основное окно программы.
+								<br />
+								<img
+									src="/guide/ADBAppControl/6.jpeg"
+									alt="Основное окно программы"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Нажмите на кнопку установки соединения с часами в правом
 									верхнем углу</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/7.jpeg"
+									alt="Кнопка подключения"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>На часах в пункте меню «Беспроводная отладка» выберите пункт
 									«Подключить к новому устройству»</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/8.jpeg"
+									alt="Подключить к новому устройству"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>В открывшемся окне будут данные порта и кода подключения,
 									которые необходимо будет ввести в окно приложения
 									ADBAppControl</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/9.jpeg"
+									alt="Данные для подключения"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>В открывшемся окне сопряжения программы ADBAPPControl впишите
 									код сопряжения и порт и нажмите кнопку Сопряжение.</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/10.jpeg"
+									alt="Окно сопряжения"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Дождитесь загрузки данных и нажмите кнопку Установить</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/11.jpeg"
+									alt="Кнопка установки"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Далее либо воспользуйтесь функцией Быстрая установка
@@ -491,19 +732,57 @@
 									в папку Install, которая расположена в той же папке, где и
 									программа ADB AppControl.</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/12.jpeg"
+									alt="Способы установки"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Установочный файл появится в списке программ для установки на
 									смартфон, далее выберите нужное приложение и нажмите кнопку
 									Установить.</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/13.jpeg"
+									alt="Список приложений"
+									class="guide-image"
+								/>
+								<br />
+								Установка приложения не займет много времени, обычно меньше 20
+								секунд. Если все пройдет успешно – вы получите уведомление об
+								этом. Установка может завершиться неудачно (например,
+								"Установлено приложений 0/1").
+								<br />
+								<img
+									src="/guide/ADBAppControl/14.jpeg"
+									alt="Уведомление об установке"
+									class="guide-image"
+								/>
+								<br />
+								Повторно начните установку. Теперь циферблат установлен в ваши
+								часы. Активировать и настроить его вы можете привычными
+								способами напрямую в часах или через приложение Wearable.
+								<br />
+								Часто ADB AppControl не с первого раза может подключиться к
+								часам. В таком случае стоит повторно пытаться подключиться.
 							</li>
+
 							<li>
 								<strong
 									>После успешной установки вы увидите циферблат в общем списке
 									циферблатов на часах в разделе «Загруженное»</strong
 								>
+								<br />
+								<img
+									src="/guide/ADBAppControl/15.jpeg"
+									alt="Установленный циферблат"
+									class="guide-image"
+								/>
 							</li>
 						</ol>
 					</div>
@@ -529,24 +808,53 @@
 									>Подключите ваши часы и смартфон к одной сети Wi-Fi</strong
 								>
 							</li>
+
 							<li>
 								<strong>Включите режим разработчика на часах.</strong> Для этого
 								зайдите в настройки, пролистайте список настроек вниз, перейдите
 								в раздел «О Galaxy Watch» и примерно 10 раз нажмите на пункт
 								«Версия ПО»
+								<br />
+								<img
+									src="/guide/Bugjaeger/1.jpeg"
+									alt="Включение режима разработчика"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Вернитесь в список настроек</strong> и увидите, что
 								появился еще один пункт «Параметры разработчика»
+								<br />
+								<img
+									src="/guide/Bugjaeger/2.jpeg"
+									alt="Параметры разработчика"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Перейдите в пункт меню «Параметры разработчика»</strong>
 								и включите ползунок «Отладка ADB»
+								<br />
+								<img
+									src="/guide/Bugjaeger/3.jpeg"
+									alt="Включение отладки ADB"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Перейдите в пункт «Беспроводная отладка»</strong> и
 								включите ползунок «Беспроводная отладка»
+								<br />
+								<img
+									src="/guide/Bugjaeger/4.jpeg"
+									alt="Включение беспроводной отладки"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong>Установите Bugjaeger на смартфон</strong>
 								<br />
@@ -558,40 +866,96 @@
 								>
 								– ссылка на скачивание программы Bugjaeger Premium
 							</li>
+
 							<li>
 								<strong
 									>Скачайте APK-файл с циферблатом на свой смартфон</strong
 								>
 							</li>
+
 							<li>
 								<strong>Запустите приложение Bugjaeger</strong>
+								<br />
+								<img
+									src="/guide/Bugjaeger/5.jpeg"
+									alt="Запуск Bugjaeger"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>На часах в пункте меню «Беспроводная отладка» выберите пункт
 									«Подключить к новому устройству»</strong
 								>
+								<br />
+								<img
+									src="/guide/Bugjaeger/6.jpeg"
+									alt="Подключить к новому устройству"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>В открывшемся окне будут данные IP-адреса, порта и кода
 									подключения, которые необходимо будет ввести в приложении
 									Bugjaeger</strong
 								>
+								<br />
+								<img
+									src="/guide/Bugjaeger/7.jpeg"
+									alt="Данные для подключения"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Теперь необходимо подключить смартфон к часам. Для этого
 									нажмите в правом верхнем углу на кнопку «Сопряжение»</strong
 								>
+								<br />
+								<img
+									src="/guide/Bugjaeger/8.jpeg"
+									alt="Кнопка сопряжения"
+									class="guide-image"
+								/>
+								<br />
+								В открывшемся окне нажмите кнопку «Pair»
+								<br />
+								<img
+									src="/guide/Bugjaeger/9.jpeg"
+									alt="Кнопка Pair"
+									class="guide-image"
+								/>
+								<br />
+								В открывшемся окне необходимо ввести данные, которые
+								отображаются на часах в пункте «Подключение к новому
+								устройству», а именно IP-адрес (1 строка), порт (2 строка) и код
+								подключения (3 строка). После ввода данных нажмите кнопку «Pair»
+								<br />
+								<img
+									src="/guide/Bugjaeger/10.jpeg"
+									alt="Ввод данных подключения"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>На часах перейдите в пункт «Беспроводная отладка» и увидите
 									IP-адрес и порт для подключения. Эти данные надо будет ввести
 									в приложении Bugjaeger</strong
 								>
+								<br />
+								<img
+									src="/guide/Bugjaeger/11.jpeg"
+									alt="Данные в беспроводной отладке"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>После успешного сопряжения с часами Bugjaeger будет сам
@@ -600,18 +964,48 @@
 									в пункте меню «Беспроводная отладка» данные ввести вручную.
 									После ввода нажмите кнопку «CONNECT»</strong
 								>
+								<br />
+								<img
+									src="/guide/Bugjaeger/12.jpeg"
+									alt="Ручной ввод данных"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>Теперь вы можете установить циферблат на часы. Для этого
 									перейдите на вкладку установки сторонних приложений</strong
 								>
+								<br />
+								<img
+									src="/guide/Bugjaeger/13.jpeg"
+									alt="Вкладка установки приложений"
+									class="guide-image"
+								/>
+								<br />
+								Теперь нажмите на кнопку «+», выберите пункт «Select APK File»,
+								нажмите кнопку «OK» и выберите скачанный ранее файл циферблата.
+								Он установится автоматически.
+								<br />
+								<img
+									src="/guide/Bugjaeger/14.jpeg"
+									alt="Выбор APK файла"
+									class="guide-image"
+								/>
 							</li>
+
 							<li>
 								<strong
 									>После успешной установки вы увидите циферблат в общем списке
 									циферблатов на часах в разделе «Загруженное»</strong
 								>
+								<br />
+								<img
+									src="/guide/Bugjaeger/15.jpeg"
+									alt="Установленный циферблат"
+									class="guide-image"
+								/>
 							</li>
 						</ol>
 					</div>
@@ -690,5 +1084,189 @@
 		<script src="../js/firebase-config.js"></script>
 		<script src="../js/auth.js"></script>
 		<script src="../js/main.js"></script>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				// Функция для работы с модальным окном выбора способа установки
+				function initInstallMethodModal() {
+					const installMethodModal =
+						document.getElementById('installMethodModal')
+					const closeInstallMethodModal = document.getElementById(
+						'closeInstallMethodModal'
+					)
+
+					if (!installMethodModal) return
+
+					// Закрытие модального окна
+					if (closeInstallMethodModal) {
+						closeInstallMethodModal.addEventListener('click', function () {
+							installMethodModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						})
+					}
+
+					// Закрытие при клике на фон
+					installMethodModal.addEventListener('click', function (e) {
+						if (e.target === installMethodModal) {
+							installMethodModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+
+					// Обработчики кнопок выбора метода установки
+					const methodButtons = document.querySelectorAll('.install-method-btn')
+					methodButtons.forEach(button => {
+						button.addEventListener('click', function () {
+							const method = this.getAttribute('data-method')
+
+							installMethodModal.classList.remove('show')
+
+							if (method === 'wearload') {
+								const wearLoadModal =
+									document.getElementById('wearloadGuideModal')
+								if (wearLoadModal) {
+									wearLoadModal.classList.add('show')
+								}
+							} else if (method === 'adb') {
+								const adbGuideModal = document.getElementById('adbGuideModal')
+								if (adbGuideModal) {
+									adbGuideModal.classList.add('show')
+								}
+							} else if (method === 'bugjaeger') {
+								const bugjaegerGuideModal = document.getElementById(
+									'bugjaegerGuideModal'
+								)
+								if (bugjaegerGuideModal) {
+									bugjaegerGuideModal.classList.add('show')
+								}
+							}
+						})
+					})
+
+					// Закрытие по клавише Escape
+					document.addEventListener('keydown', function (e) {
+						if (
+							e.key === 'Escape' &&
+							installMethodModal.classList.contains('show')
+						) {
+							installMethodModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+				}
+
+				// Функция для работы с модальным окном "Гайд по установке через WearLoad"
+				function initWearloadGuideModal() {
+					const wearLoadModal = document.getElementById('wearloadGuideModal')
+					const closeWearloadGuideModal = document.getElementById(
+						'closeWearloadGuideModal'
+					)
+
+					if (!wearLoadModal) return
+
+					// Закрытие модального окна
+					if (closeWearloadGuideModal) {
+						closeWearloadGuideModal.addEventListener('click', function () {
+							wearLoadModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						})
+					}
+
+					// Закрытие при клике на фон
+					wearLoadModal.addEventListener('click', function (e) {
+						if (e.target === wearLoadModal) {
+							wearLoadModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+
+					// Закрытие по клавише Escape
+					document.addEventListener('keydown', function (e) {
+						if (
+							e.key === 'Escape' &&
+							wearLoadModal.classList.contains('show')
+						) {
+							wearLoadModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+				}
+
+				// Функция для работы с модальным окном "Гайд по установке через ADBAppControl"
+				function initAdbGuideModal() {
+					const adbGuideModal = document.getElementById('adbGuideModal')
+					const closeAdbGuideModal =
+						document.getElementById('closeAdbGuideModal')
+
+					if (!adbGuideModal) return
+
+					// Закрытие модального окна
+					if (closeAdbGuideModal) {
+						closeAdbGuideModal.addEventListener('click', function () {
+							adbGuideModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						})
+					}
+
+					// Закрытие при клике на фон
+					adbGuideModal.addEventListener('click', function (e) {
+						if (e.target === adbGuideModal) {
+							adbGuideModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+
+					// Закрытие по клавише Escape
+					document.addEventListener('keydown', function (e) {
+						if (
+							e.key === 'Escape' &&
+							adbGuideModal.classList.contains('show')
+						) {
+							adbGuideModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+				}
+
+				// Функция для работы с модальным окном "Гайд по установке через Bugjaeger"
+				function initBugjaegerGuideModal() {
+					const bugjaegerGuideModal = document.getElementById(
+						'bugjaegerGuideModal'
+					)
+					const closeBugjaegerGuideModal = document.getElementById(
+						'closeBugjaegerGuideModal'
+					)
+
+					if (!bugjaegerGuideModal) return
+
+					// Закрытие модального окна
+					if (closeBugjaegerGuideModal) {
+						closeBugjaegerGuideModal.addEventListener('click', function () {
+							bugjaegerGuideModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						})
+					}
+
+					// Закрытие при клике на фон
+					bugjaegerGuideModal.addEventListener('click', function (e) {
+						if (e.target === bugjaegerGuideModal) {
+							bugjaegerGuideModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+
+					// Закрытие по клавише Escape
+					document.addEventListener('keydown', function (e) {
+						if (
+							e.key === 'Escape' &&
+							bugjaegerGuideModal.classList.contains('show')
+						) {
+							bugjaegerGuideModal.classList.remove('show')
+							document.body.style.overflow = 'auto'
+						}
+					})
+				}
+			})
+		</script>
 	</body>
 </html>
