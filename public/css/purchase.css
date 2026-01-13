@@ -719,6 +719,22 @@ body {
 	}
 }
 
+/* Показываем desktop ссылку по умолчанию, скрываем mobile */
+.email-mobile {
+	display: none;
+}
+
+/* На мобильных устройствах показываем mobile ссылку, скрываем desktop */
+@media (max-width: 768px) {
+	.email-desktop {
+		display: none;
+	}
+
+	.email-mobile {
+		display: inline-flex;
+	}
+}
+
 @media (max-width: 768px) {
 	.purchase-container {
 		padding: 20px 0 40px;
