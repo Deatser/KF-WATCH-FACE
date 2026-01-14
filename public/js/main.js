@@ -14,35 +14,6 @@ const loadingIndicator = document.getElementById('loadingIndicator')
 const newProductCarousel = document.getElementById('newProductCarousel')
 const newProductDots = document.getElementById('newProductDots')
 
-// Элементы мобильного меню
-const mobileMenuToggle = document.getElementById('mobileMenuToggle')
-const mobileMenuOverlay = document.getElementById('mobileMenuOverlay')
-const mobileMenu = document.getElementById('mobileMenu')
-const mobileMenuClose = document.getElementById('mobileMenuClose')
-
-// Добавляем плавный скролл для ссылок каталога
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-	anchor.addEventListener('click', function (e) {
-		e.preventDefault()
-
-		const targetId = this.getAttribute('href')
-		if (targetId === '#') return
-
-		const targetElement = document.querySelector(targetId)
-		if (targetElement) {
-			window.scrollTo({
-				top: targetElement.offsetTop - 80,
-				behavior: 'smooth',
-			})
-
-			// Закрываем мобильное меню если оно открыто
-			if (mobileMenu.classList.contains('active')) {
-				closeMobileMenu()
-			}
-		}
-	})
-})
-
 // Переменные состояния
 let allProducts = [] // Теперь будем хранить товары из папки watch
 let latestProduct = null // Товар-новинка
@@ -177,69 +148,6 @@ async function loadProductsFromWatch() {
 // Вспомогательная функция для расчета цены на основе имени папки
 function calculatePriceFromFolderName(folderName) {
 	return 150
-}
-
-// Инициализация мобильного меню
-function initMobileMenu() {
-	if (
-		!mobileMenuToggle ||
-		!mobileMenuOverlay ||
-		!mobileMenu ||
-		!mobileMenuClose
-	)
-		return
-
-	// Открытие меню
-	mobileMenuToggle.addEventListener('click', function (e) {
-		e.stopPropagation()
-		openMobileMenu()
-	})
-
-	// Закрытие меню
-	mobileMenuClose.addEventListener('click', closeMobileMenu)
-	mobileMenuOverlay.addEventListener('click', closeMobileMenu)
-
-	// Закрытие по клавише Escape
-	document.addEventListener('keydown', function (e) {
-		if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
-			closeMobileMenu()
-		}
-	})
-
-	// Обработка кликов по ссылкам в мобильном меню
-	document.querySelectorAll('.mobile-menu-link').forEach(link => {
-		link.addEventListener('click', function (e) {
-			if (this.href && !this.href.includes('#') && !this.target) {
-				// Если это внешняя ссылка, ждем немного перед переходом
-				setTimeout(() => {
-					closeMobileMenu()
-				}, 300)
-			}
-		})
-	})
-
-	// Синхронизация состояния авторизации с мобильным меню
-	syncMobileMenuAuth()
-}
-
-// Открытие мобильного меню
-function openMobileMenu() {
-	mobileMenuOverlay.classList.add('active')
-	mobileMenu.classList.add('active')
-	document.body.style.overflow = 'hidden'
-}
-
-// Закрытие мобильного меню
-function closeMobileMenu() {
-	mobileMenuOverlay.classList.remove('active')
-	mobileMenu.classList.remove('active')
-	document.body.style.overflow = 'auto'
-}
-
-// Синхронизация состояния авторизации с мобильным меню
-function syncMobileMenuAuth() {
-	// Эта функция будет вызываться из auth.js
-	// Для простоты, просто скопируем логику из auth.js
 }
 
 // Инициализация карусели для новинки с реальными изображениями, кликабельностью и свайпами
@@ -509,22 +417,22 @@ function initNewProductCarousel(product) {
 // Функция для создания заглушки в карусели новинки
 function showPlaceholderImage(container, index) {
 	container.style.cssText = `
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 16px;
-	`
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+    `
 
 	const icon = document.createElement('i')
 	icon.className = 'fas fa-clock'
 	icon.style.cssText = `
-		font-size: 3.5rem;
-		color: #8b7355;
-		opacity: 0.8;
-	`
+        font-size: 3.5rem;
+        color: #8b7355;
+        opacity: 0.8;
+    `
 
 	container.appendChild(icon)
 }
@@ -532,7 +440,6 @@ function showPlaceholderImage(container, index) {
 // Функция для работы с модальным окном "О нас"
 function initAboutModal() {
 	const aboutLink = document.getElementById('aboutLink')
-	const aboutLinkMobile = document.getElementById('aboutLinkMobile')
 	const aboutLinkFooter = document.getElementById('aboutLinkFooter')
 	const aboutModal = document.getElementById('aboutModal')
 	const closeAboutModal = document.getElementById('closeAboutModal')
@@ -545,16 +452,6 @@ function initAboutModal() {
 			e.preventDefault()
 			aboutModal.classList.add('show')
 			document.body.style.overflow = 'hidden'
-		})
-	}
-
-	// Открытие модального окна с мобильной ссылки
-	if (aboutLinkMobile) {
-		aboutLinkMobile.addEventListener('click', function (e) {
-			e.preventDefault()
-			aboutModal.classList.add('show')
-			document.body.style.overflow = 'hidden'
-			closeMobileMenu() // Закрываем мобильное меню
 		})
 	}
 
@@ -599,15 +496,15 @@ function createCarouselDot(index) {
 	dot.dataset.index = index
 	dot.addEventListener('click', () => goToNewProductSlide(index))
 	dot.style.cssText = `
-		width: 12px;
-		height: 12px;
-		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.3);
-		border: 2px solid rgba(139, 115, 85, 0.5);
-		cursor: pointer;
-		padding: 0;
-		transition: all 0.3s ease;
-	`
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(139, 115, 85, 0.5);
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.3s ease;
+    `
 
 	// Стили для активной точки
 	if (index === 0) {
@@ -636,8 +533,7 @@ function createCarouselDot(index) {
 
 // Обновление информации о новинке
 function updateNewProductInfo(product) {
-	// Форматируем название (KF194 → KF 194)
-	const formattedName = product.name.replace(/(KF)(\d{3})/i, '$1 $2')
+	const formattedName = product.name
 
 	// Обновляем заголовок
 	const titleElement = document.querySelector('.new-product-title')
@@ -674,19 +570,19 @@ function updateNewProductInfo(product) {
 	const statsContainer = document.querySelector('.new-product-stats')
 	if (statsContainer) {
 		statsContainer.innerHTML = `
-			<div class="stat">
-				<i class="fas fa-sliders-h"></i>
-				<span>Предустановленные ярлыки</span>
-			</div>
-			<div class="stat">
-				<i class="fas fa-palette"></i>
-				<span>Изменяемые цвета</span>
-			</div>
-			<div class="stat">
-				<i class="fas fa-heartbeat"></i>
-				<span>Мониторинг пульса BPM</span>
-			</div>
-		`
+            <div class="stat">
+                <i class="fas fa-sliders-h"></i>
+                <span>Предустановленные ярлыки</span>
+            </div>
+            <div class="stat">
+                <i class="fas fa-palette"></i>
+                <span>Изменяемые цвета</span>
+            </div>
+            <div class="stat">
+                <i class="fas fa-heartbeat"></i>
+                <span>Мониторинг пульса BPM</span>
+            </div>
+        `
 	}
 }
 
@@ -1034,47 +930,47 @@ function initProductCarousel(productId, images, hasRealImages) {
 			slide.className = `product-slide ${index === 0 ? 'active' : ''}`
 			slide.dataset.index = index
 			slide.style.cssText = `
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				opacity: ${index === 0 ? '1' : '0'};
-				transition: opacity 0.3s ease;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				background: #f5f0e8;
-			`
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: ${index === 0 ? '1' : '0'};
+                transition: opacity 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f5f0e8;
+            `
 
 			const img = document.createElement('img')
 			img.src = image.url
 			img.alt = `Фото товара ${index + 1}`
 			img.style.cssText = `
-				width: 100%;
-				height: 100%;
-				object-fit: cover;
-				display: block;
-			`
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            `
 			img.onerror = function () {
 				// Если изображение не загрузилось, показываем заглушку
 				this.style.display = 'none'
 				const fallback = document.createElement('div')
 				fallback.style.cssText = `
-					width: 100%;
-					height: 100%;
-					background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
-					display: flex;
-					align-items: center;
-					justify-content: center;
-				`
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `
 				const icon = document.createElement('i')
 				icon.className = 'fas fa-image'
 				icon.style.cssText = `
-					font-size: 2.5rem;
-					color: #8b7355;
-					opacity: 0.5;
-				`
+                    font-size: 2.5rem;
+                    color: #8b7355;
+                    opacity: 0.5;
+                `
 				fallback.appendChild(icon)
 				slide.appendChild(fallback)
 			}
@@ -1090,15 +986,15 @@ function initProductCarousel(productId, images, hasRealImages) {
 
 			// Яркие стили для точек
 			dot.style.cssText = `
-				width: 10px;
-				height: 10px;
-				border-radius: 50%;
-				background: rgba(255, 255, 255, 0.4);
-				border: 1px solid rgba(139, 115, 85, 0.6);
-				cursor: pointer;
-				padding: 0;
-				transition: all 0.3s ease;
-			`
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.4);
+                border: 1px solid rgba(139, 115, 85, 0.6);
+                cursor: pointer;
+                padding: 0;
+                transition: all 0.3s ease;
+            `
 
 			if (index === 0) {
 				dot.style.background = '#8b7355'
@@ -1137,36 +1033,35 @@ function initProductCarousel(productId, images, hasRealImages) {
 			slide.className = `product-slide ${i === 0 ? 'active' : ''}`
 			slide.dataset.index = i
 			slide.style.cssText = `
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				opacity: ${i === 0 ? '1' : '0'};
-				transition: opacity 0.3s ease;
-				background: linear-gradient(135deg, ${colors[i]} 0%, ${adjustColor(
-				colors[i],
-				-20
-			)} 100%);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			`
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: ${i === 0 ? '1' : '0'};
+                transition: opacity 0.3s ease;
+                background: linear-gradient(135deg, ${
+									colors[i]
+								} 0%, ${adjustColor(colors[i], -20)} 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `
 
 			const placeholder = document.createElement('div')
 			placeholder.style.cssText = `
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			`
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `
 
 			const icon = document.createElement('i')
 			icon.className = 'fas fa-clock'
 			icon.style.cssText = `
-				font-size: 2.5rem;
-				color: #8b7355;
-				opacity: 0.8;
-			`
+                font-size: 2.5rem;
+                color: #8b7355;
+                opacity: 0.8;
+            `
 
 			placeholder.appendChild(icon)
 			slide.appendChild(placeholder)
@@ -1179,15 +1074,15 @@ function initProductCarousel(productId, images, hasRealImages) {
 			dot.dataset.productId = productId
 
 			dot.style.cssText = `
-				width: 10px;
-				height: 10px;
-				border-radius: 50%;
-				background: rgba(255, 255, 255, 0.4);
-				border: 1px solid rgba(139, 115, 85, 0.6);
-				cursor: pointer;
-				padding: 0;
-				transition: all 0.3s ease;
-			`
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.4);
+                border: 1px solid rgba(139, 115, 85, 0.6);
+                cursor: pointer;
+                padding: 0;
+                transition: all 0.3s ease;
+            `
 
 			if (i === 0) {
 				dot.style.background = '#8b7355'
@@ -1317,14 +1212,14 @@ function adjustColor(color, amount) {
 // Функция для отображения сообщения о пустом каталоге
 function showEmptyCatalogMessage() {
 	productsContainer.innerHTML = `
-		<div class="empty-catalog" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
-			<i class="fas fa-box-open" style="font-size: 4rem; color: #8b7355; opacity: 0.5; margin-bottom: 20px;"></i>
-			<h3 style="color: #1a1a1a; margin-bottom: 10px; font-size: 1.5rem;">Каталог пуст</h3>
-			<p style="color: #666; font-size: 1.1rem; max-width: 500px; margin: 0 auto;">
-				В папке watch еще нет товаров. Добавьте товары через админ-панель.
-			</p>
-		</div>
-	`
+        <div class="empty-catalog" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+            <i class="fas fa-box-open" style="font-size: 4rem; color: #8b7355; opacity: 0.5; margin-bottom: 20px;"></i>
+            <h3 style="color: #1a1a1a; margin-bottom: 10px; font-size: 1.5rem;">Каталог пуст</h3>
+            <p style="color: #666; font-size: 1.1rem; max-width: 500px; margin: 0 auto;">
+                В папке watch еще нет товаров. Добавьте товары через админ-панель.
+            </p>
+        </div>
+    `
 	loadingIndicator.style.display = 'none'
 
 	// Скрываем блок с новинкой
@@ -1337,17 +1232,17 @@ function showEmptyCatalogMessage() {
 // Функция для отображения сообщения об ошибке
 function showErrorMessage(message) {
 	productsContainer.innerHTML = `
-		<div class="error-message" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
-			<i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ff6b6b; margin-bottom: 20px;"></i>
-			<h3 style="color: #1a1a1a; margin-bottom: 10px; font-size: 1.5rem;">Ошибка загрузки</h3>
-			<p style="color: #666; font-size: 1.1rem; max-width: 500px; margin: 0 auto;">
-				${message}
-			</p>
-			<button id="retryButton" class="btn-buy" style="margin-top: 20px; width: auto; padding: 10px 30px;">
-				Попробовать снова
-			</button>
-		</div>
-	`
+        <div class="error-message" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ff6b6b; margin-bottom: 20px;"></i>
+            <h3 style="color: #1a1a1a; margin-bottom: 10px; font-size: 1.5rem;">Ошибка загрузки</h3>
+            <p style="color: #666; font-size: 1.1rem; max-width: 500px; margin: 0 auto;">
+                ${message}
+            </p>
+            <button id="retryButton" class="btn-buy" style="margin-top: 20px; width: auto; padding: 10px 30px;">
+                Попробовать снова
+            </button>
+        </div>
+    `
 
 	document.getElementById('retryButton')?.addEventListener('click', () => {
 		location.reload()
@@ -1410,7 +1305,6 @@ function adjustCatalogLayout() {
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
 	initFixedHeader()
-	initMobileMenu()
 	initAboutModal()
 	initInstallGuideLinks()
 	initInstallMethodModal()
@@ -1451,11 +1345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 })
 
 function initInstallGuideLinks() {
-	const installGuideLinks = [
-		'installGuideLink',
-		'installGuideLinkMobile',
-		'installGuideLinkFooter',
-	]
+	const installGuideLinks = ['installGuideLink', 'installGuideLinkFooter']
 
 	installGuideLinks.forEach(id => {
 		const link = document.getElementById(id)

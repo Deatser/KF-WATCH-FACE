@@ -28,7 +28,6 @@
 		<!-- Общий фон для хедера и новинок -->
 		<div class="hero-background">
 			<!-- Хедер с навигацией -->
-			<!-- НОВОЕ (вставить вместо старого) -->
 			<header class="header purchase-header">
 				<div class="container">
 					<a href="/" class="logo">
@@ -45,6 +44,9 @@
 						>
 							<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
 						</a>
+						<!-- Новые ссылки: Контакты и FAQ -->
+						<a href="#" class="nav-link" id="contactsLink">Контакты</a>
+						<a href="#" class="nav-link" id="faqLink">FAQ</a>
 						<!-- Измененный порядок ссылок -->
 						<a href="#" class="nav-link" id="installGuideLink"
 							>Инструкция по установке</a
@@ -209,6 +211,10 @@
 							>
 							<a href="#catalog" class="footer-link">Каталог</a>
 							<a href="#" class="footer-link" id="aboutLinkFooter">О нас</a>
+							<a href="#" class="footer-link" id="faqLinkFooter">FAQ</a>
+							<a href="#" class="footer-link" id="contactsLinkFooter"
+								>Контакты</a
+							>
 						</div>
 					</div>
 					<div class="footer-section">
@@ -244,9 +250,225 @@
 			</div>
 		</footer>
 
-		<!-- ДОБАВИТЬ ПОСЛЕ ФУТЕРА, ПЕРЕД ПОДКЛЮЧЕНИЕМ JS -->
+		<!-- Модальное окно "Контакты" -->
+		<div id="contactsModal" class="about-modal">
+			<div class="about-modal-content contact-info-modal">
+				<button id="closeContactsModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-address-book"></i>
+					<h2>КОНТАКТЫ</h2>
+				</div>
+				<div class="about-modal-body">
+					<div class="contact-details">
+						<p><strong>KF WATCH FACE</strong></p>
+						<p><strong>Владелец:</strong> Лавров Дмитрий Алексеевич</p>
+						<p><strong>ИНН:</strong> 773609937141</p>
+						<p><strong>Почта:</strong> lavrov_dima@mail.ru</p>
+						<p><strong>Telegram:</strong> @krek_free</p>
+						<div class="contact-email">
+							<i class="fas fa-envelope"></i>
+							<p>
+								По всем вопросам обращайтесь на указанную почту или в Telegram
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
-		<!-- Модальное окно выбора способа установки -->
+		<!-- Модальное окно "FAQ" -->
+		<div id="faqModal" class="about-modal">
+			<div class="about-modal-content">
+				<button id="closeFaqModal" class="about-modal-close">
+					<i class="fas fa-times"></i>
+				</button>
+				<div class="about-modal-header">
+					<i class="fas fa-question-circle"></i>
+					<h2>ЧАСТО ЗАДАВАЕМЫЕ ВОПРОСЫ (FAQ)</h2>
+				</div>
+				<div class="about-modal-body">
+					<div class="faq-container">
+						<!-- Вопрос 1 -->
+						<div class="faq-item">
+							<div class="faq-question">
+								<h3>С какими смарт-часами совместимы ваши циферблаты?</h3>
+								<button class="faq-toggle">
+									<i class="fas fa-chevron-down"></i>
+								</button>
+							</div>
+							<div class="faq-answer">
+								<p>
+									Циферблаты совместимы с устройствами на базе операционной
+									системы Wear OS. Перед покупкой убедитесь, что ваши часы
+									работают на данной операционной системе и проверьте
+									совместимость вашей версии операционной системы с выбранным
+									циферблатом.
+								</p>
+							</div>
+						</div>
+
+						<!-- Вопрос 2 -->
+						<div class="faq-item">
+							<div class="faq-question">
+								<h3>Гарантируете ли вы качество ваших циферблатов?</h3>
+								<button class="faq-toggle">
+									<i class="fas fa-chevron-down"></i>
+								</button>
+							</div>
+							<div class="faq-answer">
+								<p>
+									Да, мы гарантируем высокое качество наших работ. Все
+									циферблаты проходят предпродажные тесты на разных моделях
+									смарт-часов. Обратите внимание, что все циферблаты
+									гарантированно работают на смарт-часах Samsung. Однако
+									некоторые функции на смарт-часах других производителей могут
+									быть ограничены.
+								</p>
+							</div>
+						</div>
+
+						<!-- Вопрос 3 -->
+						<div class="faq-item">
+							<div class="faq-question">
+								<h3>Как происходит процесс покупки?</h3>
+								<button class="faq-toggle">
+									<i class="fas fa-chevron-down"></i>
+								</button>
+							</div>
+							<div class="faq-answer">
+								<p>
+									Выберите понравившийся циферблат и нажмите кнопку "Купить".
+									После перехода на страницу покупки товара необходимо ввести
+									корректный адрес электронной почты и оплатить покупку. После
+									оплаты откроется страница с подтверждением и ссылкой на
+									скачивание файла циферблата. Также на указанную электронную
+									почту придет ссылка на скачивание.
+								</p>
+								<p>
+									<strong
+										>Пожалуйста, будьте внимательны при вводе адреса электронной
+										почты!</strong
+									>
+								</p>
+								<img
+									src="/guide/FAQ.png"
+									alt="FAQ
+								информация"
+									class="guide-image"
+								/>
+								<p>
+									Если письмо не пришло, проверьте папку СПАМ. Некоторые
+									почтовые клиенты не очень дружат с автоматическими рассылками.
+								</p>
+								<p>
+									Около месяца назад мы были вынуждены перейти с зарубежного
+									сервиса доставки писем на российский. После такой резкой смены
+									Gmail мог понизить доверие к отправителю — это нормальная
+									ситуация, так как Gmail является одним из самых строгих
+									почтовых сервисов в плане фильтрации писем.
+								</p>
+								<p>
+									Мы уже сообщили об инциденте нашему почтовому партнёру. По их
+									информации, в первое время письма могут:
+								</p>
+								<ul>
+									<li>попадать в папку «Спам»,</li>
+									<li>
+										не доходить мгновенно, пока почтовый домен «нарабатывает
+										репутацию» у Gmail.
+									</li>
+								</ul>
+							</div>
+						</div>
+
+						<!-- Вопрос 4 -->
+						<div class="faq-item">
+							<div class="faq-question">
+								<h3>Как установить приобретенный циферблат?</h3>
+								<button class="faq-toggle">
+									<i class="fas fa-chevron-down"></i>
+								</button>
+							</div>
+							<div class="faq-answer">
+								<p>
+									Скачайте установочный файл циферблата, а дальше Вам придется
+									воспользоваться вспомогательными программами - WearLoad или
+									Bugjaeger для смартфона и AppADBControl для ПК. К сожалению
+									Google ограничил деятельность разработчиков из России, и
+									возможности загружать циферблаты в Google Play у нас на
+									сегодняшний день нет.
+								</p>
+								<p>
+									Вы можете предварительно ознакомиться с инструкцией по
+									установке циферблатов на странице сайта
+									<a href="#" id="installGuideLinkFaq">Инструкции</a>
+								</p>
+							</div>
+						</div>
+
+						<!-- Вопрос 5 -->
+						<div class="faq-item">
+							<div class="faq-question">
+								<h3>Почему нельзя скачать циферблаты прямо из Google Play?</h3>
+								<button class="faq-toggle">
+									<i class="fas fa-chevron-down"></i>
+								</button>
+							</div>
+							<div class="faq-answer">
+								<p>
+									После введения ограничений со стороны Google, разработчики из
+									России утратили возможность полноценно работать с экосистемой
+									Google Play. Это касается не только публикации и обновления
+									приложений, но и их загрузки на устройства, включая смарт-часы
+									на платформе Wear OS. В результате пользователи и разработчики
+									столкнулись с тем, что стандартный способ установки приложений
+									через Google Play больше не доступен.
+								</p>
+								<p>
+									Чтобы продолжить пользоваться новыми программами и
+									обновлениями, теперь приходится прибегать к альтернативным
+									методам установки. Один из самых популярных и удобных способов
+									— использование приложения WearLoad. Оно позволяет подключить
+									смарт-часы к телефону и вручную установить нужные APK-файлы. В
+									отличии от других методов установки оно максимально
+									автоматизировано и удобно. А для установки с ПК мы рекомендуем
+									использовать приложение ADBAppControl.
+								</p>
+								<p>
+									По сути, эти приложения становятся инструментом, которые
+									заменяют магазин приложений, давая возможность напрямую
+									загружать, удалять или обновлять программы на часах. Хотя этот
+									способ требует немного больше технических навыков, для
+									пользователей из России он остаётся единственным реальным
+									решением для установки приложений на Wear OS-устройства в
+									условиях текущих ограничений Google.
+								</p>
+							</div>
+						</div>
+
+						<!-- Вопрос 6 -->
+						<div class="faq-item">
+							<div class="faq-question">
+								<h3>Можно ли вернуть товар?</h3>
+								<button class="faq-toggle">
+									<i class="fas fa-chevron-down"></i>
+								</button>
+							</div>
+							<div class="faq-answer">
+								<p>
+									Цифровые товары не подлежат возврату, но если что-то не
+									работает — мы обязательно поможем и решим проблему.
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Существующие модальные окна (инструкции по установке) -->
 		<div id="installMethodModal" class="about-modal">
 			<div class="about-modal-content">
 				<button id="closeInstallMethodModal" class="about-modal-close">
@@ -465,7 +687,7 @@
 								<br />
 								Для автоматического поиска IP-адреса и порта можно нажать кнопку
 								«Сканировать для сопряжения», а после успешного поиска останется
-								только ввести код подклюции (6 цифр) в соответствующее поле и
+								только ввести код подключения (6 цифр) в соответствующее поле и
 								нажать кнопку «Выполнить сопряжение»
 								<br />
 								<img
@@ -1108,185 +1330,147 @@
 
 		<script>
 			document.addEventListener('DOMContentLoaded', function () {
-				// Функция для работы с модальным окном выбора способа установки
-				function initInstallMethodModal() {
-					const installMethodModal =
-						document.getElementById('installMethodModal')
-					const closeInstallMethodModal = document.getElementById(
-						'closeInstallMethodModal'
-					)
+				// Инициализация модального окна "Контакты"
+				const contactsModal = document.getElementById('contactsModal')
+				const closeContactsModal = document.getElementById('closeContactsModal')
+				const contactsLinks = [
+					document.getElementById('contactsLink'),
+					document.getElementById('contactsLinkFooter'),
+				]
 
-					if (!installMethodModal) return
-
-					// Закрытие модального окна
-					if (closeInstallMethodModal) {
-						closeInstallMethodModal.addEventListener('click', function () {
-							installMethodModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
+				// Открытие модального окна "Контакты"
+				contactsLinks.forEach(link => {
+					if (link) {
+						link.addEventListener('click', function (e) {
+							e.preventDefault()
+							contactsModal.classList.add('show')
+							document.body.style.overflow = 'hidden'
 						})
 					}
+				})
 
-					// Закрытие при клике на фон
-					installMethodModal.addEventListener('click', function (e) {
-						if (e.target === installMethodModal) {
-							installMethodModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
+				// Закрытие модального окна "Контакты"
+				if (closeContactsModal) {
+					closeContactsModal.addEventListener('click', function () {
+						contactsModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					})
+				}
+
+				// Закрытие при клике на фон
+				contactsModal.addEventListener('click', function (e) {
+					if (e.target === contactsModal) {
+						contactsModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+
+				// Инициализация модального окна "FAQ"
+				const faqModal = document.getElementById('faqModal')
+				const closeFaqModal = document.getElementById('closeFaqModal')
+				const faqLinks = [
+					document.getElementById('faqLink'),
+					document.getElementById('faqLinkFooter'),
+					document.getElementById('installGuideLinkFaq'),
+				]
+
+				// Открытие модального окна "FAQ"
+				faqLinks.forEach(link => {
+					if (link) {
+						link.addEventListener('click', function (e) {
+							e.preventDefault()
+							faqModal.classList.add('show')
+							document.body.style.overflow = 'hidden'
+						})
+					}
+				})
+
+				// Закрытие модального окна "FAQ"
+				if (closeFaqModal) {
+					closeFaqModal.addEventListener('click', function () {
+						faqModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					})
+				}
+
+				// Закрытие при клике на фон
+				faqModal.addEventListener('click', function (e) {
+					if (e.target === faqModal) {
+						faqModal.classList.remove('show')
+						document.body.style.overflow = 'auto'
+					}
+				})
+
+				// Инициализация аккордеона FAQ
+				const faqToggles = document.querySelectorAll('.faq-toggle')
+				const faqQuestions = document.querySelectorAll('.faq-question')
+
+				// Обработчик для клика на сам вопрос
+				faqQuestions.forEach(question => {
+					question.addEventListener('click', function (e) {
+						// Проверяем, что клик не на кнопке с иконкой
+						if (!e.target.closest('.faq-toggle')) {
+							const faqItem = this.closest('.faq-item')
+							const toggle = faqItem.querySelector('.faq-toggle')
+							const answer = faqItem.querySelector('.faq-answer')
+
+							toggleFaqItem(toggle, answer)
 						}
 					})
+				})
 
-					// Обработчики кнопок выбора метода установки
-					const methodButtons = document.querySelectorAll('.install-method-btn')
-					methodButtons.forEach(button => {
-						button.addEventListener('click', function () {
-							const method = this.getAttribute('data-method')
+				// Обработчик для клика на иконку
+				faqToggles.forEach(toggle => {
+					toggle.addEventListener('click', function (e) {
+						e.stopPropagation() // Останавливаем всплытие
+						const faqItem = this.closest('.faq-item')
+						const answer = faqItem.querySelector('.faq-answer')
 
-							installMethodModal.classList.remove('show')
+						toggleFaqItem(this, answer)
+					})
+				})
 
-							if (method === 'wearload') {
-								const wearLoadModal =
-									document.getElementById('wearloadGuideModal')
-								if (wearLoadModal) {
-									wearLoadModal.classList.add('show')
-								}
-							} else if (method === 'adb') {
-								const adbGuideModal = document.getElementById('adbGuideModal')
-								if (adbGuideModal) {
-									adbGuideModal.classList.add('show')
-								}
-							} else if (method === 'bugjaeger') {
-								const bugjaegerGuideModal = document.getElementById(
-									'bugjaegerGuideModal'
-								)
-								if (bugjaegerGuideModal) {
-									bugjaegerGuideModal.classList.add('show')
-								}
+				// Функция для переключения состояния FAQ
+				function toggleFaqItem(toggle, answer) {
+					const isActive = answer.classList.contains('active')
+
+					// Переключаем только текущий элемент
+					if (!isActive) {
+						// Открываем
+						answer.classList.add('active')
+						// Плавно поворачиваем стрелку
+						toggle.style.transform = 'rotate(180deg)'
+						toggle.style.transition = 'transform 0.5s ease'
+					} else {
+						// Закрываем
+						answer.classList.remove('active')
+						// Плавно возвращаем стрелку
+						toggle.style.transform = 'rotate(0deg)'
+						toggle.style.transition = 'transform 0.5s ease'
+					}
+				}
+
+				// Закрытие по клавише Escape
+				document.addEventListener('keydown', function (e) {
+					if (e.key === 'Escape') {
+						const modals = [
+							contactsModal,
+							faqModal,
+							document.getElementById('installMethodModal'),
+							document.getElementById('wearloadGuideModal'),
+							document.getElementById('adbGuideModal'),
+							document.getElementById('bugjaegerGuideModal'),
+							document.getElementById('aboutModal'),
+						]
+
+						modals.forEach(modal => {
+							if (modal && modal.classList.contains('show')) {
+								modal.classList.remove('show')
+								document.body.style.overflow = 'auto'
 							}
 						})
-					})
-
-					// Закрытие по клавише Escape
-					document.addEventListener('keydown', function (e) {
-						if (
-							e.key === 'Escape' &&
-							installMethodModal.classList.contains('show')
-						) {
-							installMethodModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-				}
-
-				// Функция для работы с модальным окном "Гайд по установке через WearLoad"
-				function initWearloadGuideModal() {
-					const wearLoadModal = document.getElementById('wearloadGuideModal')
-					const closeWearloadGuideModal = document.getElementById(
-						'closeWearloadGuideModal'
-					)
-
-					if (!wearLoadModal) return
-
-					// Закрытие модального окна
-					if (closeWearloadGuideModal) {
-						closeWearloadGuideModal.addEventListener('click', function () {
-							wearLoadModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						})
 					}
-
-					// Закрытие при клике на фон
-					wearLoadModal.addEventListener('click', function (e) {
-						if (e.target === wearLoadModal) {
-							wearLoadModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-
-					// Закрытие по клавише Escape
-					document.addEventListener('keydown', function (e) {
-						if (
-							e.key === 'Escape' &&
-							wearLoadModal.classList.contains('show')
-						) {
-							wearLoadModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-				}
-
-				// Функция для работы с модальным окном "Гайд по установке через ADBAppControl"
-				function initAdbGuideModal() {
-					const adbGuideModal = document.getElementById('adbGuideModal')
-					const closeAdbGuideModal =
-						document.getElementById('closeAdbGuideModal')
-
-					if (!adbGuideModal) return
-
-					// Закрытие модального окна
-					if (closeAdbGuideModal) {
-						closeAdbGuideModal.addEventListener('click', function () {
-							adbGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						})
-					}
-
-					// Закрытие при клике на фон
-					adbGuideModal.addEventListener('click', function (e) {
-						if (e.target === adbGuideModal) {
-							adbGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-
-					// Закрытие по клавише Escape
-					document.addEventListener('keydown', function (e) {
-						if (
-							e.key === 'Escape' &&
-							adbGuideModal.classList.contains('show')
-						) {
-							adbGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-				}
-
-				// Функция для работы с модальным окном "Гайд по установке через Bugjaeger"
-				function initBugjaegerGuideModal() {
-					const bugjaegerGuideModal = document.getElementById(
-						'bugjaegerGuideModal'
-					)
-					const closeBugjaegerGuideModal = document.getElementById(
-						'closeBugjaegerGuideModal'
-					)
-
-					if (!bugjaegerGuideModal) return
-
-					// Закрытие модального окна
-					if (closeBugjaegerGuideModal) {
-						closeBugjaegerGuideModal.addEventListener('click', function () {
-							bugjaegerGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						})
-					}
-
-					// Закрытие при клике на фон
-					bugjaegerGuideModal.addEventListener('click', function (e) {
-						if (e.target === bugjaegerGuideModal) {
-							bugjaegerGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-
-					// Закрытие по клавише Escape
-					document.addEventListener('keydown', function (e) {
-						if (
-							e.key === 'Escape' &&
-							bugjaegerGuideModal.classList.contains('show')
-						) {
-							bugjaegerGuideModal.classList.remove('show')
-							document.body.style.overflow = 'auto'
-						}
-					})
-				}
+				})
 			})
 		</script>
 	</body>

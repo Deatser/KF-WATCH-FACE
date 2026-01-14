@@ -122,23 +122,6 @@ body {
 	color: #a89176;
 }
 
-/* Бургер-меню для мобильных */
-.mobile-menu-toggle {
-	display: none;
-	background: none;
-	border: none;
-	font-size: 1.5rem;
-	color: #4a4a4a;
-	cursor: pointer;
-	padding: 10px;
-	z-index: 1001;
-	transition: color 0.3s ease;
-}
-
-.mobile-menu-toggle:hover {
-	color: #8b7355;
-}
-
 /* Основная навигация */
 .nav {
 	display: flex;
@@ -331,107 +314,6 @@ body {
 #userEmailDisplay {
 	color: #4a4a4a;
 	font-size: 0.9rem;
-	word-break: break-all;
-}
-
-/* Мобильное меню */
-.mobile-menu-overlay {
-	display: none;
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
-	z-index: 999;
-	opacity: 0;
-	transition: opacity 0.3s ease;
-}
-
-.mobile-menu-overlay.active {
-	display: block;
-	opacity: 1;
-}
-
-.mobile-menu {
-	position: fixed;
-	top: 0;
-	right: -100%;
-	width: 300px;
-	height: 100%;
-	background: white;
-	z-index: 1000;
-	transition: right 0.3s ease;
-	box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
-	overflow-y: auto;
-}
-
-.mobile-menu.active {
-	right: 0;
-}
-
-.mobile-menu-close {
-	position: absolute;
-	top: 20px;
-	right: 20px;
-	background: none;
-	border: none;
-	font-size: 1.5rem;
-	color: #4a4a4a;
-	cursor: pointer;
-	padding: 5px;
-	transition: color 0.3s ease;
-}
-
-.mobile-menu-close:hover {
-	color: #8b7355;
-}
-
-.mobile-menu-content {
-	padding: 80px 30px 30px;
-	display: flex;
-	flex-direction: column;
-	gap: 20px;
-}
-
-.mobile-menu-link {
-	text-decoration: none;
-	color: #1a1a1a;
-	font-size: 1.1rem;
-	font-weight: 500;
-	padding: 12px 0;
-	border-bottom: 1px solid #f0f0f0;
-	transition: color 0.3s ease;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-
-.mobile-menu-link:hover {
-	color: #8b7355;
-}
-
-.mobile-menu-user-section {
-	margin-top: 20px;
-	padding-top: 20px;
-	border-top: 1px solid #f0f0f0;
-}
-
-.mobile-menu-user-section h3 {
-	color: #1a1a1a;
-	margin-bottom: 15px;
-	font-size: 1.1rem;
-	font-weight: 600;
-}
-
-#mobileUserInfo {
-	text-align: center;
-}
-
-#mobileUserEmailDisplay {
-	color: #4a4a4a;
-	font-size: 0.9rem;
-	margin-bottom: 15px;
 	word-break: break-all;
 }
 
@@ -1094,14 +976,14 @@ body {
 	font-size: 1.5rem;
 	font-weight: 700;
 	margin-bottom: 20px;
-	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
+	color: #f9f5f0;
 }
 
 .footer-section h4 {
 	font-size: 1.2rem;
 	font-weight: 600;
 	margin-bottom: 20px;
-	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
+	color: #f9f5f0;
 }
 
 .footer-section p {
@@ -1561,15 +1443,6 @@ body {
 
 /* Планшеты (768px - 992px) */
 @media (max-width: 992px) {
-	/* Хедер и навигация */
-	.mobile-menu-toggle {
-		display: block;
-	}
-
-	.nav {
-		display: none;
-	}
-
 	/* Блок новинки */
 	.new-arrival {
 		min-height: 500px;
@@ -1654,6 +1527,10 @@ body {
 
 	.logo i {
 		font-size: 1.3rem;
+	}
+
+	.nav {
+		gap: 15px;
 	}
 
 	.new-arrival {
@@ -1836,13 +1713,12 @@ body {
 		margin-right: 5px;
 	}
 
-	.mobile-menu-toggle {
-		font-size: 1.3rem;
-		padding: 8px;
+	.nav {
+		gap: 10px;
 	}
 
-	.mobile-menu {
-		width: 100%;
+	.nav-link {
+		font-size: 0.8rem;
 	}
 
 	.new-arrival {
@@ -1971,65 +1847,19 @@ body {
 		font-size: 1.15rem;
 	}
 
-	@media (max-width: 768px) {
-		.purchase-container {
-			padding: 20px 0 40px;
-		}
+	/* Футер адаптивность */
+	.footer {
+		padding: 40px 0 20px;
+		margin-top: 60px;
+	}
 
-		.product-details,
-		.order-card {
-			padding: 20px;
-		}
+	.footer-content {
+		grid-template-columns: 1fr;
+		gap: 30px;
+	}
 
-		.product-title {
-			font-size: 1.8rem;
-		}
-
-		.product-header {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 15px;
-		}
-
-		.carousel-container-large {
-			max-width: 320px;
-		}
-
-		.carousel-controls-large {
-			max-width: 320px;
-		}
-
-		.carousel-nav-btn-outer {
-			width: 32px;
-			height: 32px;
-			font-size: 0.9rem;
-		}
-
-		.current-price {
-			font-size: 1.3rem;
-		}
-
-		.old-price {
-			font-size: 1rem;
-		}
-
-		.footer {
-			padding: 40px 0 20px;
-			margin-top: 60px;
-		}
-
-		.footer-content {
-			grid-template-columns: 1fr;
-			gap: 30px;
-		}
-
-		.footer-section {
-			text-align: center;
-		}
-
-		.social-links {
-			justify-content: center;
-		}
+	.footer-section {
+		text-align: center;
 	}
 
 	.social-links {
@@ -2151,4 +1981,162 @@ body {
 		align-items: center;
 		text-align: center;
 	}
+}
+
+/* Стили для FAQ аккордеона */
+.faq-item {
+	border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+	padding: 15px 0;
+	transition: all 0.3s ease;
+}
+
+.faq-question {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	cursor: pointer;
+	padding: 15px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	background-color: rgba(139, 115, 85, 0.05);
+}
+
+.faq-question:hover {
+	background-color: rgba(139, 115, 85, 0.1);
+	transform: translateX(5px);
+}
+
+.faq-question h3 {
+	color: #1a1a1a;
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin: 0;
+	flex: 1;
+	text-align: left;
+	padding-right: 15px;
+}
+
+.faq-toggle {
+	background: none;
+	border: none;
+	color: #8b7355;
+	font-size: 1.2rem;
+	cursor: pointer;
+	transition: transform 0.5s ease;
+	padding: 5px;
+	min-width: 30px;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.faq-toggle:hover {
+	color: #a89176;
+}
+
+/* УБРАТЬ .faq-toggle.active - заменить на CSS transform через JS */
+
+.faq-answer {
+	max-height: 0;
+	overflow: hidden;
+	padding: 0 15px;
+	opacity: 0;
+	transform: translateY(-10px);
+	transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease,
+		opacity 0.2s ease, transform 0.2s ease;
+}
+
+.faq-answer.active {
+	max-height: 3000px;
+	padding: 20px 15px;
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.faq-answer p {
+	margin-bottom: 10px;
+	color: #4a4a4a;
+	line-height: 1.6;
+}
+
+.faq-answer img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 8px;
+	margin: 15px 0;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.faq-answer strong {
+	color: #8b7355;
+	font-weight: 600;
+}
+
+.faq-answer a {
+	color: #8b7355;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.faq-answer a:hover {
+	text-decoration: underline;
+}
+
+.faq-answer ul {
+	margin: 10px 0 15px 20px;
+	padding-left: 0;
+}
+
+.faq-answer li {
+	margin-bottom: 8px;
+	color: #4a4a4a;
+	line-height: 1.5;
+	position: relative;
+	padding-left: 15px;
+}
+
+.faq-answer li:before {
+	content: '•';
+	color: #8b7355;
+	font-weight: bold;
+	position: absolute;
+	left: 0;
+}
+/* Стили для контактной информации */
+.contact-info-modal .contact-details {
+	margin: 20px 0;
+	padding: 20px;
+	background: rgba(139, 115, 85, 0.05);
+	border-radius: 12px;
+	border-left: 4px solid #8b7355;
+}
+
+.contact-details p {
+	margin-bottom: 15px;
+	font-size: 1.1rem;
+	line-height: 1.6;
+}
+
+.contact-details strong {
+	color: #8b7355;
+	font-weight: 600;
+	display: inline-block;
+	min-width: 120px;
+}
+
+.contact-email {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 20px;
+	padding: 15px;
+	background: rgba(139, 115, 85, 0.1);
+	border-radius: 10px;
+}
+
+.contact-email i {
+	color: #8b7355;
+	font-size: 1.2rem;
 }
