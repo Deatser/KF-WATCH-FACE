@@ -21,7 +21,7 @@ body {
 	overflow-x: hidden;
 	width: 100%;
 	max-width: 100vw;
-	padding-top: 80px; /* Для фиксированного хедера */
+	padding-top: 80px;
 }
 
 .container {
@@ -35,7 +35,6 @@ body {
 /* ХЕДЕР И НАВИГАЦИЯ */
 /* ========================================== */
 
-/* Общий фон для хедера и блока новинки */
 .hero-background {
 	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
 	position: relative;
@@ -65,7 +64,6 @@ body {
 	pointer-events: none;
 }
 
-/* Хедер */
 .header {
 	position: fixed;
 	top: 0;
@@ -95,7 +93,6 @@ body {
 	box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Логотип */
 .logo {
 	display: flex;
 	align-items: center;
@@ -125,7 +122,6 @@ body {
 	color: #a89176;
 }
 
-/* Навигация */
 .nav {
 	display: flex;
 	gap: 25px;
@@ -167,7 +163,6 @@ body {
 	color: #8b7355;
 }
 
-/* Меню пользователя */
 .user-menu-container {
 	position: relative;
 }
@@ -424,7 +419,6 @@ body {
 	padding: 20px 0;
 }
 
-/* Карусель новинки */
 .new-product-carousel {
 	flex: 1;
 	max-width: 320px;
@@ -502,7 +496,6 @@ body {
 	font-size: 0.9rem;
 }
 
-/* Навигация карусели */
 .carousel-controls {
 	display: flex;
 	align-items: center;
@@ -556,7 +549,6 @@ body {
 	transform: scale(1.2);
 }
 
-/* Детали новинки */
 .new-product-details {
 	flex: 1;
 	max-width: 300px;
@@ -595,7 +587,6 @@ body {
 	font-weight: 400;
 }
 
-/* Кнопки */
 .btn {
 	display: inline-flex;
 	align-items: center;
@@ -663,155 +654,51 @@ body {
 }
 
 /* ========================================== */
-/* ПРЕДЛОЖЕНИЕ ДНЯ */
+/* ПРЕДЛОЖЕНИЕ ДНЯ - ОБНОВЛЕННАЯ СТРУКТУРА */
 /* ========================================== */
 
-/* Основной контейнер предложения дня - СЖАТЫЙ */
 .daily-offer-background {
 	background: white;
 	border-radius: 20px;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-	margin: 40px auto; /* Центрируем сверху и снизу */
-	position: relative;
-	z-index: 1;
-	overflow: hidden;
-	width: fit-content; /* Ширина по содержимому */
-	max-width: 1400px; /* Максимальная ширина как у каталога */
+	margin: 40px auto;
+	width: fit-content;
+	max-width: none;
 }
 
-/* ВНУТРЕННИЙ КОНТЕЙНЕР - БЕЗ БОКОВЫХ ОТСТУПОВ */
 .daily-offer {
-	padding: 40px 0; /* Только верхний и нижний отступ */
+	padding: 40px;
 	background: white;
 	border-radius: 20px;
 	width: 100%;
 	box-sizing: border-box;
 }
 
-/* Контейнер контента - ДОБАВЛЯЕМ ОТСТУПЫ ТУТ */
 .daily-offer-content {
 	width: 100%;
 	max-width: 1400px;
 	margin: 0 auto;
-	padding: 0 40px; /* Отступы слева и справа ТОЛЬКО здесь */
 }
 
-/* Визуальный блок */
-.daily-offer-visual {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 60px; /* Увеличим расстояние между фото и кнопкой */
-	align-items: center;
-	width: 100%;
-}
-
-/* Карусель - фиксированная ширина */
-.daily-offer-carousel {
-	width: 100%;
-	max-width: 600px; /* Фиксируем ширину карусели */
-	min-width: 500px;
-}
-
-/* Детали с кнопкой */
-.daily-offer-details {
-	min-width: 300px;
-	max-width: 350px;
-}
-
-/* Заголовок и таймер - ТАКЖЕ ДОБАВЛЯЕМ ОТСТУПЫ */
 .daily-offer-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 20px;
+	margin-bottom: 30px;
+	padding-left: 40px;
 	width: 100%;
-	padding: 0 40px; /* Такие же отступы как у .daily-offer-content */
-	box-sizing: border-box;
 }
 
-/* Медиа-запросы для адаптивности */
-@media (max-width: 1200px) {
-	.daily-offer-visual {
-		grid-template-columns: 1fr;
-		gap: 40px;
-	}
-
-	.daily-offer-carousel {
-		max-width: 100%;
-		min-width: auto;
-	}
-
-	.daily-offer-details {
-		max-width: 100%;
-		text-align: center;
-	}
-
-	.daily-offer-content {
-		padding: 0 30px; /* Уменьшаем отступы на планшетах */
-	}
-
-	.daily-offer-header {
-		padding: 0 30px; /* Синхронизируем отступы */
-	}
-}
-
-@media (max-width: 768px) {
-	.daily-offer {
-		padding: 30px 0; /* Уменьшаем вертикальные отступы */
-	}
-
-	.daily-offer-visual {
-		gap: 30px;
-	}
-
-	.daily-offer-content {
-		padding: 0 20px; /* Еще меньше отступы на телефонах */
-	}
-
-	.daily-offer-header {
-		padding: 0 20px; /* Синхронизируем отступы */
-	}
-}
-/* Медиа-запросы для адаптивности */
-@media (max-width: 1200px) {
-	.daily-offer-visual {
-		grid-template-columns: 1fr;
-		gap: 40px;
-	}
-
-	.daily-offer-carousel {
-		max-width: 100%;
-		min-width: auto;
-	}
-
-	.daily-offer-details {
-		max-width: 100%;
-		text-align: center;
-	}
-
-	.daily-offer {
-		padding: 40px;
-	}
-}
-
-@media (max-width: 768px) {
-	.daily-offer {
-		padding: 30px 20px;
-	}
-
-	.daily-offer-visual {
-		gap: 30px;
-	}
-}
 .offer-badge {
 	background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
 	color: white;
-	padding: 8px 16px;
+	padding: 10px 20px;
 	border-radius: 20px;
 	font-weight: 700;
-	font-size: 0.9rem;
+	font-size: 1rem;
 	letter-spacing: 0.5px;
 	box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+	text-transform: uppercase;
 }
 
 .offer-timer {
@@ -819,78 +706,103 @@ body {
 	align-items: center;
 	gap: 10px;
 	background: rgba(139, 115, 85, 0.1);
-	padding: 10px 20px;
+	padding: 12px 24px;
 	border-radius: 12px;
 	font-weight: 600;
 }
 
 .offer-timer i {
 	color: #ff6b6b;
-	font-size: 1.2rem;
-}
-
-.timer-text {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	font-family: monospace;
+	font-size: 1.3rem;
 }
 
 #timerHours,
 #timerMinutes,
 #timerSeconds {
-	font-size: 1.3rem;
+	font-size: 1.5rem;
 	color: #1a1a1a;
-	min-width: 24px;
+	min-width: 30px;
 	text-align: center;
+	font-weight: 700;
 }
 
 .timer-label {
-	margin-left: 10px;
-	font-size: 0.85rem;
+	margin-left: 15px;
+	font-size: 0.9rem;
 	color: #666;
 	font-weight: normal;
 }
 
-.daily-offer-watch-name {
-	font-size: 2.8rem;
-	font-weight: 700;
-	color: #1a1a1a;
-	margin-bottom: 15px;
-	line-height: 1.2;
-}
-
-.daily-offer-visual {
+.daily-offer-main {
 	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 40px;
-	align-items: center;
+	grid-template-columns: auto auto;
+	gap: 80px;
+	align-items: start;
+	width: 100%;
 }
 
+/* КАРУСЕЛЬ БОЛЬШОГО РАЗМЕРА */
 .daily-offer-carousel {
+	width: 650px; /* УВЕЛИЧЕННЫЙ РАЗМЕР */
+	max-width: 100%;
+}
+
+/* УВЕЛИЧЕННАЯ КАРУСЕЛЬ ВНУТРИ */
+.daily-offer-carousel .carousel-container {
 	width: 100%;
-	max-width: 800px;
+	aspect-ratio: 1 / 1;
+	border-radius: 20px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.daily-offer-carousel .carousel-image i {
+	font-size: 4.5rem; /* УВЕЛИЧЕННЫЙ РАЗМЕР ИКОНКИ */
+}
+
+.daily-offer-carousel .carousel-controls {
+	margin-top: 20px;
+}
+
+.daily-offer-carousel .carousel-btn {
+	width: 42px;
+	height: 42px;
+	font-size: 1.2rem;
 }
 
 .daily-offer-details {
-	min-width: 300px;
+	min-width: 400px;
+	max-width: 450px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.daily-offer-watch-name {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: #1a1a1a;
+	margin: 0 0 10px 0;
+	line-height: 1.2;
+	text-align: left !important; /* Принудительно */
+	align-self: flex-start; /* Если используется flex */
+	width: 100%; /* Занимает всю ширину */
 }
 
 .daily-offer-price {
 	display: flex;
 	align-items: baseline;
-	gap: 15px;
-	margin-bottom: 25px;
+	gap: 20px;
+	margin-bottom: 10px;
 }
 
 .daily-offer-price .price {
-	font-size: 2.5rem;
-	font-weight: 700;
+	font-size: 3rem;
+	font-weight: 800;
 	color: #ff6b6b;
 }
 
 .daily-offer-price .price-old {
-	font-size: 1.5rem;
+	font-size: 2rem;
 	color: #999;
 	text-decoration: line-through;
 }
@@ -898,36 +810,72 @@ body {
 .discount-badge {
 	background: #ff6b6b;
 	color: white;
-	padding: 4px 10px;
-	border-radius: 8px;
-	font-size: 0.9rem;
-	font-weight: 600;
+	padding: 6px 14px;
+	border-radius: 10px;
+	font-size: 1.1rem;
+	font-weight: 700;
+}
+
+#dailyOfferBuyButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 20px 30px;
+	background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+	color: white;
+	border: none;
+	border-radius: 12px;
+	font-size: 1.2rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-decoration: none;
+	width: 100%;
+	margin: 15px 0;
+	box-shadow: 0 8px 25px rgba(139, 115, 85, 0.3);
+}
+
+#dailyOfferBuyButton:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 12px 30px rgba(139, 115, 85, 0.4);
 }
 
 .daily-offer-stats {
-	margin-top: 25px;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 15px;
+	margin-top: 20px;
+	width: 100%;
 }
 
 .daily-offer-stats .stat {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	padding: 8px 0;
-	border-bottom: 1px solid #eee;
+	gap: 15px;
+	padding: 16px 20px;
+	background: rgba(248, 242, 233, 0.7);
+	border-radius: 12px;
+	transition: all 0.2s ease;
+	width: 100%;
+}
+
+.daily-offer-stats .stat:hover {
+	background: rgba(248, 242, 233, 0.9);
+	transform: translateX(5px);
 }
 
 .daily-offer-stats .stat i {
 	color: #8b7355;
-	font-size: 1rem;
-	width: 20px;
+	font-size: 1.3rem;
+	width: 30px;
+	text-align: center;
 }
 
 .daily-offer-stats .stat span {
 	color: #555;
-	font-size: 0.95rem;
+	font-size: 1.1rem;
+	font-weight: 500;
 }
 
 /* ========================================== */
@@ -978,7 +926,6 @@ body {
 	width: 100%;
 }
 
-/* Карточки товаров */
 .product-card {
 	background: #ffffff;
 	border-radius: 16px;
@@ -997,7 +944,6 @@ body {
 	box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
-/* Карусель в карточке товара */
 .product-carousel {
 	position: relative;
 	width: 100%;
@@ -1045,7 +991,6 @@ body {
 	justify-content: center;
 }
 
-/* Навигация карусели товара */
 .product-carousel-controls {
 	position: absolute;
 	bottom: 15px;
@@ -1119,7 +1064,6 @@ body {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Информация о товаре */
 .product-info {
 	padding: 20px;
 	flex-grow: 1;
@@ -1149,7 +1093,6 @@ body {
 	letter-spacing: 0.5px;
 }
 
-/* Кнопка купить */
 .btn-buy {
 	margin-top: auto;
 	width: 100%;
@@ -1315,7 +1258,6 @@ body {
 	font-weight: 300;
 }
 
-/* Email ссылки */
 .email-desktop {
 	display: inline-flex;
 }
@@ -1324,7 +1266,6 @@ body {
 	display: none;
 }
 
-/* Лого в футере */
 .logo-section {
 	display: flex;
 	flex-direction: column;
@@ -1336,7 +1277,7 @@ body {
 }
 
 /* ========================================== */
-/* МОДАЛЬНЫЕ ОКНА (ОБЩИЕ) */
+/* МОДАЛЬНЫЕ ОКНА */
 /* ========================================== */
 
 .about-modal {
@@ -1433,7 +1374,6 @@ body {
 	color: #4a4a4a;
 }
 
-/* Стили для "О нас" */
 .about-text {
 	line-height: 1.7;
 }
@@ -1535,7 +1475,6 @@ body {
 	font-weight: 600;
 }
 
-/* Юридические тексты */
 .legal-text {
 	line-height: 1.6;
 	font-size: 0.95rem;
@@ -1586,7 +1525,6 @@ body {
 	margin-top: 0;
 }
 
-/* Модальное окно выбора установки */
 .install-methods {
 	display: flex;
 	flex-direction: column;
@@ -1622,7 +1560,6 @@ body {
 	color: white;
 }
 
-/* Стили для гайдов */
 .guide-content {
 	line-height: 1.7;
 	color: #333;
@@ -1695,7 +1632,6 @@ body {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Контакты */
 .contact-info-modal .contact-details {
 	margin: 20px 0;
 	padding: 20px;
@@ -1968,7 +1904,6 @@ body {
 /* СПЕЦИАЛЬНЫЕ СТИЛИ */
 /* ========================================== */
 
-/* Стиль для ссылки админ панели */
 .admin-link {
 	color: #8b7355 !important;
 	font-weight: 600 !important;
@@ -1987,7 +1922,6 @@ body {
 	color: #ffed4e !important;
 }
 
-/* Анимация загрузки */
 @keyframes fadeIn {
 	from {
 		opacity: 0;
@@ -2063,13 +1997,34 @@ body {
 		font-size: 2.2rem;
 	}
 
-	.daily-offer-visual {
+	.daily-offer-main {
 		grid-template-columns: 1fr;
-		gap: 30px;
+		gap: 50px;
+	}
+
+	.daily-offer-carousel {
+		width: 100%;
+		max-width: 600px;
+		margin: 0 auto;
 	}
 
 	.daily-offer-details {
 		min-width: auto;
+		max-width: 600px;
+		margin: 0 auto;
+		text-align: center;
+	}
+
+	.daily-offer-watch-name {
+		text-align: center;
+	}
+
+	.daily-offer-price {
+		justify-content: center;
+	}
+
+	.daily-offer-stats .stat {
+		justify-content: center;
 	}
 }
 
@@ -2128,10 +2083,6 @@ body {
 
 	.new-product-description {
 		font-size: 0.85rem;
-	}
-
-	.new-product-visual {
-		gap: 25px;
 	}
 
 	.carousel-container {
@@ -2248,32 +2199,50 @@ body {
 		max-width: 100%;
 	}
 
-	.offer-header {
+	.daily-offer {
+		padding: 30px 20px;
+	}
+
+	.daily-offer-header {
 		flex-direction: column;
-		align-items: flex-start;
 		gap: 15px;
+		align-items: stretch;
 	}
 
-	.daily-offer-title {
-		font-size: 2.2rem;
+	.offer-badge,
+	.offer-timer {
+		width: 100%;
+		justify-content: center;
+		text-align: center;
 	}
 
-	.daily-offer-description {
-		font-size: 1.1rem;
+	.daily-offer-main {
+		gap: 40px;
 	}
 
-	.daily-offer-price .price {
+	.daily-offer-watch-name {
 		font-size: 2rem;
 	}
 
-	.daily-offer-background {
-		margin: 0 15px 30px 15px;
-		border-radius: 15px;
+	.daily-offer-price .price {
+		font-size: 2.5rem;
 	}
 
-	.daily-offer {
-		padding: 30px 0 40px;
-		border-radius: 15px;
+	.daily-offer-price .price-old {
+		font-size: 1.7rem;
+	}
+
+	#dailyOfferBuyButton {
+		padding: 18px 25px;
+		font-size: 1.1rem;
+	}
+
+	.daily-offer-stats .stat {
+		padding: 14px 18px;
+	}
+
+	.daily-offer-stats .stat span {
+		font-size: 1rem;
 	}
 
 	.email-desktop {
@@ -2365,11 +2334,6 @@ body {
 		font-size: 0.8rem;
 		margin-bottom: 15px;
 		display: block;
-	}
-
-	.new-product-visual {
-		gap: 20px;
-		margin-top: 0;
 	}
 
 	.carousel-container {
@@ -2495,6 +2459,27 @@ body {
 	.platform-info h3 {
 		font-size: 1.1rem;
 	}
+
+	.daily-offer-watch-name {
+		font-size: 1.8rem;
+	}
+
+	.daily-offer-price .price {
+		font-size: 2.2rem;
+	}
+
+	.daily-offer-price .price-old {
+		font-size: 1.5rem;
+	}
+
+	#dailyOfferBuyButton {
+		padding: 16px 20px;
+		font-size: 1rem;
+	}
+
+	.daily-offer-stats .stat {
+		padding: 12px 16px;
+	}
 }
 
 /* Очень маленькие телефоны (до 400px) */
@@ -2553,4 +2538,9 @@ body {
 		padding: 20px 0 30px;
 		border-radius: 12px;
 	}
+}
+
+/* Уменьшение расстояния между названием и ценой */
+.daily-offer-watch-name {
+	margin-bottom: 10px !important;
 }

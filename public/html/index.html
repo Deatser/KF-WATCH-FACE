@@ -101,73 +101,78 @@
 					</nav>
 				</div>
 			</header>
+
 			<!-- Блок с предложением дня -->
 			<div class="daily-offer-background">
 				<section class="daily-offer">
-					<div class="container">
-						<div class="daily-offer-content">
-							<!-- Заголовок предложения дня -->
-							<div class="daily-offer-header">
-								<span class="offer-badge">ПРЕДЛОЖЕНИЕ ДНЯ</span>
-								<div class="offer-timer" id="offerTimer">
-									<i class="fas fa-clock"></i>
-									<span id="timerHours">24</span>:<span id="timerMinutes"
-										>00</span
-									>:<span id="timerSeconds">00</span>
-									<span class="timer-label">До конца акции</span>
+					<div class="daily-offer-content">
+						<!-- Заголовок предложения дня -->
+						<div class="daily-offer-header">
+							<span class="offer-badge">ПРЕДЛОЖЕНИЕ ДНЯ</span>
+							<div class="offer-timer" id="offerTimer">
+								<i class="fas fa-clock"></i>
+								<span id="timerHours">24</span>:<span id="timerMinutes">00</span
+								>:<span id="timerSeconds">00</span>
+								<span class="timer-label">До конца акции</span>
+							</div>
+						</div>
+
+						<div class="daily-offer-main">
+							<!-- Карусель для предложения дня -->
+							<div class="daily-offer-carousel">
+								<div class="carousel-container" id="dailyOfferCarousel">
+									<!-- Фотографии будут добавляться через JS -->
+								</div>
+
+								<!-- Навигация карусели -->
+								<div class="carousel-controls">
+									<button class="carousel-btn prev-btn">
+										<i class="fas fa-chevron-left"></i>
+									</button>
+
+									<!-- Точки навигации -->
+									<div class="carousel-dots" id="dailyOfferDots">
+										<!-- Точки будут добавляться через JS -->
+									</div>
+
+									<button class="carousel-btn next-btn">
+										<i class="fas fa-chevron-right"></i>
+									</button>
 								</div>
 							</div>
 
-							<h1 class="daily-offer-watch-name" id="dailyOfferWatchName"></h1>
-							<!-- Убрали описание, оно больше не нужно -->
+							<div class="daily-offer-details">
+								<!-- Название часов теперь здесь -->
+								<h1
+									class="daily-offer-watch-name"
+									id="dailyOfferWatchName"
+								></h1>
 
-							<div class="daily-offer-visual">
-								<!-- Карусель для предложения дня -->
-								<div class="daily-offer-carousel">
-									<div class="carousel-container" id="dailyOfferCarousel">
-										<!-- Фотографии будут добавляться через JS -->
-									</div>
-
-									<!-- Навигация карусели -->
-									<div class="carousel-controls">
-										<button class="carousel-btn prev-btn">
-											<i class="fas fa-chevron-left"></i>
-										</button>
-
-										<!-- Точки навигации -->
-										<div class="carousel-dots" id="dailyOfferDots">
-											<!-- Точки будут добавляться через JS -->
-										</div>
-
-										<button class="carousel-btn next-btn">
-											<i class="fas fa-chevron-right"></i>
-										</button>
-									</div>
+								<div class="daily-offer-price">
+									<span class="price">150 ₽</span>
+									<span class="price-old">190 ₽</span>
+									<span class="discount-badge">-20%</span>
 								</div>
-
-								<div class="daily-offer-details">
-									<div class="daily-offer-price">
-										<span class="price">150 ₽</span>
-										<span class="price-old">190 ₽</span>
-										<span class="discount-badge">-20%</span>
+								<a href="#" class="btn btn-primary" id="dailyOfferBuyButton">
+									<i class="fas fa-shopping-bag"></i>
+									Купить сейчас
+								</a>
+								<div class="daily-offer-stats">
+									<div class="stat">
+										<i class="fas fa-sliders-h"></i>
+										<span>Предустановленные ярлыки</span>
 									</div>
-									<a href="#" class="btn btn-primary" id="dailyOfferBuyButton">
-										<i class="fas fa-shopping-bag"></i>
-										Купить сейчас
-									</a>
-									<div class="daily-offer-stats">
-										<div class="stat">
-											<i class="fas fa-sliders-h"></i>
-											<span>Предустановленные ярлыки</span>
-										</div>
-										<div class="stat">
-											<i class="fas fa-palette"></i>
-											<span>Изменяемые цвета</span>
-										</div>
-										<div class="stat">
-											<i class="fas fa-heartbeat"></i>
-											<span>Мониторинг пульса BPM</span>
-										</div>
+									<div class="stat">
+										<i class="fas fa-palette"></i>
+										<span>Изменяемые цвета</span>
+									</div>
+									<div class="stat">
+										<i class="fas fa-heartbeat"></i>
+										<span>Мониторинг пульса BPM</span>
+									</div>
+									<div class="stat">
+										<i class="fas fa-microchip"></i>
+										<span>WearOS 4+ | AOD | APK файл</span>
 									</div>
 								</div>
 							</div>
