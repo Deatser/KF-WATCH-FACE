@@ -101,20 +101,30 @@
 					</nav>
 				</div>
 			</header>
+			<!-- Блок с предложением дня -->
+			<div class="daily-offer-background">
+				<section class="daily-offer">
+					<div class="container">
+						<div class="daily-offer-content">
+							<!-- Заголовок предложения дня -->
+							<div class="daily-offer-header">
+								<span class="offer-badge">ПРЕДЛОЖЕНИЕ ДНЯ</span>
+								<div class="offer-timer" id="offerTimer">
+									<i class="fas fa-clock"></i>
+									<span id="timerHours">24</span>:<span id="timerMinutes"
+										>00</span
+									>:<span id="timerSeconds">00</span>
+									<span class="timer-label">До конца акции</span>
+								</div>
+							</div>
 
-			<!-- Блок с новинкой -->
-			<section class="new-arrival">
-				<div class="container">
-					<div class="new-product">
-						<div class="new-product-content">
-							<span class="new-badge">НОВИНКА</span>
-							<h1 class="new-product-title"></h1>
-							<p class="new-product-description"></p>
+							<h1 class="daily-offer-watch-name" id="dailyOfferWatchName"></h1>
+							<!-- Убрали описание, оно больше не нужно -->
 
-							<div class="new-product-visual">
-								<!-- Карусель для новинки -->
-								<div class="new-product-carousel">
-									<div class="carousel-container" id="newProductCarousel">
+							<div class="daily-offer-visual">
+								<!-- Карусель для предложения дня -->
+								<div class="daily-offer-carousel">
+									<div class="carousel-container" id="dailyOfferCarousel">
 										<!-- Фотографии будут добавляться через JS -->
 									</div>
 
@@ -125,7 +135,7 @@
 										</button>
 
 										<!-- Точки навигации -->
-										<div class="carousel-dots" id="newProductDots">
+										<div class="carousel-dots" id="dailyOfferDots">
 											<!-- Точки будут добавляться через JS -->
 										</div>
 
@@ -135,35 +145,36 @@
 									</div>
 								</div>
 
-								<div class="new-product-details">
-									<div class="new-product-price">
+								<div class="daily-offer-details">
+									<div class="daily-offer-price">
 										<span class="price">150 ₽</span>
 										<span class="price-old">190 ₽</span>
+										<span class="discount-badge">-20%</span>
 									</div>
-									<a href="/purchase/1" class="btn btn-primary">
+									<a href="#" class="btn btn-primary" id="dailyOfferBuyButton">
 										<i class="fas fa-shopping-bag"></i>
 										Купить сейчас
 									</a>
-									<div class="new-product-stats">
+									<div class="daily-offer-stats">
 										<div class="stat">
-											<i class="fas fa-gem"></i>
-											<span>Сапфировое стекло</span>
+											<i class="fas fa-sliders-h"></i>
+											<span>Предустановленные ярлыки</span>
 										</div>
 										<div class="stat">
-											<i class="fas fa-bolt"></i>
-											<span>Сверхъяркая люминесценция</span>
+											<i class="fas fa-palette"></i>
+											<span>Изменяемые цвета</span>
 										</div>
 										<div class="stat">
-											<i class="fas fa-award"></i>
-											<span>Ручная гравировка</span>
+											<i class="fas fa-heartbeat"></i>
+											<span>Мониторинг пульса BPM</span>
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			</section>
+				</section>
+			</div>
 		</div>
 
 		<!-- Основной каталог -->

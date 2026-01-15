@@ -10,27 +10,38 @@ import {
 	initEscapeKeyHandler,
 } from './modals.js'
 
-// Конфигурация каруселей
 const CAROUSEL_CONFIG = {
-	// Для новинки: нет ограничений
-	newProduct: {
-		// Убраны все ограничения
-	},
+	// Для предложения дня: нет ограничений
+	dailyOffer: {},
 }
 
 // DOM элементы
 const productsContainer = document.getElementById('productsContainer')
 const loadingIndicator = document.getElementById('loadingIndicator')
-const newProductCarousel = document.getElementById('newProductCarousel')
-const newProductDots = document.getElementById('newProductDots')
+const dailyOfferCarousel = document.getElementById('dailyOfferCarousel')
+const dailyOfferDots = document.getElementById('dailyOfferDots')
+const dailyOfferBuyButton = document.getElementById('dailyOfferBuyButton')
+const dailyOfferTitle = document.getElementById('dailyOfferTitle')
+const dailyOfferWatchName = document.getElementById('dailyOfferWatchName')
+const dailyOfferPrice = document.getElementById('dailyOfferPrice')
+const dailyOfferOldPrice = document.getElementById('dailyOfferOldPrice')
+
+// Таймер
+const timerHours = document.getElementById('timerHours')
+const timerMinutes = document.getElementById('timerMinutes')
+const timerSeconds = document.getElementById('timerSeconds')
 
 // Переменные состояния
-let allProducts = [] // Теперь будем хранить товары из папки watch
-let latestProduct = null // Товар-новинка
+let allProducts = [] // Все товары из папки watch
+let dailyOfferProduct = null // Товар дня
 
-// Карусель новинки
-let newProductCurrentSlide = 0
-let newProductTotalSlides = 0
+// Карусель предложения дня
+let dailyOfferCurrentSlide = 0
+let dailyOfferTotalSlides = 0
+let dailyOfferCarouselInterval
+
+// Таймер
+let offerTimerInterval
 
 // Переменные для свайпов
 let touchStartX = 0
@@ -139,14 +150,9 @@ async function loadProductsFromWatch() {
 			}
 		})
 
-		// Первый товар после сортировки - новинка
-		const latestProduct = products.length > 0 ? products[0] : null
-		// Остальные товары (без новинки)
-		const otherProducts = products.length > 1 ? products.slice(1) : []
-
+		// Возвращаем все товары для случайного выбора
 		return {
-			products: otherProducts,
-			latestProduct: latestProduct,
+			products: products, // Все товары
 		}
 	} catch (error) {
 		console.error('Ошибка загрузки товаров:', error)
@@ -160,15 +166,15 @@ function calculatePriceFromFolderName(folderName) {
 	return 150
 }
 
-// Инициализация карусели для новинки с реальными изображениями, кликабельностью и свайпами
-function initNewProductCarousel(product) {
-	// Если нет товара-новинки, используем заглушку
+// Инициализация карусели для предложения дня
+function initDailyOfferCarousel(product) {
+	// Если нет товара дня, используем заглушку
 	if (!product) {
-		initNewProductCarouselPlaceholder()
+		initDailyOfferCarouselPlaceholder()
 		return
 	}
 
-	// Используем реальные изображения из папки новинки
+	// Используем реальные изображения из папки товара дня
 	let images = []
 	if (product.images && product.images.length > 0) {
 		images = product.images
@@ -183,12 +189,12 @@ function initNewProductCarousel(product) {
 			}))
 	}
 
-	newProductTotalSlides = images.length
-	CAROUSEL_CONFIG.newProduct.currentPhotoCount = newProductTotalSlides
+	dailyOfferTotalSlides = images.length
+	CAROUSEL_CONFIG.dailyOffer.currentPhotoCount = dailyOfferTotalSlides
 
 	// Очищаем карусель
-	newProductCarousel.innerHTML = ''
-	newProductDots.innerHTML = ''
+	dailyOfferCarousel.innerHTML = ''
+	dailyOfferDots.innerHTML = ''
 
 	// Создаем слайды
 	images.forEach((image, index) => {
@@ -224,80 +230,39 @@ function initNewProductCarousel(product) {
 		}
 
 		slide.appendChild(imageDiv)
-		newProductCarousel.appendChild(slide)
+		dailyOfferCarousel.appendChild(slide)
 
-		// Создаем точку навигации с более яркими цветами
+		// Создаем точку навигации
 		const dot = createCarouselDot(index)
-		newProductDots.appendChild(dot)
+		dailyOfferDots.appendChild(dot)
 	})
 
-	// Обновляем информацию о новинке
-	updateNewProductInfo(product)
+	// Обновляем информацию о предложении дня
+	updateDailyOfferInfo(product)
 
 	// Добавляем обработчики для кнопок навигации
 	document.querySelectorAll('.carousel-btn.prev-btn').forEach(btn => {
 		btn.addEventListener('click', e => {
 			e.stopPropagation()
-			goToNewProductSlide(newProductCurrentSlide - 1)
+			goToDailyOfferSlide(dailyOfferCurrentSlide - 1)
 		})
 	})
 
 	document.querySelectorAll('.carousel-btn.next-btn').forEach(btn => {
 		btn.addEventListener('click', e => {
 			e.stopPropagation()
-			goToNewProductSlide(newProductCurrentSlide + 1)
+			goToDailyOfferSlide(dailyOfferCurrentSlide + 1)
 		})
 	})
 
-	// === ДОБАВЛЯЕМ КЛИКАБЕЛЬНОСТЬ КАРТИНКИ НОВИНКИ ===
-	if (newProductCarousel && product) {
-		// Делаем весь контейнер карусели кликабельным
-		newProductCarousel.style.cursor = 'pointer'
-		newProductCarousel.style.position = 'relative'
-		newProductCarousel.style.transition = 'all 0.3s ease'
-
-		// Добавляем полупрозрачный оверлей при наведении
-		const hoverOverlay = document.createElement('div')
-		hoverOverlay.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(139, 115, 85, 0.1);
-            border-radius: 16px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 1;
-        `
-		newProductCarousel.appendChild(hoverOverlay)
-
-		// Добавляем иконку "глаз" в правом верхнем углу
-		const viewIcon = document.createElement('div')
-		viewIcon.style.cssText = `
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 36px;
-            height: 36px;
-            background: rgba(139, 115, 85, 0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.9rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 2;
-            pointer-events: none;
-        `
-		viewIcon.innerHTML = '<i class="fas fa-external-link-alt"></i>'
-		newProductCarousel.appendChild(viewIcon)
+	// Добавляем кликабельность карусели предложения дня
+	if (dailyOfferCarousel && product) {
+		dailyOfferCarousel.style.cursor = 'pointer'
+		dailyOfferCarousel.style.position = 'relative'
+		dailyOfferCarousel.style.transition = 'all 0.3s ease'
 
 		// Обработчик клика на карусель
-		newProductCarousel.addEventListener('click', function (e) {
+		dailyOfferCarousel.addEventListener('click', function (e) {
 			// Не перенаправляем если клик был на кнопки навигации или точки
 			if (
 				e.target.closest('.carousel-btn') ||
@@ -309,119 +274,147 @@ function initNewProductCarousel(product) {
 			// Переходим на страницу покупки
 			window.location.href = `/purchase/${product.id}`
 		})
-
-		// Эффекты при наведении - как у обычных товаров
-		newProductCarousel.addEventListener('mouseenter', function () {
-			this.style.transform = 'translateY(-6px)'
-			hoverOverlay.style.opacity = '1'
-			viewIcon.style.opacity = '1'
-			this.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.15)'
-		})
-
-		newProductCarousel.addEventListener('mouseleave', function () {
-			this.style.transform = 'translateY(0)'
-			hoverOverlay.style.opacity = '0'
-			viewIcon.style.opacity = '0'
-			this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)'
-		})
-
-		// Также делаем кликабельными все слайды внутри
-		const slides = newProductCarousel.querySelectorAll('.carousel-slide')
-		slides.forEach(slide => {
-			slide.style.cursor = 'pointer'
-		})
 	}
 
-	// === ДОБАВЛЯЕМ КЛИКАБЕЛЬНОСТЬ ЗАГОЛОВКА НОВИНКИ ===
-	const newProductTitle = document.querySelector('.new-product-title')
-	if (newProductTitle && product) {
-		newProductTitle.style.cursor = 'pointer'
-		newProductTitle.style.position = 'relative'
-		newProductTitle.style.transition = 'all 0.3s ease'
-
-		// Добавляем иконку стрелки после заголовка
-		const titleWrapper = newProductTitle.parentElement
-		const arrowIcon = document.createElement('span')
-		arrowIcon.style.cssText = `
-            margin-left: 10px;
-            color: #8b7355;
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            display: inline-block;
-        `
-		arrowIcon.innerHTML = '<i class="fas fa-arrow-right"></i>'
-		newProductTitle.parentNode.insertBefore(
-			arrowIcon,
-			newProductTitle.nextSibling
-		)
-
-		// Обработчик клика на заголовок
-		newProductTitle.addEventListener('click', function (e) {
-			e.stopPropagation()
-			window.location.href = `/purchase/${product.id}`
-		})
-
-		// Эффекты при наведении
-		newProductTitle.addEventListener('mouseenter', function () {
-			this.style.color = '#8b7355'
-			this.style.paddingLeft = '5px'
-			arrowIcon.style.opacity = '1'
-			arrowIcon.style.transform = 'translateX(5px)'
-		})
-
-		newProductTitle.addEventListener('mouseleave', function () {
-			this.style.color = '#1a1a1a'
-			this.style.paddingLeft = '0'
-			arrowIcon.style.opacity = '0'
-			arrowIcon.style.transform = 'translateX(0)'
-		})
-	}
-
-	// === ДОБАВЛЯЕМ КЛИКАБЕЛЬНОСТЬ БЛОКА ЦЕНЫ НОВИНКИ ===
-	const priceBlock = document.querySelector('.new-product-price')
-	if (priceBlock && product) {
-		priceBlock.style.cursor = 'pointer'
-		priceBlock.style.transition = 'transform 0.3s ease'
-
-		priceBlock.addEventListener('click', function (e) {
-			e.stopPropagation()
-			window.location.href = `/purchase/${product.id}`
-		})
-
-		priceBlock.addEventListener('mouseenter', function () {
-			this.style.transform = 'scale(1.05)'
-		})
-
-		priceBlock.addEventListener('mouseleave', function () {
-			this.style.transform = 'scale(1)'
-		})
-	}
-
-	// === ДОБАВЛЯЕМ ПОДДЕРЖКУ СВАЙПОВ ДЛЯ КАРУСЕЛИ НОВИНКИ ===
-	initSwipeForCarousel(newProductCarousel, 'new')
+	// Добавляем поддержку свайпов для карусели предложения дня
+	initSwipeForCarousel(dailyOfferCarousel, 'daily')
 
 	// Автопрокрутка карусели
-	startNewProductCarouselAutoPlay()
+	startDailyOfferCarouselAutoPlay()
 
-	// Останавливаем автопрокрутку при наведении на карусель новинки
-	newProductCarousel.addEventListener('mouseenter', () => {
-		clearInterval(newProductCarouselInterval)
+	// Останавливаем автопрокрутку при наведении
+	dailyOfferCarousel.addEventListener('mouseenter', () => {
+		clearInterval(dailyOfferCarouselInterval)
 	})
 
-	newProductCarousel.addEventListener('mouseleave', () => {
-		startNewProductCarouselAutoPlay()
+	dailyOfferCarousel.addEventListener('mouseleave', () => {
+		startDailyOfferCarouselAutoPlay()
+	})
+}
+
+// Заглушка для карусели предложения дня (если нет товаров)
+function initDailyOfferCarouselPlaceholder() {
+	dailyOfferTotalSlides = 5
+	CAROUSEL_CONFIG.dailyOffer.currentPhotoCount = dailyOfferTotalSlides
+
+	// Очищаем карусель
+	dailyOfferCarousel.innerHTML = ''
+	dailyOfferDots.innerHTML = ''
+
+	// Создаем слайды-заглушки
+	for (let i = 0; i < dailyOfferTotalSlides; i++) {
+		const slide = document.createElement('div')
+		slide.className = `carousel-slide ${i === 0 ? 'active' : ''}`
+		slide.dataset.index = i
+
+		const imageDiv = document.createElement('div')
+		imageDiv.className = 'carousel-image'
+		showPlaceholderImage(imageDiv, i)
+
+		slide.appendChild(imageDiv)
+		dailyOfferCarousel.appendChild(slide)
+
+		const dot = createCarouselDot(i)
+		dailyOfferDots.appendChild(dot)
+	}
+
+	// Делаем заголовок и описание нейтральными
+	updateDailyOfferInfo({
+		name: 'ПРЕДЛОЖЕНИЕ ДНЯ',
+		price: 150,
 	})
 
-	// Также останавливаем автопрокрутку при касании на мобильных
-	newProductCarousel.addEventListener('touchstart', () => {
-		clearInterval(newProductCarouselInterval)
+	// Добавляем обработчики для кнопок навигации
+	document.querySelectorAll('.carousel-btn.prev-btn').forEach(btn => {
+		btn.addEventListener('click', () =>
+			goToDailyOfferSlide(dailyOfferCurrentSlide - 1)
+		)
 	})
 
-	newProductCarousel.addEventListener('touchend', () => {
-		setTimeout(() => {
-			startNewProductCarouselAutoPlay()
-		}, 5000) // Возобновляем через 5 секунд
+	document.querySelectorAll('.carousel-btn.next-btn').forEach(btn => {
+		btn.addEventListener('click', () =>
+			goToDailyOfferSlide(dailyOfferCurrentSlide + 1)
+		)
 	})
+
+	// Добавляем поддержку свайпов для заглушки
+	initSwipeForCarousel(dailyOfferCarousel, 'daily')
+
+	// Автопрокрутка карусели
+	startDailyOfferCarouselAutoPlay()
+}
+
+// Обновление информации о предложении дня
+
+function updateDailyOfferInfo(product) {
+	const formattedName = product.name
+
+	// Обновляем название часов (просто KF181 без "Циферблат")
+	const watchNameElement = document.getElementById('dailyOfferWatchName')
+	if (watchNameElement) {
+		watchNameElement.textContent = formattedName // Просто "KF181"
+		watchNameElement.style.cssText = `
+            font-size: 3rem;
+            color: #1a1a1a;
+            margin: 10px 0 30px 0;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 1px;
+        `
+	}
+
+	// Обновляем цену
+	if (dailyOfferPrice) {
+		dailyOfferPrice.textContent = `${formatPrice(product.price || 150)} ₽`
+	}
+
+	// Обновляем старую цену (скидка 20%)
+	if (dailyOfferOldPrice) {
+		const oldPrice = Math.round((product.price || 150) / 0.8)
+		dailyOfferOldPrice.textContent = `${formatPrice(oldPrice)} ₽`
+	}
+}
+// Переход к определенному слайду в карусели предложения дня
+function goToDailyOfferSlide(index) {
+	// Корректируем индекс
+	if (index < 0) {
+		index = dailyOfferTotalSlides - 1
+	} else if (index >= dailyOfferTotalSlides) {
+		index = 0
+	}
+
+	// Обновляем текущий слайд
+	dailyOfferCurrentSlide = index
+
+	// Обновляем отображение слайдов
+	document.querySelectorAll('.carousel-slide').forEach((slide, i) => {
+		slide.classList.toggle('active', i === index)
+	})
+
+	// Обновляем точки навигации
+	document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+		dot.classList.toggle('active', i === index)
+
+		if (i === index) {
+			dot.style.background = '#8b7355'
+			dot.style.borderColor = '#8b7355'
+			dot.style.transform = 'scale(1.2)'
+			dot.style.boxShadow = '0 0 8px rgba(139, 115, 85, 0.6)'
+		} else {
+			dot.style.background = 'rgba(255, 255, 255, 0.3)'
+			dot.style.borderColor = 'rgba(139, 115, 85, 0.5)'
+			dot.style.transform = 'scale(1)'
+			dot.style.boxShadow = 'none'
+		}
+	})
+}
+
+// Автопрокрутка карусели предложения дня
+function startDailyOfferCarouselAutoPlay() {
+	clearInterval(dailyOfferCarouselInterval)
+	dailyOfferCarouselInterval = setInterval(() => {
+		goToDailyOfferSlide(dailyOfferCurrentSlide + 1)
+	}, 5000)
 }
 
 // Функция для создания заглушки в карусели новинки
@@ -445,6 +438,90 @@ function showPlaceholderImage(container, index) {
     `
 
 	container.appendChild(icon)
+}
+
+// Функция для генерации случайного товара дня (основана на текущей дате)
+function getDailyOfferProduct(products) {
+	if (products.length === 0) return null
+
+	// Используем текущую дату как seed для детерминированного случайного выбора
+	const today = new Date()
+	const seed =
+		today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate()
+
+	// Простой детерминированный генератор (одинаковый для всех в один день)
+	let randomIndex = seed % products.length
+
+	// Добавляем смещение на номер дня в году для разнообразия
+	const dayOfYear = Math.floor(
+		(today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)
+	)
+	randomIndex = (randomIndex + dayOfYear) % products.length
+
+	return products[randomIndex]
+}
+
+// Инициализация таймера обратного отсчета
+function initOfferTimer() {
+	clearInterval(offerTimerInterval)
+
+	// Функция обновления таймера
+	function updateTimer() {
+		const now = new Date()
+		const endOfDay = new Date(now)
+		endOfDay.setHours(23, 59, 59, 999)
+
+		const diff = endOfDay - now
+
+		if (diff <= 0) {
+			// День закончился, обновляем товар дня
+			updateDailyOffer()
+			return
+		}
+
+		const hours = Math.floor(diff / (1000 * 60 * 60))
+		const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+		const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+		// Форматирование с ведущими нулями
+		timerHours.textContent = hours.toString().padStart(2, '0')
+		timerMinutes.textContent = minutes.toString().padStart(2, '0')
+		timerSeconds.textContent = seconds.toString().padStart(2, '0')
+	}
+
+	// Обновляем сразу и затем каждую секунду
+	updateTimer()
+	offerTimerInterval = setInterval(updateTimer, 1000)
+}
+
+// Обновление предложения дня
+function updateDailyOffer() {
+	// Выбираем новый случайный товар
+	dailyOfferProduct = getDailyOfferProduct(allProducts)
+
+	// Если есть товар дня
+	if (dailyOfferProduct) {
+		// Инициализируем карусель
+		initDailyOfferCarousel(dailyOfferProduct)
+
+		// Обновляем кнопку покупки
+		if (dailyOfferBuyButton) {
+			dailyOfferBuyButton.href = `/purchase/${dailyOfferProduct.id}`
+		}
+	} else {
+		// Если нет товаров, показываем заглушку
+		initDailyOfferCarousel(null)
+	}
+
+	// Перезапускаем таймер
+	initOfferTimer()
+
+	// Сохраняем выбор в localStorage для кеширования
+	if (dailyOfferProduct) {
+		const today = new Date().toDateString()
+		localStorage.setItem('dailyOfferDate', today)
+		localStorage.setItem('dailyOfferProductId', dailyOfferProduct.id)
+	}
 }
 
 // Создание точки карусели
@@ -708,8 +785,8 @@ function handleSwipeGesture(type, productId) {
 	if (Math.abs(swipeDistance) > swipeThreshold) {
 		if (swipeDistance > 0) {
 			// Свайп вправо
-			if (type === 'new') {
-				goToNewProductSlide(newProductCurrentSlide - 1)
+			if (type === 'daily') {
+				goToDailyOfferSlide(dailyOfferCurrentSlide - 1)
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
@@ -723,8 +800,8 @@ function handleSwipeGesture(type, productId) {
 			}
 		} else {
 			// Свайп влево
-			if (type === 'new') {
-				goToNewProductSlide(newProductCurrentSlide + 1)
+			if (type === 'daily') {
+				goToDailyOfferSlide(dailyOfferCurrentSlide + 1)
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
@@ -745,8 +822,8 @@ function handleMouseSwipe(startX, endX, type, productId) {
 	if (Math.abs(swipeDistance) > swipeThreshold) {
 		if (swipeDistance > 0) {
 			// Свайп вправо
-			if (type === 'new') {
-				goToNewProductSlide(newProductCurrentSlide - 1)
+			if (type === 'daily') {
+				goToDailyOfferSlide(dailyOfferCurrentSlide - 1)
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
@@ -760,8 +837,8 @@ function handleMouseSwipe(startX, endX, type, productId) {
 			}
 		} else {
 			// Свайп влево
-			if (type === 'new') {
-				goToNewProductSlide(newProductCurrentSlide + 1)
+			if (type === 'daily') {
+				goToDailyOfferSlide(dailyOfferCurrentSlide + 1)
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
@@ -1274,12 +1351,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 	initEscapeKeyHandler()
 
 	// Загружаем товары из папки watch
-	const { products, latestProduct } = await loadProductsFromWatch()
-
+	const { products } = await loadProductsFromWatch()
 	allProducts = products
 
-	// Инициализируем карусель для новинки
-	initNewProductCarousel(latestProduct)
+	// Инициализируем предложение дня
+	updateDailyOffer()
 
 	if (allProducts.length > 0) {
 		// Загружаем ВСЕ товары сразу (без бесконечной прокрутки)
@@ -1287,8 +1363,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 		// Скрываем индикатор загрузки
 		loadingIndicator.style.display = 'none'
-	} else if (latestProduct) {
-		// Если есть только новинка, но нет других товаров
+	} else {
+		// Если нет товаров
 		loadingIndicator.style.display = 'none'
 	}
 

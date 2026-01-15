@@ -1,7 +1,10 @@
 /* Подключение шрифта Comfortaa */
 @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
 
-/* Сброс стилей и базовые настройки */
+/* ========================================== */
+/* СБРОС И БАЗОВЫЕ СТИЛИ */
+/* ========================================== */
+
 * {
 	margin: 0;
 	padding: 0;
@@ -18,6 +21,7 @@ body {
 	overflow-x: hidden;
 	width: 100%;
 	max-width: 100vw;
+	padding-top: 80px; /* Для фиксированного хедера */
 }
 
 .container {
@@ -27,7 +31,11 @@ body {
 	width: 100%;
 }
 
-/* Общий фон для хедера и блока новинки - единый градиент */
+/* ========================================== */
+/* ХЕДЕР И НАВИГАЦИЯ */
+/* ========================================== */
+
+/* Общий фон для хедера и блока новинки */
 .hero-background {
 	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
 	position: relative;
@@ -57,7 +65,7 @@ body {
 	pointer-events: none;
 }
 
-/* Стили хедера */
+/* Хедер */
 .header {
 	position: fixed;
 	top: 0;
@@ -82,17 +90,12 @@ body {
 	max-width: 100%;
 }
 
-/* Небольшой эффект при скролле */
 .header.scrolled {
 	background: rgba(255, 255, 255, 0.98);
 	box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Добавляем отступ для основного контента, чтобы он не скрывался под фиксированным хедером */
-body {
-	padding-top: 80px;
-}
-
+/* Логотип */
 .logo {
 	display: flex;
 	align-items: center;
@@ -122,7 +125,7 @@ body {
 	color: #a89176;
 }
 
-/* Основная навигация */
+/* Навигация */
 .nav {
 	display: flex;
 	gap: 25px;
@@ -156,7 +159,6 @@ body {
 	transition: transform 0.3s ease;
 }
 
-/* Для иконки телеграмма */
 .nav-link i {
 	font-size: 1.2rem;
 }
@@ -165,7 +167,7 @@ body {
 	color: #8b7355;
 }
 
-/* Стили для меню пользователя */
+/* Меню пользователя */
 .user-menu-container {
 	position: relative;
 }
@@ -196,7 +198,6 @@ body {
 	z-index: 1000;
 	display: none;
 	margin-top: 10px;
-	animation: fadeIn 0.3s ease;
 }
 
 .user-menu.show {
@@ -317,7 +318,10 @@ body {
 	word-break: break-all;
 }
 
-/* Стили блока с новинкой - новая структура */
+/* ========================================== */
+/* БЛОК НОВИНКИ */
+/* ========================================== */
+
 .new-arrival {
 	padding-top: 10%;
 	padding-bottom: 20px;
@@ -331,7 +335,6 @@ body {
 	justify-content: center;
 }
 
-/* Обертка для белого блока */
 .new-product-wrapper {
 	width: 100%;
 	height: 100%;
@@ -341,7 +344,6 @@ body {
 	padding: 15px;
 }
 
-/* САМ БЕЛЫЙ ПРЯМОУГОЛЬНИК */
 .new-product {
 	background-color: rgba(255, 255, 255, 0.95);
 	border-radius: 20px;
@@ -358,7 +360,6 @@ body {
 	backdrop-filter: blur(8px);
 }
 
-/* Контент внутри белого блока */
 .new-product-content {
 	width: 100%;
 	height: 100%;
@@ -410,7 +411,6 @@ body {
 	margin-right: auto;
 }
 
-/* Основная часть с каруселью и деталями */
 .new-product-visual {
 	display: flex;
 	align-items: center;
@@ -424,7 +424,7 @@ body {
 	padding: 20px 0;
 }
 
-/* Карусель для новинки - квадратная */
+/* Карусель новинки */
 .new-product-carousel {
 	flex: 1;
 	max-width: 320px;
@@ -595,6 +595,7 @@ body {
 	font-weight: 400;
 }
 
+/* Кнопки */
 .btn {
 	display: inline-flex;
 	align-items: center;
@@ -661,7 +662,278 @@ body {
 	text-align: center;
 }
 
-/* Стили каталога - ширина 65% */
+/* ========================================== */
+/* ПРЕДЛОЖЕНИЕ ДНЯ */
+/* ========================================== */
+
+/* Основной контейнер предложения дня - СЖАТЫЙ */
+.daily-offer-background {
+	background: white;
+	border-radius: 20px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+	margin: 40px auto; /* Центрируем сверху и снизу */
+	position: relative;
+	z-index: 1;
+	overflow: hidden;
+	width: fit-content; /* Ширина по содержимому */
+	max-width: 1400px; /* Максимальная ширина как у каталога */
+}
+
+/* ВНУТРЕННИЙ КОНТЕЙНЕР - БЕЗ БОКОВЫХ ОТСТУПОВ */
+.daily-offer {
+	padding: 40px 0; /* Только верхний и нижний отступ */
+	background: white;
+	border-radius: 20px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Контейнер контента - ДОБАВЛЯЕМ ОТСТУПЫ ТУТ */
+.daily-offer-content {
+	width: 100%;
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 0 40px; /* Отступы слева и справа ТОЛЬКО здесь */
+}
+
+/* Визуальный блок */
+.daily-offer-visual {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 60px; /* Увеличим расстояние между фото и кнопкой */
+	align-items: center;
+	width: 100%;
+}
+
+/* Карусель - фиксированная ширина */
+.daily-offer-carousel {
+	width: 100%;
+	max-width: 600px; /* Фиксируем ширину карусели */
+	min-width: 500px;
+}
+
+/* Детали с кнопкой */
+.daily-offer-details {
+	min-width: 300px;
+	max-width: 350px;
+}
+
+/* Заголовок и таймер - ТАКЖЕ ДОБАВЛЯЕМ ОТСТУПЫ */
+.daily-offer-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+	width: 100%;
+	padding: 0 40px; /* Такие же отступы как у .daily-offer-content */
+	box-sizing: border-box;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 1200px) {
+	.daily-offer-visual {
+		grid-template-columns: 1fr;
+		gap: 40px;
+	}
+
+	.daily-offer-carousel {
+		max-width: 100%;
+		min-width: auto;
+	}
+
+	.daily-offer-details {
+		max-width: 100%;
+		text-align: center;
+	}
+
+	.daily-offer-content {
+		padding: 0 30px; /* Уменьшаем отступы на планшетах */
+	}
+
+	.daily-offer-header {
+		padding: 0 30px; /* Синхронизируем отступы */
+	}
+}
+
+@media (max-width: 768px) {
+	.daily-offer {
+		padding: 30px 0; /* Уменьшаем вертикальные отступы */
+	}
+
+	.daily-offer-visual {
+		gap: 30px;
+	}
+
+	.daily-offer-content {
+		padding: 0 20px; /* Еще меньше отступы на телефонах */
+	}
+
+	.daily-offer-header {
+		padding: 0 20px; /* Синхронизируем отступы */
+	}
+}
+/* Медиа-запросы для адаптивности */
+@media (max-width: 1200px) {
+	.daily-offer-visual {
+		grid-template-columns: 1fr;
+		gap: 40px;
+	}
+
+	.daily-offer-carousel {
+		max-width: 100%;
+		min-width: auto;
+	}
+
+	.daily-offer-details {
+		max-width: 100%;
+		text-align: center;
+	}
+
+	.daily-offer {
+		padding: 40px;
+	}
+}
+
+@media (max-width: 768px) {
+	.daily-offer {
+		padding: 30px 20px;
+	}
+
+	.daily-offer-visual {
+		gap: 30px;
+	}
+}
+.offer-badge {
+	background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+	color: white;
+	padding: 8px 16px;
+	border-radius: 20px;
+	font-weight: 700;
+	font-size: 0.9rem;
+	letter-spacing: 0.5px;
+	box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.offer-timer {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	background: rgba(139, 115, 85, 0.1);
+	padding: 10px 20px;
+	border-radius: 12px;
+	font-weight: 600;
+}
+
+.offer-timer i {
+	color: #ff6b6b;
+	font-size: 1.2rem;
+}
+
+.timer-text {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-family: monospace;
+}
+
+#timerHours,
+#timerMinutes,
+#timerSeconds {
+	font-size: 1.3rem;
+	color: #1a1a1a;
+	min-width: 24px;
+	text-align: center;
+}
+
+.timer-label {
+	margin-left: 10px;
+	font-size: 0.85rem;
+	color: #666;
+	font-weight: normal;
+}
+
+.daily-offer-watch-name {
+	font-size: 2.8rem;
+	font-weight: 700;
+	color: #1a1a1a;
+	margin-bottom: 15px;
+	line-height: 1.2;
+}
+
+.daily-offer-visual {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 40px;
+	align-items: center;
+}
+
+.daily-offer-carousel {
+	width: 100%;
+	max-width: 800px;
+}
+
+.daily-offer-details {
+	min-width: 300px;
+}
+
+.daily-offer-price {
+	display: flex;
+	align-items: baseline;
+	gap: 15px;
+	margin-bottom: 25px;
+}
+
+.daily-offer-price .price {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: #ff6b6b;
+}
+
+.daily-offer-price .price-old {
+	font-size: 1.5rem;
+	color: #999;
+	text-decoration: line-through;
+}
+
+.discount-badge {
+	background: #ff6b6b;
+	color: white;
+	padding: 4px 10px;
+	border-radius: 8px;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.daily-offer-stats {
+	margin-top: 25px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.daily-offer-stats .stat {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 0;
+	border-bottom: 1px solid #eee;
+}
+
+.daily-offer-stats .stat i {
+	color: #8b7355;
+	font-size: 1rem;
+	width: 20px;
+}
+
+.daily-offer-stats .stat span {
+	color: #555;
+	font-size: 0.95rem;
+}
+
+/* ========================================== */
+/* КАТАЛОГ */
+/* ========================================== */
+
 .catalog {
 	padding: 40px 0 100px;
 	background-color: #ffffff;
@@ -698,7 +970,6 @@ body {
 	font-weight: 300;
 }
 
-/* Контейнер для товаров - 5 в ряд с каруселями */
 .products-container {
 	display: grid;
 	grid-template-columns: repeat(5, 1fr);
@@ -707,7 +978,7 @@ body {
 	width: 100%;
 }
 
-/* Карточки товаров с каруселями */
+/* Карточки товаров */
 .product-card {
 	background: #ffffff;
 	border-radius: 16px;
@@ -774,7 +1045,7 @@ body {
 	justify-content: center;
 }
 
-/* Исправленные стили для точек навигации */
+/* Навигация карусели товара */
 .product-carousel-controls {
 	position: absolute;
 	bottom: 15px;
@@ -805,7 +1076,6 @@ body {
 	box-shadow: 0 0 6px rgba(139, 115, 85, 0.8);
 }
 
-/* Кнопки навигации - видимые всегда */
 .product-carousel-nav {
 	position: absolute;
 	top: 50%;
@@ -849,11 +1119,7 @@ body {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.product-card:hover .product-carousel-controls {
-	opacity: 1;
-}
-
-/* Компактная информация о товаре */
+/* Информация о товаре */
 .product-info {
 	padding: 20px;
 	flex-grow: 1;
@@ -883,7 +1149,7 @@ body {
 	letter-spacing: 0.5px;
 }
 
-/* Компактная кнопка купить */
+/* Кнопка купить */
 .btn-buy {
 	margin-top: auto;
 	width: 100%;
@@ -909,7 +1175,6 @@ body {
 	box-shadow: 0 6px 15px rgba(139, 115, 85, 0.3);
 }
 
-/* Дополнительные стили для лучшего отображения каруселей */
 .product-image {
 	width: 100%;
 	height: 100%;
@@ -925,7 +1190,10 @@ body {
 	z-index: 1;
 }
 
-/* Стили индикатора загрузки */
+/* ========================================== */
+/* ЗАГРУЗКА */
+/* ========================================== */
+
 .loading {
 	text-align: center;
 	padding: 60px 0;
@@ -957,7 +1225,10 @@ body {
 	font-weight: 300;
 }
 
-/* Стили для футера */
+/* ========================================== */
+/* ФУТЕР */
+/* ========================================== */
+
 .footer {
 	background: #1a1a1a;
 	color: #f9f5f0;
@@ -1044,7 +1315,30 @@ body {
 	font-weight: 300;
 }
 
-/* Стили для модального окна "О нас" и всех модальных окон */
+/* Email ссылки */
+.email-desktop {
+	display: inline-flex;
+}
+
+.email-mobile {
+	display: none;
+}
+
+/* Лого в футере */
+.logo-section {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.logo-section h3 {
+	margin-top: 0;
+}
+
+/* ========================================== */
+/* МОДАЛЬНЫЕ ОКНА (ОБЩИЕ) */
+/* ========================================== */
+
 .about-modal {
 	display: none;
 	position: fixed;
@@ -1139,6 +1433,7 @@ body {
 	color: #4a4a4a;
 }
 
+/* Стили для "О нас" */
 .about-text {
 	line-height: 1.7;
 }
@@ -1240,7 +1535,7 @@ body {
 	font-weight: 600;
 }
 
-/* Стили для длинных текстов в модальных окнах */
+/* Юридические тексты */
 .legal-text {
 	line-height: 1.6;
 	font-size: 0.95rem;
@@ -1291,7 +1586,7 @@ body {
 	margin-top: 0;
 }
 
-/* Стили для модального окна выбора способа установки */
+/* Модальное окно выбора установки */
 .install-methods {
 	display: flex;
 	flex-direction: column;
@@ -1327,7 +1622,7 @@ body {
 	color: white;
 }
 
-/* Стили для детального гайда */
+/* Стили для гайдов */
 .guide-content {
 	line-height: 1.7;
 	color: #333;
@@ -1391,7 +1686,6 @@ body {
 	text-decoration: underline;
 }
 
-/* Специальные стили для изображений в гайдах */
 .guide-content img {
 	display: block;
 	margin: 15px auto;
@@ -1400,6 +1694,279 @@ body {
 	border-radius: 10px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
+/* Контакты */
+.contact-info-modal .contact-details {
+	margin: 20px 0;
+	padding: 20px;
+	background: rgba(139, 115, 85, 0.05);
+	border-radius: 12px;
+	border-left: 4px solid #8b7355;
+}
+
+.contact-details p {
+	margin-bottom: 15px;
+	font-size: 1.1rem;
+	line-height: 1.6;
+}
+
+.contact-details strong {
+	color: #8b7355;
+	font-weight: 600;
+	display: inline-block;
+	min-width: 120px;
+}
+
+.contact-email {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 20px;
+	padding: 15px;
+	background: rgba(139, 115, 85, 0.1);
+	border-radius: 10px;
+}
+
+.contact-email i {
+	color: #8b7355;
+	font-size: 1.2rem;
+}
+
+/* ========================================== */
+/* FAQ АККОРДЕОН */
+/* ========================================== */
+
+.faq-item {
+	border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+	padding: 15px 0;
+	transition: all 0.3s ease;
+}
+
+.faq-question {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	cursor: pointer;
+	padding: 15px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	background-color: rgba(139, 115, 85, 0.05);
+}
+
+.faq-question:hover {
+	background-color: rgba(139, 115, 85, 0.1);
+	transform: translateX(5px);
+}
+
+.faq-question h3 {
+	color: #1a1a1a;
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin: 0;
+	flex: 1;
+	text-align: left;
+	padding-right: 15px;
+}
+
+.faq-toggle {
+	background: none;
+	border: none;
+	color: #8b7355;
+	font-size: 1.2rem;
+	cursor: pointer;
+	transition: transform 0.5s ease;
+	padding: 5px;
+	min-width: 30px;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.faq-toggle:hover {
+	color: #a89176;
+}
+
+.faq-answer {
+	max-height: 0;
+	overflow: hidden;
+	padding: 0 15px;
+	opacity: 0;
+	transform: translateY(-10px);
+	transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease,
+		opacity 0.2s ease, transform 0.2s ease;
+}
+
+.faq-answer.active {
+	max-height: 3000px;
+	padding: 20px 15px;
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.faq-answer p {
+	margin-bottom: 10px;
+	color: #4a4a4a;
+	line-height: 1.6;
+}
+
+.faq-answer img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 8px;
+	margin: 15px 0;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.faq-answer strong {
+	color: #8b7355;
+	font-weight: 600;
+}
+
+.faq-answer a {
+	color: #8b7355;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.faq-answer a:hover {
+	text-decoration: underline;
+}
+
+.faq-answer ul {
+	margin: 10px 0 15px 20px;
+	padding-left: 0;
+}
+
+.faq-answer li {
+	margin-bottom: 8px;
+	color: #4a4a4a;
+	line-height: 1.5;
+	position: relative;
+	padding-left: 15px;
+}
+
+.faq-answer li:before {
+	content: '•';
+	color: #8b7355;
+	font-weight: bold;
+	position: absolute;
+	left: 0;
+}
+
+/* ========================================== */
+/* МОДАЛЬНОЕ ОКНО ТАЙМЕРА */
+/* ========================================== */
+
+.timer-modal {
+	max-width: 500px;
+	background: white;
+	border-radius: 16px;
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.timer-inputs {
+	display: flex;
+	gap: 20px;
+	justify-content: center;
+	margin: 30px 0;
+	padding: 20px;
+	background: #f9f7f3;
+	border-radius: 12px;
+}
+
+.timer-input-group {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+}
+
+.timer-input-group label {
+	font-weight: 600;
+	color: #555;
+	font-size: 0.9rem;
+}
+
+.timer-input-group input {
+	width: 80px;
+	padding: 12px;
+	border: 2px solid #e0d6c8;
+	border-radius: 8px;
+	font-size: 1.2rem;
+	font-weight: 600;
+	text-align: center;
+	color: #1a1a1a;
+	transition: all 0.3s ease;
+}
+
+.timer-input-group input:focus {
+	border-color: #8b7355;
+	box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.2);
+	outline: none;
+}
+
+.timer-actions {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	margin: 25px 0;
+	flex-wrap: wrap;
+}
+
+.timer-actions .btn {
+	padding: 12px 24px;
+	font-size: 0.95rem;
+	border-radius: 10px;
+	min-width: 160px;
+}
+
+.btn-secondary {
+	background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+	color: white;
+	border: none;
+}
+
+.btn-secondary:hover {
+	background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+	transform: translateY(-2px);
+}
+
+.btn-cancel {
+	background: #f8f9fa;
+	color: #6c757d;
+	border: 2px solid #dee2e6;
+}
+
+.btn-cancel:hover {
+	background: #e9ecef;
+	border-color: #ced4da;
+}
+
+.timer-info {
+	margin-top: 25px;
+	padding: 15px;
+	background: #f1f8ff;
+	border-radius: 10px;
+	border-left: 4px solid #4dabf7;
+}
+
+.timer-info p {
+	margin: 0;
+	color: #555;
+	font-size: 0.9rem;
+	line-height: 1.5;
+}
+
+.timer-info i {
+	color: #4dabf7;
+	margin-right: 8px;
+}
+
+/* ========================================== */
+/* СПЕЦИАЛЬНЫЕ СТИЛИ */
+/* ========================================== */
 
 /* Стиль для ссылки админ панели */
 .admin-link {
@@ -1438,12 +2005,11 @@ body {
 }
 
 /* ========================================== */
-/* МЕДИА-ЗАПРОСЫ ДЛЯ АДАПТИВНОСТИ */
+/* МЕДИА-ЗАПРОСЫ */
 /* ========================================== */
 
 /* Планшеты (768px - 992px) */
 @media (max-width: 992px) {
-	/* Блок новинки */
 	.new-arrival {
 		min-height: 500px;
 		padding-top: 15%;
@@ -1484,7 +2050,6 @@ body {
 		max-width: 250px;
 	}
 
-	/* Каталог */
 	.catalog-container {
 		width: 90% !important;
 	}
@@ -1497,17 +2062,14 @@ body {
 	.section-title {
 		font-size: 2.2rem;
 	}
-}
 
-/* Адаптивность */
-@media (max-width: 1200px) {
-	.purchase-content {
-		grid-template-columns: 1fr 350px;
+	.daily-offer-visual {
+		grid-template-columns: 1fr;
 		gap: 30px;
 	}
 
-	.footer-content {
-		grid-template-columns: repeat(3, 1fr);
+	.daily-offer-details {
+		min-width: auto;
 	}
 }
 
@@ -1599,7 +2161,6 @@ body {
 		padding: 8px 10px;
 	}
 
-	/* Каталог */
 	.catalog-container {
 		width: 95% !important;
 	}
@@ -1630,7 +2191,6 @@ body {
 		font-size: 1.05rem;
 	}
 
-	/* Кнопки карусели */
 	.product-carousel-btn {
 		width: 28px;
 		height: 28px;
@@ -1641,7 +2201,6 @@ body {
 		padding: 0 10px;
 	}
 
-	/* Адаптивность для модального окна */
 	.about-modal-content {
 		width: 95%;
 		padding: 20px;
@@ -1687,6 +2246,59 @@ body {
 
 	.guide-image {
 		max-width: 100%;
+	}
+
+	.offer-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 15px;
+	}
+
+	.daily-offer-title {
+		font-size: 2.2rem;
+	}
+
+	.daily-offer-description {
+		font-size: 1.1rem;
+	}
+
+	.daily-offer-price .price {
+		font-size: 2rem;
+	}
+
+	.daily-offer-background {
+		margin: 0 15px 30px 15px;
+		border-radius: 15px;
+	}
+
+	.daily-offer {
+		padding: 30px 0 40px;
+		border-radius: 15px;
+	}
+
+	.email-desktop {
+		display: none;
+	}
+
+	.email-mobile {
+		display: inline-flex;
+	}
+
+	.footer-logo {
+		width: 100px;
+	}
+
+	.logo-section {
+		align-items: center;
+		text-align: center;
+	}
+
+	.guide-content ol {
+		margin-left: 10px;
+	}
+
+	.guide-content li {
+		padding-left: 10px;
 	}
 }
 
@@ -1807,7 +2419,6 @@ body {
 		padding: 6px 8px;
 	}
 
-	/* Каталог */
 	.catalog {
 		padding: 30px 0 60px;
 	}
@@ -1847,7 +2458,6 @@ body {
 		font-size: 1.15rem;
 	}
 
-	/* Футер адаптивность */
 	.footer {
 		padding: 40px 0 20px;
 		margin-top: 60px;
@@ -1866,7 +2476,6 @@ body {
 		justify-content: center;
 	}
 
-	/* Модальное окно */
 	.about-modal-content {
 		width: 98%;
 		padding: 15px;
@@ -1885,15 +2494,6 @@ body {
 	.feature-section h3,
 	.platform-info h3 {
 		font-size: 1.1rem;
-	}
-
-	/* Дополнительные адаптивные стили для модальных окон */
-	.guide-content ol {
-		margin-left: 10px;
-	}
-
-	.guide-content li {
-		padding-left: 10px;
 	}
 }
 
@@ -1943,200 +2543,14 @@ body {
 		padding: 10px;
 		font-size: 0.9rem;
 	}
-}
 
-/* Показываем desktop ссылку по умолчанию, скрываем mobile */
-.email-mobile {
-	display: none;
-}
-
-/* На мобильных устройствах показываем mobile ссылку, скрываем desktop */
-@media (max-width: 768px) {
-	.email-desktop {
-		display: none;
+	.daily-offer-background {
+		margin: 0 10px 20px 10px;
+		border-radius: 12px;
 	}
 
-	.email-mobile {
-		display: inline-flex;
+	.daily-offer {
+		padding: 20px 0 30px;
+		border-radius: 12px;
 	}
-}
-
-.logo-section {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-}
-
-.logo-section h3 {
-	margin-top: 0;
-}
-
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-	.footer-logo {
-		width: 100px;
-	}
-
-	.logo-section {
-		align-items: center;
-		text-align: center;
-	}
-}
-
-/* Стили для FAQ аккордеона */
-.faq-item {
-	border-bottom: 1px solid rgba(139, 115, 85, 0.2);
-	padding: 15px 0;
-	transition: all 0.3s ease;
-}
-
-.faq-question {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	cursor: pointer;
-	padding: 15px;
-	border-radius: 8px;
-	transition: all 0.3s ease;
-	background-color: rgba(139, 115, 85, 0.05);
-}
-
-.faq-question:hover {
-	background-color: rgba(139, 115, 85, 0.1);
-	transform: translateX(5px);
-}
-
-.faq-question h3 {
-	color: #1a1a1a;
-	font-size: 1.1rem;
-	font-weight: 600;
-	margin: 0;
-	flex: 1;
-	text-align: left;
-	padding-right: 15px;
-}
-
-.faq-toggle {
-	background: none;
-	border: none;
-	color: #8b7355;
-	font-size: 1.2rem;
-	cursor: pointer;
-	transition: transform 0.5s ease;
-	padding: 5px;
-	min-width: 30px;
-	height: 30px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-}
-
-.faq-toggle:hover {
-	color: #a89176;
-}
-
-/* УБРАТЬ .faq-toggle.active - заменить на CSS transform через JS */
-
-.faq-answer {
-	max-height: 0;
-	overflow: hidden;
-	padding: 0 15px;
-	opacity: 0;
-	transform: translateY(-10px);
-	transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease,
-		opacity 0.2s ease, transform 0.2s ease;
-}
-
-.faq-answer.active {
-	max-height: 3000px;
-	padding: 20px 15px;
-	opacity: 1;
-	transform: translateY(0);
-}
-
-.faq-answer p {
-	margin-bottom: 10px;
-	color: #4a4a4a;
-	line-height: 1.6;
-}
-
-.faq-answer img {
-	max-width: 100%;
-	height: auto;
-	border-radius: 8px;
-	margin: 15px 0;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-}
-
-.faq-answer strong {
-	color: #8b7355;
-	font-weight: 600;
-}
-
-.faq-answer a {
-	color: #8b7355;
-	text-decoration: none;
-	font-weight: 600;
-}
-
-.faq-answer a:hover {
-	text-decoration: underline;
-}
-
-.faq-answer ul {
-	margin: 10px 0 15px 20px;
-	padding-left: 0;
-}
-
-.faq-answer li {
-	margin-bottom: 8px;
-	color: #4a4a4a;
-	line-height: 1.5;
-	position: relative;
-	padding-left: 15px;
-}
-
-.faq-answer li:before {
-	content: '•';
-	color: #8b7355;
-	font-weight: bold;
-	position: absolute;
-	left: 0;
-}
-/* Стили для контактной информации */
-.contact-info-modal .contact-details {
-	margin: 20px 0;
-	padding: 20px;
-	background: rgba(139, 115, 85, 0.05);
-	border-radius: 12px;
-	border-left: 4px solid #8b7355;
-}
-
-.contact-details p {
-	margin-bottom: 15px;
-	font-size: 1.1rem;
-	line-height: 1.6;
-}
-
-.contact-details strong {
-	color: #8b7355;
-	font-weight: 600;
-	display: inline-block;
-	min-width: 120px;
-}
-
-.contact-email {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	margin-top: 20px;
-	padding: 15px;
-	background: rgba(139, 115, 85, 0.1);
-	border-radius: 10px;
-}
-
-.contact-email i {
-	color: #8b7355;
-	font-size: 1.2rem;
 }
