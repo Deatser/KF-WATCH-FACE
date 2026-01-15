@@ -1311,6 +1311,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 	initWearloadGuideModal()
 	initAdbGuideModal()
 	initBugjaegerGuideModal()
+	initContactsModal() // Инициализация модального окна "Контакты"
+	initFaqModal() // Инициализация модального окна "FAQ"
+	initEscapeKeyHandler() // Инициализация обработчика Escape
 
 	// Загружаем товары из папки watch
 	const { products, latestProduct } = await loadProductsFromWatch()
@@ -1521,6 +1524,165 @@ function initBugjaegerGuideModal() {
 		if (e.key === 'Escape' && bugjaegerGuideModal.classList.contains('show')) {
 			bugjaegerGuideModal.classList.remove('show')
 			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
+// ====== ФУНКЦИИ ДЛЯ РАБОТЫ С МОДАЛЬНЫМИ ОКНАМИ ======
+
+// Функция для работы с модальным окном "Контакты"
+function initContactsModal() {
+	const contactsModal = document.getElementById('contactsModal')
+	const closeContactsModal = document.getElementById('closeContactsModal')
+	const contactsLinks = [
+		document.getElementById('contactsLink'),
+		document.getElementById('contactsLinkFooter'),
+	]
+
+	if (!contactsModal) return
+
+	// Открытие модального окна "Контакты"
+	contactsLinks.forEach(link => {
+		if (link) {
+			link.addEventListener('click', function (e) {
+				e.preventDefault()
+				contactsModal.classList.add('show')
+				document.body.style.overflow = 'hidden'
+			})
+		}
+	})
+
+	// Закрытие модального окна "Контакты"
+	if (closeContactsModal) {
+		closeContactsModal.addEventListener('click', function () {
+			contactsModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		})
+	}
+
+	// Закрытие при клике на фон
+	contactsModal.addEventListener('click', function (e) {
+		if (e.target === contactsModal) {
+			contactsModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
+// Функция для работы с модальным окном "FAQ"
+function initFaqModal() {
+	const faqModal = document.getElementById('faqModal')
+	const closeFaqModal = document.getElementById('closeFaqModal')
+	const faqLinks = [
+		document.getElementById('faqLink'),
+		document.getElementById('faqLinkFooter'),
+		document.getElementById('installGuideLinkFaq'),
+	]
+
+	if (!faqModal) return
+
+	// Открытие модального окна "FAQ"
+	faqLinks.forEach(link => {
+		if (link) {
+			link.addEventListener('click', function (e) {
+				e.preventDefault()
+				faqModal.classList.add('show')
+				document.body.style.overflow = 'hidden'
+			})
+		}
+	})
+
+	// Закрытие модального окна "FAQ"
+	if (closeFaqModal) {
+		closeFaqModal.addEventListener('click', function () {
+			faqModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		})
+	}
+
+	// Закрытие при клике на фон
+	faqModal.addEventListener('click', function (e) {
+		if (e.target === faqModal) {
+			faqModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Инициализация аккордеона FAQ
+	initFaqAccordion()
+}
+
+// Функция для инициализации аккордеона FAQ
+function initFaqAccordion() {
+	const faqToggles = document.querySelectorAll('.faq-toggle')
+	const faqQuestions = document.querySelectorAll('.faq-question')
+
+	// Обработчик для клика на сам вопрос
+	faqQuestions.forEach(question => {
+		question.addEventListener('click', function (e) {
+			// Проверяем, что клик не на кнопке с иконкой
+			if (!e.target.closest('.faq-toggle')) {
+				const faqItem = this.closest('.faq-item')
+				const toggle = faqItem.querySelector('.faq-toggle')
+				const answer = faqItem.querySelector('.faq-answer')
+
+				toggleFaqItem(toggle, answer)
+			}
+		})
+	})
+
+	// Обработчик для клика на иконку
+	faqToggles.forEach(toggle => {
+		toggle.addEventListener('click', function (e) {
+			e.stopPropagation() // Останавливаем всплытие
+			const faqItem = this.closest('.faq-item')
+			const answer = faqItem.querySelector('.faq-answer')
+
+			toggleFaqItem(this, answer)
+		})
+	})
+}
+
+// Функция для переключения состояния FAQ
+function toggleFaqItem(toggle, answer) {
+	const isActive = answer.classList.contains('active')
+
+	// Переключаем только текущий элемент
+	if (!isActive) {
+		// Открываем
+		answer.classList.add('active')
+		// Плавно поворачиваем стрелку
+		toggle.style.transform = 'rotate(180deg)'
+		toggle.style.transition = 'transform 0.5s ease'
+	} else {
+		// Закрываем
+		answer.classList.remove('active')
+		// Плавно возвращаем стрелку
+		toggle.style.transform = 'rotate(0deg)'
+		toggle.style.transition = 'transform 0.5s ease'
+	}
+}
+
+// Функция для обработки клавиши Escape для всех модальных окон
+function initEscapeKeyHandler() {
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape') {
+			const modals = [
+				document.getElementById('contactsModal'),
+				document.getElementById('faqModal'),
+				document.getElementById('installMethodModal'),
+				document.getElementById('wearloadGuideModal'),
+				document.getElementById('adbGuideModal'),
+				document.getElementById('bugjaegerGuideModal'),
+				document.getElementById('aboutModal'),
+			]
+
+			modals.forEach(modal => {
+				if (modal && modal.classList.contains('show')) {
+					modal.classList.remove('show')
+					document.body.style.overflow = 'auto'
+				}
+			})
 		}
 	})
 }
