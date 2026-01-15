@@ -838,6 +838,10 @@ app.get('/admin', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'admin.html'))
 })
 
+app.get('/modals', (req, res) => {
+	res.sendFile(path.join(__dirname, 'public', 'html', 'modals.html'))
+})
+
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'))
 })
