@@ -19,6 +19,98 @@ let totalSlides = 0
 let carouselInterval = null
 let imagesPreloaded = false
 
+// =============== УПРАВЛЕНИЕ МЕНЮ ПОЛЬЗОВАТЕЛЯ ===============
+
+// Функция для открытия/закрытия меню
+function toggleUserMenu(event) {
+	if (event) {
+		event.preventDefault()
+		event.stopPropagation()
+		event.stopImmediatePropagation() // Останавливаем ВСЕ другие обработчики
+	}
+
+	const menu = document.getElementById('userMenu')
+	if (menu) {
+		menu.classList.toggle('show')
+
+		// Фокус на поле email при открытии
+		if (menu.classList.contains('show')) {
+			setTimeout(() => {
+				const authEmail = document.getElementById('authEmail')
+				if (authEmail) {
+					authEmail.focus()
+				}
+			}, 100)
+		}
+	}
+}
+
+// Инициализация меню пользователя
+function initUserMenu() {
+	console.log('Инициализация меню пользователя...')
+
+	// 1. Обработчик для иконки пользователя
+	const userIcon = document.getElementById('userMenuBtn')
+	if (userIcon) {
+		userIcon.addEventListener('click', function (e) {
+			toggleUserMenu(e)
+		})
+	}
+
+	// 2. Закрытие меню при клике вне его
+	document.addEventListener('click', function (e) {
+		const menu = document.getElementById('userMenu')
+		const btn = document.getElementById('userMenuBtn')
+
+		if (menu && menu.classList.contains('show')) {
+			// Проверяем, кликнули ли мы вне меню и вне кнопки
+			const isClickInsideMenu = menu.contains(e.target)
+			const isClickOnButton =
+				btn && (btn === e.target || btn.contains(e.target))
+
+			if (!isClickInsideMenu && !isClickOnButton) {
+				menu.classList.remove('show')
+			}
+		}
+	})
+
+	// 3. Делегирование событий для ссылок авторизации
+	document.body.addEventListener('click', function (e) {
+		// Проверяем, кликнули ли на ссылки "Войдите в аккаунт" или "зарегистрируйтесь"
+		const target = e.target
+		const isLoginLink =
+			target.id === 'loginLink' ||
+			target.closest('#loginLink') ||
+			(target.classList &&
+				target.classList.contains('auth-link') &&
+				target.textContent.includes('Войдите'))
+
+		const isRegisterLink =
+			target.id === 'registerLink' ||
+			target.closest('#registerLink') ||
+			(target.classList &&
+				target.classList.contains('auth-link') &&
+				target.textContent.includes('зарегистрируйтесь'))
+
+		if (isLoginLink || isRegisterLink) {
+			e.preventDefault()
+			e.stopPropagation()
+
+			const menu = document.getElementById('userMenu')
+			if (menu) {
+				menu.classList.add('show')
+
+				setTimeout(() => {
+					const authEmail = document.getElementById('authEmail')
+					if (authEmail) authEmail.focus()
+				}, 100)
+			}
+		}
+	})
+
+	console.log('Обработчики меню установлены')
+}
+
 // Функция предзагрузки изображений
 function preloadImages(imageUrls) {
 	if (imagesPreloaded) return
@@ -45,6 +137,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	initEscapeKeyHandler()
 	initTermsModal()
 	initPrivacyModal()
+	initUserMenu()
 
 	// Инициализация Firebase и проверка прав админа
 	await initAuth()
@@ -325,30 +418,6 @@ function initAuthHandlers() {
 			}
 		})
 	}
-
-	// Кнопка меню пользователя
-	const userMenuBtn = document.getElementById('userMenuBtn')
-	if (userMenuBtn) {
-		userMenuBtn.addEventListener('click', function (e) {
-			e.stopPropagation()
-			const userMenu = document.getElementById('userMenu')
-			if (userMenu) {
-				userMenu.classList.toggle('show')
-			}
-		})
-	}
-
-	// Закрытие меню при клике вне его
-	document.addEventListener('click', function (e) {
-		const userMenu = document.getElementById('userMenu')
-		const userMenuBtn = document.getElementById('userMenuBtn')
-
-		if (userMenu && userMenuBtn) {
-			if (!userMenu.contains(e.target) && e.target !== userMenuBtn) {
-				userMenu.classList.remove('show')
-			}
-		}
-	})
 
 	// Ввод в полях авторизации (Enter для отправки)
 	const authEmail = document.getElementById('authEmail')
