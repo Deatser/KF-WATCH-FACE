@@ -1269,9 +1269,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 	initWearloadGuideModal()
 	initAdbGuideModal()
 	initBugjaegerGuideModal()
-	initContactsModal() // Инициализация модального окна "Контакты"
-	initFaqModal() // Инициализация модального окна "FAQ"
-	initEscapeKeyHandler() // Инициализация обработчика Escape
+	initContactsModal()
+	initFaqModal()
+	initEscapeKeyHandler()
 
 	// Загружаем товары из папки watch
 	const { products, latestProduct } = await loadProductsFromWatch()

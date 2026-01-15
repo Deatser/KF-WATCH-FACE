@@ -352,6 +352,82 @@ function initEscapeKeyHandler() {
 	})
 }
 
+// Функция для работы с модальным окном "Условия использования"
+function initTermsModal() {
+	const termsLink = document.getElementById('termsLink')
+	const termsModal = document.getElementById('termsModal')
+	const closeTermsModal = document.getElementById('closeTermsModal')
+
+	if (!termsLink || !termsModal) return
+
+	// Открытие модального окна
+	termsLink.addEventListener('click', function (e) {
+		e.preventDefault()
+		termsModal.classList.add('show')
+		document.body.style.overflow = 'hidden'
+	})
+
+	// Закрытие модального окна
+	closeTermsModal.addEventListener('click', function () {
+		termsModal.classList.remove('show')
+		document.body.style.overflow = 'auto'
+	})
+
+	// Закрытие при клике на фон
+	termsModal.addEventListener('click', function (e) {
+		if (e.target === termsModal) {
+			termsModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && termsModal.classList.contains('show')) {
+			termsModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
+// Функция для работы с модальным окном "Политика конфиденциальности"
+function initPrivacyModal() {
+	const privacyLink = document.getElementById('privacyLink')
+	const privacyModal = document.getElementById('privacyModal')
+	const closePrivacyModal = document.getElementById('closePrivacyModal')
+
+	if (!privacyLink || !privacyModal) return
+
+	// Открытие модального окна
+	privacyLink.addEventListener('click', function (e) {
+		e.preventDefault()
+		privacyModal.classList.add('show')
+		document.body.style.overflow = 'hidden'
+	})
+
+	// Закрытие модального окна
+	closePrivacyModal.addEventListener('click', function () {
+		privacyModal.classList.remove('show')
+		document.body.style.overflow = 'auto'
+	})
+
+	// Закрытие при клике на фон
+	privacyModal.addEventListener('click', function (e) {
+		if (e.target === privacyModal) {
+			privacyModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+
+	// Закрытие по клавише Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && privacyModal.classList.contains('show')) {
+			privacyModal.classList.remove('show')
+			document.body.style.overflow = 'auto'
+		}
+	})
+}
+
 // Экспортируем все функции для использования в main.js
 export {
 	initContactsModal,
@@ -364,4 +440,6 @@ export {
 	initBugjaegerGuideModal,
 	initEscapeKeyHandler,
 	initFaqAccordion,
+	initTermsModal,
+	initPrivacyModal,
 }

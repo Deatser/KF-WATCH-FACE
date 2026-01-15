@@ -1,4 +1,16 @@
-// purchase.js - Оптимизированная версия с быстрой загрузкой всех изображений
+import {
+	initContactsModal,
+	initFaqModal,
+	initAboutModal,
+	initInstallGuideLinks,
+	initInstallMethodModal,
+	initWearloadGuideModal,
+	initAdbGuideModal,
+	initBugjaegerGuideModal,
+	initEscapeKeyHandler,
+	initTermsModal,
+	initPrivacyModal,
+} from './modals.js'
 
 // Глобальные переменные
 let currentProduct = null
@@ -21,6 +33,19 @@ function preloadImages(imageUrls) {
 
 // Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', async function () {
+	initFixedHeader()
+	initAboutModal()
+	initInstallGuideLinks()
+	initInstallMethodModal()
+	initWearloadGuideModal()
+	initAdbGuideModal()
+	initBugjaegerGuideModal()
+	initContactsModal()
+	initFaqModal()
+	initEscapeKeyHandler()
+	initTermsModal()
+	initPrivacyModal()
+
 	// Инициализация Firebase и проверка прав админа
 	await initAuth()
 
