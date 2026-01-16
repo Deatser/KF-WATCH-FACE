@@ -700,6 +700,17 @@ body {
 	gap: 10px; /* Уменьшено с 20px */
 }
 
+.product-price-container {
+	display: flex;
+	align-items: center; /* Это выравнивает все элементы по вертикали */
+	gap: 8px;
+	margin: 10px 0;
+}
+
+.product-discount {
+	align-self: center; /* Выравнивание конкретно для скидки */
+}
+
 /* Уменьшим размер названия часов */
 .daily-offer-watch-name {
 	font-size: 2.2rem; /* Уменьшено с 2.5rem */

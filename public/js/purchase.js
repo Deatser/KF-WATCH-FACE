@@ -172,6 +172,9 @@ async function loadProductDataOptimized(productId) {
 		const product = await response.json()
 		currentProduct = product
 
+		// ВАЖНО: Проверяем статус циферблата (isdaily) в Firebase
+		await checkWatchfaceDailyStatus(productId)
+
 		// Обновляем UI
 		updateProductUI()
 
@@ -449,6 +452,244 @@ function checkAdminStatus(email) {
 	}
 }
 
+// Функция проверки статуса циферблата (isdaily)
+async function checkWatchfaceDailyStatus(productId) {
+	try {
+		if (!currentProduct) {
+			console.log('Товар еще не загружен')
+			return false
+		}
+
+		// Пробуем получить номер из разных мест
+		const watchfaceId = extractWatchfaceId(currentProduct)
+
+		if (!watchfaceId) {
+			console.log('Не удалось определить ID циферблата')
+			return false
+		}
+
+		console.log('Проверяем циферблат:', watchfaceId)
+
+		// Проверяем, что Firebase Database загружен
+		if (!firebase.database) {
+			console.error('Firebase Database не загружен')
+			return false
+		}
+
+		// Получаем данные из Firebase Realtime Database
+		const snapshot = await firebase
+			.database()
+			.ref(`items/${watchfaceId}`)
+			.once('value')
+
+		if (snapshot.exists()) {
+			const watchfaceData = snapshot.val()
+			const isDaily = watchfaceData.isdaily === true
+
+			console.log(`Статус циферблата ${watchfaceId}: isdaily =`, isDaily)
+
+			// Если isdaily = true, применяем скидку и добавляем бейдж
+			if (isDaily) {
+				console.log('Циферблат доступен как daily! Применяем скидку...')
+				applyDailyDiscount()
+			} else {
+				console.log('Циферблат не является daily')
+			}
+
+			return isDaily
+		} else {
+			console.log(`Циферблат ${watchfaceId} не найден в базе данных Firebase`)
+			return false
+		}
+	} catch (error) {
+		console.error('Ошибка при проверке статуса циферблата:', error)
+		return false
+	}
+}
+
+// Вспомогательная функция для извлечения ID циферблата
+function extractWatchfaceId(product) {
+	// Пробуем разные источники данных
+
+	// 1. Из названия товара
+	if (product.name) {
+		const match = product.name.match(/KF(\d{3})/i)
+		if (match) return match[0].toUpperCase()
+	}
+
+	// 2. Из displayName
+	if (product.displayName) {
+		const match = product.displayName.match(/KF(\d{3})/i)
+		if (match) return match[0].toUpperCase()
+	}
+
+	// 3. Из folderName
+	if (product.folderName) {
+		const match = product.folderName.match(/KF(\d{3})/i)
+		if (match) return match[0].toUpperCase()
+	}
+
+	// 4. Из описания или других полей
+	if (product.description) {
+		const match = product.description.match(/KF(\d{3})/i)
+		if (match) return match[0].toUpperCase()
+	}
+
+	return null
+}
+
+// Функция применения скидки для daily циферблата
+function applyDailyDiscount() {
+	console.log('Применяем скидку daily...')
+
+	// 1. Добавляем бейдж "ПРЕДЛОЖЕНИЕ ДНЯ" к названию циферблата
+	addDailyBadge()
+
+	// 2. Изменяем цену
+	applyDailyPrice()
+
+	// 3. Обновляем итоговую сумму
+	updateTotalPrice()
+}
+
+// Добавляем бейдж "ПРЕДЛОЖЕНИЕ ДНЯ"
+function addDailyBadge() {
+	const productHeader = document.querySelector('.product-header')
+	if (!productHeader) return
+
+	// Проверяем, не добавлен ли уже бейдж
+	if (document.querySelector('.daily-badge')) return
+
+	const dailyBadge = document.createElement('div')
+	dailyBadge.className = 'daily-badge'
+	dailyBadge.innerHTML = '<i class="fas fa-fire"></i> ПРЕДЛОЖЕНИЕ ДНЯ'
+
+	// Стили для бейджа
+	dailyBadge.style.cssText = `
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    text-transform: uppercase;
+    margin-left: 15px;
+    display: inline-block;
+`
+
+	productHeader.appendChild(dailyBadge)
+}
+
+// Применяем скидочную цену
+function applyDailyPrice() {
+	console.log('Устанавливаем скидочную цену...')
+
+	// Текущая цена (оригинальная)
+	const originalPrice = currentProduct.price || 150
+
+	// Новая цена со скидкой 20%
+	const discountedPrice = Math.round(originalPrice * 0.8)
+
+	// Сохраняем оригинальную цену
+	currentProduct.originalPrice = originalPrice
+	currentProduct.price = discountedPrice
+	currentProduct.isDaily = true
+	currentProduct.discountPercent = 20
+
+	// Обновляем отображение цен
+	updatePriceDisplay(originalPrice, discountedPrice)
+}
+
+function updatePriceDisplay(originalPrice, discountedPrice) {
+	// 1. Обновляем текущую цену (120₽)
+	const currentPriceElement = document.querySelector('.current-price')
+	if (currentPriceElement) {
+		currentPriceElement.textContent = `${discountedPrice} ₽`
+		// Добавляем класс для стилизации daily-цены
+		currentPriceElement.classList.add('daily-price')
+		currentPriceElement.style.cssText = `
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: inline-block;
+        `
+	}
+
+	// 2. Показываем старую цену (150₽) - такой же размер
+	const oldPriceElement = document.getElementById('oldPrice')
+	if (oldPriceElement) {
+		oldPriceElement.textContent = `${originalPrice} ₽`
+		oldPriceElement.style.display = 'inline'
+
+		// Делаем такую же высоту как у новой цены, но серую и зачеркнутую
+		oldPriceElement.style.cssText = `
+    display: inline !important;
+    text-decoration: line-through;
+    color: #999;
+    font-size: 1.1rem; /* Уменьшили с 1.3rem до 1.1rem */
+    margin-left: 15px;
+    font-weight: 600; /* Сделали менее жирной */
+    opacity: 0.7;
+`
+	} else {
+		// Если элемента нет, создаем его
+		const orderItemPrice = document.querySelector('.order-item-price')
+		if (orderItemPrice) {
+			const newOldPrice = document.createElement('span')
+			newOldPrice.id = 'oldPrice'
+			newOldPrice.textContent = `${originalPrice} ₽`
+			newOldPrice.style.cssText = `
+    text-decoration: line-through;
+    color: #999;
+    font-size: 1.1rem; /* Уменьшили */
+    margin-left: 15px;
+    font-weight: 600; /* Сделали менее жирной */
+    opacity: 0.7;
+    display: inline-block !important;
+`
+			orderItemPrice.appendChild(newOldPrice)
+		}
+	}
+
+	// 3. Добавляем бейдж скидки
+	addDiscountBadge()
+}
+// Добавляем бейдж скидки
+function addDiscountBadge() {
+	const orderItemPrice = document.querySelector('.order-item-price')
+	if (!orderItemPrice) return
+
+	// Проверяем, не добавлен ли уже бейдж скидки
+	if (document.querySelector('.discount-badge')) return
+
+	const discountBadge = document.createElement('span')
+	discountBadge.className = 'discount-badge'
+	discountBadge.textContent = '-20%'
+
+	discountBadge.style.cssText = `
+    background: #ff6b6b;
+    color: white;
+    padding: 4px 12px;  /* меньше padding */
+    border-radius: 8px;  /* чуть меньше радиус */
+    font-size: 0.95rem;  /* меньше размер шрифта */
+    font-weight: 600;    /* чуть менее жирный */
+    margin-left: 10px;
+    display: inline-block;
+`
+
+	orderItemPrice.appendChild(discountBadge)
+}
+
+// Обновляем итоговую сумму
+function updateTotalPrice() {
+	const totalPriceElement = document.getElementById('totalPrice')
+	if (totalPriceElement && currentProduct.price) {
+		totalPriceElement.textContent = `${currentProduct.price} ₽`
+	}
+}
+
 // Функции авторизации
 function loginUser() {
 	const email = document.getElementById('authEmail').value
@@ -608,18 +849,46 @@ function updateProductUI() {
 		newBadge.style.display = 'none'
 	}
 
-	// Обновляем цены
-	const currentPrice = document.querySelector('.current-price')
-	if (currentPrice) {
-		currentPrice.textContent = `${currentProduct.price} ₽`
-	}
+	// Обновляем цены (учитываем daily скидку если есть)
+	updateProductPriceDisplay()
+}
 
-	const oldPriceElement = document.getElementById('oldPrice')
-	if (currentProduct.isNewProduct && currentProduct.oldPrice) {
-		oldPriceElement.textContent = `${currentProduct.oldPrice} ₽`
-		oldPriceElement.style.display = 'inline'
+// Обновляем отображение цены товара
+function updateProductPriceDisplay() {
+	// Если есть оригинальная цена (значит была применена скидка)
+	if (currentProduct.originalPrice && currentProduct.isDaily) {
+		// Показываем новую цену и старую
+		const currentPrice = document.querySelector('.current-price')
+		if (currentPrice) {
+			currentPrice.textContent = `${currentProduct.price} ₽`
+		}
+
+		const oldPriceElement = document.getElementById('oldPrice')
+		if (oldPriceElement) {
+			oldPriceElement.textContent = `${currentProduct.originalPrice} ₽`
+			oldPriceElement.style.display = 'inline'
+			oldPriceElement.style.cssText = `
+                display: inline !important;
+                text-decoration: line-through;
+                color: #999;
+                font-size: 0.9em;
+                margin-left: 8px;
+            `
+		}
 	} else {
-		oldPriceElement.style.display = 'none'
+		// Иначе показываем обычную цену
+		const currentPrice = document.querySelector('.current-price')
+		if (currentPrice) {
+			currentPrice.textContent = `${currentProduct.price} ₽`
+		}
+
+		const oldPriceElement = document.getElementById('oldPrice')
+		if (currentProduct.isNewProduct && currentProduct.oldPrice) {
+			oldPriceElement.textContent = `${currentProduct.oldPrice} ₽`
+			oldPriceElement.style.display = 'inline'
+		} else {
+			oldPriceElement.style.display = 'none'
+		}
 	}
 
 	// Обновляем итоговую сумму
@@ -1148,3 +1417,51 @@ style.textContent = `
     }
 `
 document.head.appendChild(style)
+// В конце файла добавьте этот стиль
+const dailyStyle = document.createElement('style')
+dailyStyle.textContent = `
+.daily-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%) !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3) !important;
+    text-transform: uppercase !important;
+    margin-left: 15px !important;
+    display: inline-block !important;
+}
+    
+.discount-badge {
+    background: #ff6b6b !important;
+    color: white !important;
+    padding: 5px 12px !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;  
+    font-weight: 700 !important;
+    margin-left: 10px !important;
+    display: inline-block !important;
+}
+
+/* Добавьте также стиль для новой цены */
+.current-price.daily-price {
+    color: #ff6b6b !important;
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+}
+
+#oldPrice {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    opacity: 0.7 !important;
+}
+    
+    @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 4px 10px rgba(238, 90, 36, 0.3); }
+        50% { transform: scale(1.05); box-shadow: 0 6px 15px rgba(238, 90, 36, 0.5); }
+        100% { transform: scale(1); box-shadow: 0 4px 10px rgba(238, 90, 36, 0.3); }
+    }
+`
+document.head.appendChild(dailyStyle)

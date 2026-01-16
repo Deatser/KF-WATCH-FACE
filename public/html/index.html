@@ -23,6 +23,37 @@
 		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+		<style>
+			/* Добавляем стили для цен в каталоге */
+			.product-price-container {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin: 10px 0;
+			}
+
+			.product-price {
+				font-size: 1.5rem;
+				font-weight: 700;
+				color: #8b7355;
+			}
+
+			.product-price-old {
+				font-size: 1.2rem;
+				color: #999;
+				text-decoration: line-through;
+			}
+
+			.product-discount {
+				background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+				color: white;
+				padding: 2px 6px;
+				border-radius: 12px;
+				font-size: 0.9rem;
+				font-weight: 600;
+			}
+		</style>
 	</head>
 	<body>
 		<!-- Общий фон для хедера и новинок -->
@@ -108,7 +139,9 @@
 					<div class="daily-offer-content">
 						<!-- Заголовок предложения дня -->
 						<div class="daily-offer-header">
-							<span class="offer-badge">ПРЕДЛОЖЕНИЕ ДНЯ</span>
+							<span class="offer-badge"
+								><i class="fas fa-fire"></i> ПРЕДЛОЖЕНИЕ ДНЯ</span
+							>
 							<div class="offer-timer" id="offerTimer">
 								<i class="fas fa-clock"></i>
 								<span id="timerHours">24</span>:<span id="timerMinutes">00</span
@@ -149,8 +182,8 @@
 								></h1>
 
 								<div class="daily-offer-price">
-									<span class="price">150 ₽</span>
-									<span class="price-old">190 ₽</span>
+									<span class="price">120 ₽</span>
+									<span class="price-old">150 ₽</span>
 									<span class="discount-badge">-20%</span>
 								</div>
 								<a href="#" class="btn btn-primary" id="dailyOfferBuyButton">

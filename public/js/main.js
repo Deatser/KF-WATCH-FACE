@@ -34,6 +34,7 @@ const timerSeconds = document.getElementById('timerSeconds')
 // Переменные состояния
 let allProducts = [] // Все товары из папки watch
 let dailyOfferProduct = null // Товар дня
+let previousDailyProductId = null // Предыдущий товар дня (для сброса isdaily)
 
 // Карусель предложения дня
 let dailyOfferCurrentSlide = 0
@@ -59,6 +60,118 @@ function extractFolderNumber(folderName) {
 		return parseInt(match[1], 10)
 	}
 	return 0
+}
+
+// НОВАЯ ФУНКЦИЯ: Обновление isdaily в Firebase
+async function updateDailyOfferInFirebase(newDailyProductId) {
+	try {
+		// Проверяем, инициализирован ли Firebase
+		if (!firebase.apps.length) {
+			console.log('Firebase не инициализирован, пропускаем обновление')
+			return
+		}
+
+		const database = firebase.database()
+
+		// 1. Сбрасываем предыдущий товар дня (если был)
+		if (previousDailyProductId) {
+			try {
+				await database.ref('items/' + previousDailyProductId).update({
+					isdaily: false,
+				})
+				console.log(
+					`Сбросили isdaily для предыдущего товара дня: ${previousDailyProductId}`
+				)
+			} catch (error) {
+				console.error('Ошибка при сбросе предыдущего товара дня:', error)
+			}
+		}
+
+		// 2. Устанавливаем новый товар дня
+		if (newDailyProductId) {
+			try {
+				await database.ref('items/' + newDailyProductId).update({
+					isdaily: true,
+				})
+				console.log(
+					`Установили isdaily=true для нового товара дня: ${newDailyProductId}`
+				)
+
+				// Сохраняем ID текущего товара дня как предыдущий для следующего обновления
+				previousDailyProductId = newDailyProductId
+			} catch (error) {
+				// Если папка не существует, создаем её
+				if (
+					error.code === 'PERMISSION_DENIED' ||
+					error.message.includes('does not exist')
+				) {
+					try {
+						await database.ref('items/' + newDailyProductId).set({
+							isdaily: true,
+						})
+						console.log(
+							`Создали папку и установили isdaily=true для товара дня: ${newDailyProductId}`
+						)
+						previousDailyProductId = newDailyProductId
+					} catch (createError) {
+						console.error(
+							'Ошибка при создании папки для товара дня:',
+							createError
+						)
+					}
+				} else {
+					console.error('Ошибка при установке нового товара дня:', error)
+				}
+			}
+		}
+	} catch (error) {
+		console.error('Общая ошибка при обновлении товара дня в Firebase:', error)
+	}
+}
+
+// НОВАЯ ФУНКЦИЯ: Получение текущего товара дня из Firebase
+async function getCurrentDailyOfferFromFirebase() {
+	try {
+		if (!firebase.apps.length) {
+			console.log('Firebase не инициализирован')
+			return null
+		}
+
+		const database = firebase.database()
+		const snapshot = await database.ref('items').once('value')
+
+		if (!snapshot.exists()) {
+			console.log('Нет товаров в Firebase')
+			return null
+		}
+
+		const items = snapshot.val()
+		let dailyProduct = null
+
+		// Ищем товар с isdaily: true
+		for (const [itemId, itemData] of Object.entries(items)) {
+			if (itemData && itemData.isdaily === true) {
+				dailyProduct = {
+					id: itemId,
+					...itemData,
+				}
+				// Сохраняем как предыдущий товар дня
+				previousDailyProductId = itemId
+				break
+			}
+		}
+
+		if (dailyProduct) {
+			console.log('Найден товар дня из Firebase:', dailyProduct.id)
+		} else {
+			console.log('Товар дня не найден в Firebase')
+		}
+
+		return dailyProduct
+	} catch (error) {
+		console.error('Ошибка при получении товара дня из Firebase:', error)
+		return null
+	}
 }
 
 // Функция для загрузки товаров из папки watch
@@ -167,7 +280,7 @@ async function loadProductsFromWatch() {
 
 // Вспомогательная функция для расчета цены на основе имени папки
 function calculatePriceFromFolderName(folderName) {
-	return 150
+	return 150 // Обычная цена 150 для всех товаров
 }
 
 // Функция: Приоритетная загрузка первого фото каждого товара
@@ -514,7 +627,7 @@ function initDailyOfferCarouselPlaceholder() {
 	// Делаем заголовок и описание нейтральными
 	updateDailyOfferInfo({
 		name: 'ПРЕДЛОЖЕНИЕ ДНЯ',
-		price: 150,
+		price: 120,
 	})
 
 	// Добавляем обработчики для кнопок навигации
@@ -556,15 +669,14 @@ function updateDailyOfferInfo(product) {
         `
 	}
 
-	// Обновляем цену
+	// Обновляем цену (специальная цена для товара дня 120)
 	if (dailyOfferPrice) {
-		dailyOfferPrice.textContent = `${formatPrice(product.price || 150)} ₽`
+		dailyOfferPrice.textContent = `${formatPrice(120)} ₽`
 	}
 
-	// Обновляем старую цену (скидка 20%)
+	// Обновляем старую цену (150)
 	if (dailyOfferOldPrice) {
-		const oldPrice = Math.round((product.price || 150) / 0.8)
-		dailyOfferOldPrice.textContent = `${formatPrice(oldPrice)} ₽`
+		dailyOfferOldPrice.textContent = `${formatPrice(150)} ₽`
 	}
 }
 
@@ -691,11 +803,32 @@ function initOfferTimer() {
 }
 
 // Обновление предложения дня
-function updateDailyOffer() {
-	// Выбираем новый случайный товар
-	dailyOfferProduct = getDailyOfferProduct(allProducts)
+async function updateDailyOffer() {
+	console.log('Обновление предложения дня...')
 
-	// Если есть товар дня
+	// 1. Получаем текущий товар дня из Firebase (если есть)
+	const currentDailyFromFirebase = await getCurrentDailyOfferFromFirebase()
+
+	// 2. Выбираем новый случайный товар
+	const newDailyProduct = getDailyOfferProduct(allProducts)
+
+	// 3. Проверяем, не является ли новый товар уже текущим товаром дня
+	if (
+		currentDailyFromFirebase &&
+		newDailyProduct &&
+		currentDailyFromFirebase.id === newDailyProduct.folderName
+	) {
+		console.log('Новый товар дня совпадает с текущим, оставляем без изменений')
+		dailyOfferProduct = newDailyProduct
+	} else {
+		// 4. Обновляем товар дня в Firebase
+		if (newDailyProduct) {
+			await updateDailyOfferInFirebase(newDailyProduct.folderName)
+		}
+		dailyOfferProduct = newDailyProduct
+	}
+
+	// 5. Если есть товар дня
 	if (dailyOfferProduct) {
 		// Инициализируем карусель
 		initDailyOfferCarousel(dailyOfferProduct)
@@ -709,10 +842,10 @@ function updateDailyOffer() {
 		initDailyOfferCarousel(null)
 	}
 
-	// Перезапускаем таймер
+	// 6. Перезапускаем таймер
 	initOfferTimer()
 
-	// Сохраняем выбор в localStorage для кеширования
+	// 7. Сохраняем выбор в localStorage для кеширования
 	if (dailyOfferProduct) {
 		const today = new Date().toDateString()
 		localStorage.setItem('dailyOfferDate', today)
@@ -782,13 +915,13 @@ function updateNewProductInfo(product) {
 		descriptionElement.textContent = `Циферблат ${formattedName} - самый новый цифровой циферблат для умных часов WearOS 4+. Современный дизайн с максимальной функциональностью.`
 	}
 
-	// Обновляем цену
+	// Обновляем цену (обычная цена 150)
 	const priceElement = document.querySelector('.new-product-price .price')
 	if (priceElement) {
 		priceElement.textContent = `${formatPrice(150)} ₽`
 	}
 
-	// Обновляем старую цену (скидка 20%)
+	// Обновляем старую цену (190)
 	const oldPriceElement = document.querySelector('.price-old')
 	if (oldPriceElement) {
 		const oldPrice = 190
@@ -923,7 +1056,10 @@ function renderAllProducts(productsToRender) {
 	const renderStartTime = performance.now()
 
 	productsToRender.forEach(product => {
-		renderProductCard(product)
+		// Проверяем, является ли этот товар товаром дня
+		const isDailyOffer =
+			dailyOfferProduct && product.id === dailyOfferProduct.id
+		renderProductCard(product, isDailyOffer)
 	})
 
 	const renderEndTime = performance.now()
@@ -1062,16 +1198,25 @@ function handleMouseSwipe(startX, endX, type, productId) {
 	}
 }
 
-function renderProductCard(product) {
+function renderProductCard(product, isDailyOffer = false) {
 	const productCard = document.createElement('div')
 	productCard.className = 'product-card'
 	productCard.dataset.folder = product.folderName
 
+	// Определяем цену в зависимости от того, это товар дня или обычный товар
+	const currentPrice = isDailyOffer ? 120 : 150
+	const oldPrice = isDailyOffer ? 150 : 190
+	const showDiscount = isDailyOffer
+
 	// ВАЖНО: Используем правильные классы, которые определены в CSS
 	productCard.innerHTML = `
-        <div class="product-carousel" data-product-id="${product.id}" style="cursor: pointer;">
+        <div class="product-carousel" data-product-id="${
+					product.id
+				}" style="cursor: pointer;">
             <!-- Контейнер для слайдов с правильным классом -->
-            <div class="product-carousel-slides" data-product-id="${product.id}"></div>
+            <div class="product-carousel-slides" data-product-id="${
+							product.id
+						}"></div>
             
             <!-- Навигационные точки -->
             <div class="product-carousel-controls" id="dots-${product.id}">
@@ -1080,17 +1225,35 @@ function renderProductCard(product) {
             
             <!-- Кнопки навигации -->
             <div class="product-carousel-nav">
-                <button class="product-carousel-btn prev-btn" data-product-id="${product.id}">
+                <button class="product-carousel-btn prev-btn" data-product-id="${
+									product.id
+								}">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                <button class="product-carousel-btn next-btn" data-product-id="${product.id}">
+                <button class="product-carousel-btn next-btn" data-product-id="${
+									product.id
+								}">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
         </div>
         <div class="product-info">
-            <h3 class="product-title" style="cursor: pointer;" data-product-id="${product.id}">${product.name}</h3>
-            <p class="product-price">150 ₽</p>
+            <h3 class="product-title" style="cursor: pointer;" data-product-id="${
+							product.id
+						}">${product.name}</h3>
+            <div class="product-price-container">
+                <span class="product-price">${currentPrice} ₽</span>
+                ${
+									showDiscount
+										? `<span class="product-price-old">${oldPrice} ₽</span>`
+										: ''
+								}
+                ${
+									showDiscount
+										? `<span class="product-discount">-20%</span>`
+										: ''
+								}
+            </div>
             <a href="/purchase/${product.id}" class="btn-buy">
                 <i class="fas fa-shopping-cart"></i> Купить
             </a>
@@ -1104,6 +1267,28 @@ function renderProductCard(product) {
 
 	// Добавляем обработчики кликов на картинку и название
 	addProductClickHandlers(productCard, product.id)
+
+	// Если это товар дня, добавляем специальный бейдж
+	if (isDailyOffer) {
+		const badge = document.createElement('div')
+		badge.className = 'product-daily-badge'
+		badge.innerHTML = '<i class="fas fa-star"></i> ТОВАР ДНЯ'
+		badge.style.cssText = `
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+        `
+		productCard.style.position = 'relative'
+		productCard.appendChild(badge)
+	}
 }
 
 // Добавление обработчиков кликов на картинку и название товара
@@ -1609,7 +1794,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	allProducts = products
 
 	// Инициализируем предложение дня
-	updateDailyOffer()
+	await updateDailyOffer() // Добавили await
 
 	if (allProducts.length > 0) {
 		// 1. Загружаем первые фото каждого товара
