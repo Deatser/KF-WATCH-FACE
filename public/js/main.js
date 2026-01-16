@@ -463,24 +463,24 @@ function initDailyOfferCarousel(product) {
 	}
 
 	// Добавляем поддержку свайпов для карусели предложения дня
-	initSwipeForCarousel(dailyOfferCarousel, 'daily')[
-		// Догружаем остальные фото при hover на карусель
+	initSwipeForCarousel(dailyOfferCarousel, 'daily')
 
-		('mouseenter', 'touchstart', 'pointerenter')
-	].forEach(event => {
-		dailyOfferCarousel.addEventListener(event, function (e) {
-			if (event === 'touchstart') {
-				e.preventDefault()
+	// Останавливаем автопрокрутку при наведении (оставляем для надежности)
+	dailyOfferCarousel.addEventListener('mouseenter', () => {
+		clearInterval(dailyOfferCarouselInterval)
+	})
+
+	dailyOfferCarousel.addEventListener('mouseleave', () => {
+		// Не запускаем автопрокрутку
+	})
+
+	// Догружаем остальные фото при hover на карусель
+	dailyOfferCarousel.addEventListener('mouseenter', function () {
+		const lazyImages = this.querySelectorAll('img[data-src]')
+		lazyImages.forEach(img => {
+			if (img.dataset.src && !img.src) {
+				img.src = img.dataset.src
 			}
-			const lazyImages = this.querySelectorAll('img[data-src]')
-			lazyImages.forEach(img => {
-				if (img.dataset.src && !img.src) {
-					img.src = img.dataset.src
-					img.onload = () => {
-						img.style.opacity = '1'
-					}
-				}
-			})
 		})
 	})
 }
@@ -1126,29 +1126,12 @@ function addProductClickHandlers(productCard, productId) {
 
 		// Добавляем стиль при наведении
 		carousel.style.transition = 'all 0.3s ease'
-		// ЗАМЕНИТЬ блок кода с mouseenter НА:
 		carousel.addEventListener('mouseenter', function () {
 			this.style.transform = 'scale(1.02)'
 			this.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.15)'
-			loadLazyImages(this)
-		})
 
-		carousel.addEventListener('touchstart', function (e) {
-			e.preventDefault()
-			this.style.transform = 'scale(1.02)'
-			this.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.15)'
-			loadLazyImages(this)
-		})
-
-		carousel.addEventListener('pointerenter', function () {
-			this.style.transform = 'scale(1.02)'
-			this.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.15)'
-			loadLazyImages(this)
-		})
-
-		// И добавить вспомогательную функцию (можно в начале файла):
-		function loadLazyImages(container) {
-			const lazyImages = container.querySelectorAll('img[data-src]')
+			// ПРИ НАВЕДЕНИИ: догружаем все фото этого товара
+			const lazyImages = this.querySelectorAll('img[data-src]')
 			lazyImages.forEach(img => {
 				if (img.dataset.src && !img.src) {
 					img.src = img.dataset.src
@@ -1157,7 +1140,7 @@ function addProductClickHandlers(productCard, productId) {
 					}
 				}
 			})
-		}
+		})
 
 		carousel.addEventListener('mouseleave', function () {
 			this.style.transform = 'scale(1)'
