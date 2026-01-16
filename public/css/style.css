@@ -35,13 +35,18 @@ body {
 /* ХЕДЕР И НАВИГАЦИЯ */
 /* ========================================== */
 
+/* В разделе "ХЕДЕР И НАВИГАЦИЯ" обновите .hero-background: */
+
 .hero-background {
 	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
 	position: relative;
 	overflow: hidden;
-	min-height: 61vh;
-	max-height: 90vh;
+	min-height: 40vh; /* Уменьшено с 61vh */
+	max-height: 60vh; /* Уменьшено с 90vh */
 	width: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 }
 
 .hero-background::before {
@@ -657,26 +662,119 @@ body {
 /* ПРЕДЛОЖЕНИЕ ДНЯ - ОБНОВЛЕННАЯ СТРУКТУРА */
 /* ========================================== */
 
+/* В разделе "ПРЕДЛОЖЕНИЕ ДНЯ - ОБНОВЛЕННАЯ СТРУКТУРА" обновите: */
+
 .daily-offer-background {
 	background: white;
 	border-radius: 20px;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-	margin: 40px auto;
+	margin: 30px auto; /* Уменьшено с 40px */
 	width: fit-content;
 	max-width: none;
+	flex-grow: 1; /* Растягивается чтобы занять доступное пространство */
 }
 
 .daily-offer {
-	padding: 40px;
+	padding: 30px; /* Уменьшено с 40px */
 	background: white;
 	border-radius: 20px;
 	width: 100%;
 	box-sizing: border-box;
+	height: 100%;
+}
+
+/* Уменьшим размер карусели предложения дня */
+.daily-offer-carousel {
+	width: 580px; /* Уменьшено с 650px */
+	max-width: 100%;
+}
+
+/* Уменьшим отступы в деталях предложения дня */
+.daily-offer-details {
+	padding-top: 0; /* Убрать отступ сверху */
+	margin-top: -40px; /* Поднять весь блок вверх */
+	min-width: 380px; /* Уменьшено с 400px */
+	max-width: 420px; /* Уменьшено с 450px */
+	display: flex;
+	flex-direction: column;
+	gap: 10px; /* Уменьшено с 20px */
+}
+
+/* Уменьшим размер названия часов */
+.daily-offer-watch-name {
+	font-size: 2.2rem; /* Уменьшено с 2.5rem */
+	font-weight: 700;
+	color: #1a1a1a;
+	margin: 0 0 8px 0; /* Уменьшено с 10px */
+	line-height: 1.2;
+	text-align: left !important;
+	align-self: flex-start;
+	width: 100%;
+}
+
+/* Уменьшим размер цен */
+.daily-offer-price .price {
+	font-size: 2.6rem; /* Уменьшено с 3rem */
+	font-weight: 800;
+	color: #ff6b6b;
+}
+
+.daily-offer-price .price-old {
+	font-size: 1.8rem; /* Уменьшено с 2rem */
+	color: #999;
+	text-decoration: line-through;
+}
+
+/* Уменьшим кнопку покупки */
+#dailyOfferBuyButton {
+	padding: 18px 25px; /* Уменьшено с 20px 30px */
+	font-size: 1.1rem; /* Уменьшено с 1.2rem */
+	/* остальные стили без изменений */
+}
+
+/* Уменьшим статистику */
+.daily-offer-stats .stat {
+	padding: 14px 18px; /* Уменьшено с 16px 20px */
+	font-size: 0.95rem; /* Если нужно уменьшить текст */
+}
+
+.daily-offer-stats .stat i {
+	font-size: 1.2rem; /* Уменьшено с 1.3rem */
+}
+
+.daily-offer-stats .stat span {
+	font-size: 1rem; /* Уменьшено с 1.1rem */
+}
+
+/* В медиа-запросах для планшетов добавьте: */
+@media (max-width: 992px) {
+	.hero-background {
+		min-height: 45vh;
+		max-height: 65vh;
+	}
+
+	.daily-offer-background {
+		margin: 20px auto;
+	}
+}
+
+/* В медиа-запросах для телефонов: */
+@media (max-width: 768px) {
+	.hero-background {
+		min-height: 40vh;
+		max-height: none; /* Убираем ограничение для мобильных */
+		padding-bottom: 30px;
+	}
+
+	.daily-offer {
+		padding: 25px 20px;
+	}
 }
 
 .daily-offer-content {
 	width: 100%;
-	max-width: 1400px;
+	max-width: 1250px;
+	max-height: 650px;
 	margin: 0 auto;
 }
 
@@ -743,7 +841,7 @@ body {
 
 /* КАРУСЕЛЬ БОЛЬШОГО РАЗМЕРА */
 .daily-offer-carousel {
-	width: 650px; /* УВЕЛИЧЕННЫЙ РАЗМЕР */
+	width: 500px; /* УВЕЛИЧЕННЫЙ РАЗМЕР */
 	max-width: 100%;
 }
 
@@ -770,6 +868,7 @@ body {
 }
 
 .daily-offer-details {
+	transform: scale(0.85);
 	min-width: 400px;
 	max-width: 450px;
 	display: flex;
