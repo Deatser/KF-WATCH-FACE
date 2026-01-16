@@ -78,6 +78,7 @@ async function loadProductsFromWatch() {
 		}
 
 		console.log(`Загружено ${data.folders.length} папок из watch`)
+		console.log(`====================================================`)
 
 		// Преобразуем папки в товары
 		const products = await Promise.all(
@@ -166,6 +167,126 @@ function calculatePriceFromFolderName(folderName) {
 	return 150
 }
 
+// Функция: Приоритетная загрузка первого фото каждого товара
+async function loadPriorityImages(products) {
+	const priorityPromises = []
+	const startTime = performance.now()
+
+	products.forEach(product => {
+		if (product.images && product.images.length > 0) {
+			// Загружаем только ПЕРВОЕ фото каждого товара
+			const firstImage = product.images[0]
+			if (firstImage.url) {
+				const promise = new Promise(resolve => {
+					const img = new Image()
+					img.src = firstImage.url
+
+					img.onload = () => {
+						resolve({ success: true, product: product.name })
+					}
+					img.onerror = () => {
+						resolve({ success: false, product: product.name })
+					}
+				})
+				priorityPromises.push(promise)
+			}
+		}
+	})
+
+	const results = await Promise.allSettled(priorityPromises)
+
+	const endTime = performance.now()
+	const loadingTime = ((endTime - startTime) / 1000).toFixed(2)
+
+	const successCount = results.filter(
+		r => r.status === 'fulfilled' && r.value.success
+	).length
+	const failedCount = priorityPromises.length - successCount
+
+	console.log(
+		`Завершена Загрузка первых фото: ${(endTime - startTime).toFixed(2)}ms`
+	)
+
+	return endTime - startTime // Возвращаем время в мс
+}
+
+// Функция: Фоновая загрузка остальных фото
+async function loadRemainingImagesBackground(products) {
+	console.time('Загрузка остальных фото')
+	const startTime = performance.now()
+
+	let remainingImagesCount = 0
+	let loadedCount = 0
+	let failedCount = 0
+
+	// Подсчитываем общее количество оставшихся фото
+	products.forEach(product => {
+		if (product.images && product.images.length > 1) {
+			remainingImagesCount += product.images.length - 1
+		}
+	})
+
+	if (remainingImagesCount === 0) {
+		console.log('ℹ️ Нет дополнительных фото для загрузки')
+		console.timeEnd('Загрузка остальных фото')
+		return { time: 0, loaded: 0, total: 0 }
+	}
+
+	console.log(
+		`📊 Всего дополнительных фото для фоновой загрузки: ${remainingImagesCount}`
+	)
+
+	const loadPromises = []
+
+	products.forEach(product => {
+		if (product.images && product.images.length > 1) {
+			// Пропускаем первое фото (оно уже загружено)
+			const remainingImages = product.images.slice(1)
+
+			remainingImages.forEach(image => {
+				if (image.url) {
+					const promise = new Promise(resolve => {
+						const img = new Image()
+						img.src = image.url
+
+						img.onload = () => {
+							loadedCount++
+							resolve({ success: true })
+						}
+
+						img.onerror = () => {
+							loadedCount++
+							failedCount++
+							resolve({ success: false })
+						}
+					})
+					loadPromises.push(promise)
+				}
+			})
+		}
+	})
+
+	console.log('⏳ Загрузка остальных фото началась...')
+
+	// Ждем завершения ВСЕХ фото
+	await Promise.allSettled(loadPromises)
+
+	const endTime = performance.now()
+	const totalTime = endTime - startTime
+
+	console.timeEnd('Загрузка остальных фото')
+	console.log(`✅ Загрузка остальных фото завершена: ${totalTime.toFixed(2)}ms`)
+	console.log(`📊 Загружено: ${loadedCount}/${remainingImagesCount} фото`)
+	console.log(`❌ Не удалось загрузить: ${failedCount} фото`)
+
+	return {
+		time: totalTime,
+		loaded: loadedCount,
+		total: remainingImagesCount,
+		failed: failedCount,
+	}
+}
+
 // Инициализация карусели для предложения дня
 function initDailyOfferCarousel(product) {
 	// Если нет товара дня, используем заглушку
@@ -209,7 +330,15 @@ function initDailyOfferCarousel(product) {
 		if (image.url && image.type !== 'placeholder') {
 			// Реальное изображение
 			const img = document.createElement('img')
-			img.src = image.url
+
+			// ПРИОРИТЕТНАЯ ЗАГРУЗКА: первое фото сразу, остальные lazy
+			if (index === 0) {
+				img.src = image.url // Первое фото уже загружено
+			} else {
+				img.dataset.src = image.url // Остальные - lazy
+				img.style.opacity = '0.7' // Полупрозрачные пока не загружены
+			}
+
 			img.alt = `Фото ${product.name} - ${index + 1}`
 			img.style.cssText = `
                 width: 100%;
@@ -217,12 +346,19 @@ function initDailyOfferCarousel(product) {
                 object-fit: cover;
                 border-radius: 16px;
                 cursor: pointer;
-                transition: transform 0.3s ease;
+                transition: transform 0.3s ease, opacity 0.3s ease;
             `
 			img.onerror = function () {
 				// Если изображение не загрузилось, показываем заглушку
 				showPlaceholderImage(imageDiv, index)
 			}
+
+			img.onload = function () {
+				if (index > 0) {
+					this.style.opacity = '1'
+				}
+			}
+
 			imageDiv.appendChild(img)
 		} else {
 			// Заглушка
@@ -279,16 +415,23 @@ function initDailyOfferCarousel(product) {
 	// Добавляем поддержку свайпов для карусели предложения дня
 	initSwipeForCarousel(dailyOfferCarousel, 'daily')
 
-	// Автопрокрутка карусели
-	startDailyOfferCarouselAutoPlay()
-
-	// Останавливаем автопрокрутку при наведении
+	// Останавливаем автопрокрутку при наведении (оставляем для надежности)
 	dailyOfferCarousel.addEventListener('mouseenter', () => {
 		clearInterval(dailyOfferCarouselInterval)
 	})
 
 	dailyOfferCarousel.addEventListener('mouseleave', () => {
-		startDailyOfferCarouselAutoPlay()
+		// Не запускаем автопрокрутку
+	})
+
+	// Догружаем остальные фото при hover на карусель
+	dailyOfferCarousel.addEventListener('mouseenter', function () {
+		const lazyImages = this.querySelectorAll('img[data-src]')
+		lazyImages.forEach(img => {
+			if (img.dataset.src && !img.src) {
+				img.src = img.dataset.src
+			}
+		})
 	})
 }
 
@@ -339,13 +482,9 @@ function initDailyOfferCarouselPlaceholder() {
 
 	// Добавляем поддержку свайпов для заглушки
 	initSwipeForCarousel(dailyOfferCarousel, 'daily')
-
-	// Автопрокрутка карусели
-	startDailyOfferCarouselAutoPlay()
 }
 
 // Обновление информации о предложении дня
-
 function updateDailyOfferInfo(product) {
 	const formattedName = product.name
 
@@ -374,6 +513,7 @@ function updateDailyOfferInfo(product) {
 		dailyOfferOldPrice.textContent = `${formatPrice(oldPrice)} ₽`
 	}
 }
+
 // Переход к определенному слайду в карусели предложения дня
 function goToDailyOfferSlide(index) {
 	// Корректируем индекс
@@ -409,7 +549,7 @@ function goToDailyOfferSlide(index) {
 	})
 }
 
-// Автопрокрутка карусели предложения дня
+// Автопрокрутка карусели предложения дня (НЕ ИСПОЛЬЗУЕТСЯ - закомментировано)
 function startDailyOfferCarouselAutoPlay() {
 	clearInterval(dailyOfferCarouselInterval)
 	dailyOfferCarouselInterval = setInterval(() => {
@@ -489,7 +629,6 @@ function initOfferTimer() {
 		timerSeconds.textContent = seconds.toString().padStart(2, '0')
 	}
 
-	// Обновляем сразу и затем каждую секунду
 	updateTimer()
 	offerTimerInterval = setInterval(updateTimer, 1000)
 }
@@ -674,9 +813,6 @@ function initNewProductCarouselPlaceholder() {
 
 	// Добавляем поддержку свайпов для заглушки
 	initSwipeForCarousel(newProductCarousel, 'new')
-
-	// Автопрокрутка карусели
-	startNewProductCarouselAutoPlay()
 }
 
 // Переход к определенному слайду в карусели новинки
@@ -714,22 +850,25 @@ function goToNewProductSlide(index) {
 	})
 }
 
-// Автопрокрутка карусели новинки
-let newProductCarouselInterval
-function startNewProductCarouselAutoPlay() {
-	clearInterval(newProductCarouselInterval)
-	newProductCarouselInterval = setInterval(() => {
-		goToNewProductSlide(newProductCurrentSlide + 1)
-	}, 5000)
-}
-
 // Функция для отображения ВСЕХ товаров сразу
 function renderAllProducts(productsToRender) {
+	const renderStartTime = performance.now()
+
 	productsToRender.forEach(product => {
 		renderProductCard(product)
 	})
+
+	const renderEndTime = performance.now()
+	const renderTime = renderEndTime - renderStartTime
+
+	console.log(
+		`✅ Отрисовка фото и создание карточек товаров: ${renderTime.toFixed(2)}ms`
+	)
+
 	// После отрисовки всех товаров инициализируем свайпы для всех каруселей
 	initSwipeForAllProductCarousels()
+
+	return renderTime
 }
 
 // Инициализация свайпов для всех карточек товаров
@@ -918,6 +1057,17 @@ function addProductClickHandlers(productCard, productId) {
 		carousel.addEventListener('mouseenter', function () {
 			this.style.transform = 'scale(1.02)'
 			this.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.15)'
+
+			// ПРИ НАВЕДЕНИИ: догружаем все фото этого товара
+			const lazyImages = this.querySelectorAll('img[data-src]')
+			lazyImages.forEach(img => {
+				if (img.dataset.src && !img.src) {
+					img.src = img.dataset.src
+					img.onload = () => {
+						img.style.opacity = '1'
+					}
+				}
+			})
 		})
 
 		carousel.addEventListener('mouseleave', function () {
@@ -979,13 +1129,22 @@ function initProductCarousel(productId, images, hasRealImages) {
             `
 
 			const img = document.createElement('img')
-			img.src = image.url
+
+			// ПРИОРИТЕТНАЯ ЗАГРУЗКА: первое фото сразу, остальные lazy
+			if (index === 0) {
+				img.src = image.url // Первое фото уже загружено
+			} else {
+				img.dataset.src = image.url // Остальные - lazy
+				img.style.opacity = '0.5' // Полупрозрачные пока не загружены
+			}
+
 			img.alt = `Фото товара ${index + 1}`
 			img.style.cssText = `
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
                 display: block;
+                transition: opacity 0.3s ease;
             `
 			img.onerror = function () {
 				// Если изображение не загрузилось, показываем заглушку
@@ -1008,6 +1167,12 @@ function initProductCarousel(productId, images, hasRealImages) {
                 `
 				fallback.appendChild(icon)
 				slide.appendChild(fallback)
+			}
+
+			img.onload = function () {
+				if (index > 0) {
+					this.style.opacity = '1'
+				}
 			}
 
 			slide.appendChild(img)
@@ -1339,6 +1504,9 @@ function adjustCatalogLayout() {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
+	console.log('⏱️ Начало загрузки страницы')
+	const pageLoadStartTime = performance.now()
+
 	initFixedHeader()
 	initAboutModal()
 	initInstallGuideLinks()
@@ -1358,11 +1526,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 	updateDailyOffer()
 
 	if (allProducts.length > 0) {
-		// Загружаем ВСЕ товары сразу (без бесконечной прокрутки)
-		renderAllProducts(allProducts)
+		// 1. Загружаем первые фото каждого товара
+		const firstImagesTime = await loadPriorityImages(allProducts)
 
-		// Скрываем индикатор загрузки
-		loadingIndicator.style.display = 'none'
+		// 2. Рендерим товары с уже загруженными первыми фото
+		const renderTime = renderAllProducts(allProducts)
+
+		// 3. Выводим итоговое время для видимости товаров
+		const firstVisibleTime = firstImagesTime + renderTime
+		console.log(
+			`✅ Итоговое время загрузки чтобы было видно товары с первым фото: ${firstVisibleTime.toFixed(
+				2
+			)}ms - Сайт можно смотреть и ПЕРВЫЕ фото есть`
+		)
+
+		// 4. В фоне загружаем остальные фото и ждем их завершения
+		const remainingImagesResult = await loadRemainingImagesBackground(
+			allProducts
+		) // ЖДЕМ ЗАВЕРШЕНИЯ
+
+		// 5. Выводим финальный лог
+		const totalLoadTime = performance.now() - pageLoadStartTime
+		console.log(
+			`✅ Финальная загрузка страницы - ${totalLoadTime.toFixed(
+				2
+			)}ms Вообще все ${remainingImagesResult.loaded} фото загружены`
+		)
+		console.log(
+			`🎉 Полное время загрузки страницы: ${totalLoadTime.toFixed(2)}ms`
+		)
 	} else {
 		// Если нет товаров
 		loadingIndicator.style.display = 'none'
