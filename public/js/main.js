@@ -49,6 +49,9 @@ let touchEndX = 0
 let touchStartY = 0
 let touchEndY = 0
 
+// Таймер для периодической проверки изображений
+let imageCheckInterval
+
 // Функция для извлечения номера из имени папки KF###
 function extractFolderNumber(folderName) {
 	const match = folderName.match(/KF(\d{3})/i)
@@ -287,6 +290,49 @@ async function loadRemainingImagesBackground(products) {
 	}
 }
 
+// НОВАЯ ФУНКЦИЯ: Проверка и обновление изображений при взаимодействии
+function checkAndUpdateImagesOnInteraction() {
+	// Проверяем все ленивые изображения в карусели предложения дня
+	const dailyCarousel = document.getElementById('dailyOfferCarousel')
+	if (dailyCarousel) {
+		const lazyImages = dailyCarousel.querySelectorAll('img[data-src]')
+		lazyImages.forEach(img => {
+			if (img.dataset.src && !img.src) {
+				img.src = img.dataset.src
+				img.onload = () => {
+					img.style.opacity = '1'
+				}
+			}
+		})
+	}
+
+	// Проверяем все ленивые изображения в карточках товаров
+	document.querySelectorAll('.product-carousel').forEach(carousel => {
+		const lazyImages = carousel.querySelectorAll('img[data-src]')
+		lazyImages.forEach(img => {
+			if (img.dataset.src && !img.src) {
+				img.src = img.dataset.src
+				img.onload = () => {
+					img.style.opacity = '1'
+				}
+			}
+		})
+	})
+}
+
+// НОВАЯ ФУНКЦИЯ: Запуск периодической проверки изображений
+function startPeriodicImageCheck() {
+	// Останавливаем предыдущий интервал, если он есть
+	if (imageCheckInterval) {
+		clearInterval(imageCheckInterval)
+	}
+
+	// Запускаем проверку каждую секунду
+	imageCheckInterval = setInterval(() => {
+		checkAndUpdateImagesOnInteraction()
+	}, 1000) // Проверка каждую секунду
+}
+
 // Инициализация карусели для предложения дня
 function initDailyOfferCarousel(product) {
 	// Если нет товара дня, используем заглушку
@@ -381,6 +427,8 @@ function initDailyOfferCarousel(product) {
 		btn.addEventListener('click', e => {
 			e.stopPropagation()
 			goToDailyOfferSlide(dailyOfferCurrentSlide - 1)
+			// НОВОЕ: Проверяем и обновляем изображения при клике
+			checkAndUpdateImagesOnInteraction()
 		})
 	})
 
@@ -388,6 +436,8 @@ function initDailyOfferCarousel(product) {
 		btn.addEventListener('click', e => {
 			e.stopPropagation()
 			goToDailyOfferSlide(dailyOfferCurrentSlide + 1)
+			// НОВОЕ: Проверяем и обновляем изображения при клике
+			checkAndUpdateImagesOnInteraction()
 		})
 	})
 
@@ -469,15 +519,19 @@ function initDailyOfferCarouselPlaceholder() {
 
 	// Добавляем обработчики для кнопок навигации
 	document.querySelectorAll('.carousel-btn.prev-btn').forEach(btn => {
-		btn.addEventListener('click', () =>
+		btn.addEventListener('click', () => {
 			goToDailyOfferSlide(dailyOfferCurrentSlide - 1)
-		)
+			// НОВОЕ: Проверяем и обновляем изображения при клике
+			checkAndUpdateImagesOnInteraction()
+		})
 	})
 
 	document.querySelectorAll('.carousel-btn.next-btn').forEach(btn => {
-		btn.addEventListener('click', () =>
+		btn.addEventListener('click', () => {
 			goToDailyOfferSlide(dailyOfferCurrentSlide + 1)
-		)
+			// НОВОЕ: Проверяем и обновляем изображения при клике
+			checkAndUpdateImagesOnInteraction()
+		})
 	})
 
 	// Добавляем поддержку свайпов для заглушки
@@ -547,6 +601,9 @@ function goToDailyOfferSlide(index) {
 			dot.style.boxShadow = 'none'
 		}
 	})
+
+	// НОВОЕ: Проверяем и обновляем изображения при смене слайда
+	checkAndUpdateImagesOnInteraction()
 }
 
 // Автопрокрутка карусели предложения дня (НЕ ИСПОЛЬЗУЕТСЯ - закомментировано)
@@ -668,7 +725,11 @@ function createCarouselDot(index) {
 	const dot = document.createElement('button')
 	dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`
 	dot.dataset.index = index
-	dot.addEventListener('click', () => goToNewProductSlide(index))
+	dot.addEventListener('click', () => {
+		goToNewProductSlide(index)
+		// НОВОЕ: Проверяем и обновляем изображения при клике
+		checkAndUpdateImagesOnInteraction()
+	})
 	dot.style.cssText = `
         width: 12px;
         height: 12px;
@@ -800,15 +861,19 @@ function initNewProductCarouselPlaceholder() {
 
 	// Добавляем обработчики для кнопок навигации
 	document.querySelectorAll('.carousel-btn.prev-btn').forEach(btn => {
-		btn.addEventListener('click', () =>
+		btn.addEventListener('click', () => {
 			goToNewProductSlide(newProductCurrentSlide - 1)
-		)
+			// НОВОЕ: Проверяем и обновляем изображения при клике
+			checkAndUpdateImagesOnInteraction()
+		})
 	})
 
 	document.querySelectorAll('.carousel-btn.next-btn').forEach(btn => {
-		btn.addEventListener('click', () =>
+		btn.addEventListener('click', () => {
 			goToNewProductSlide(newProductCurrentSlide + 1)
-		)
+			// НОВОЕ: Проверяем и обновляем изображения при клике
+			checkAndUpdateImagesOnInteraction()
+		})
 	})
 
 	// Добавляем поддержку свайпов для заглушки
@@ -848,6 +913,9 @@ function goToNewProductSlide(index) {
 			dot.style.boxShadow = 'none'
 		}
 	})
+
+	// НОВОЕ: Проверяем и обновляем изображения при смене слайда
+	checkAndUpdateImagesOnInteraction()
 }
 
 // Функция для отображения ВСЕХ товаров сразу
@@ -894,6 +962,8 @@ function initSwipeForCarousel(carousel, type, productId = null) {
 		touchEndX = e.changedTouches[0].screenX
 		touchEndY = e.changedTouches[0].screenY
 		handleSwipeGesture(type, productId)
+		// НОВОЕ: Проверяем и обновляем изображения после свайпа
+		checkAndUpdateImagesOnInteraction()
 	})
 
 	// Также добавим поддержку мыши для тестирования
@@ -907,6 +977,8 @@ function initSwipeForCarousel(carousel, type, productId = null) {
 	carousel.addEventListener('mouseup', function (e) {
 		mouseUpX = e.clientX
 		handleMouseSwipe(mouseDownX, mouseUpX, type, productId)
+		// НОВОЕ: Проверяем и обновляем изображения после свайпа мышью
+		checkAndUpdateImagesOnInteraction()
 	})
 }
 
@@ -1220,7 +1292,11 @@ function initProductCarousel(productId, images, hasRealImages) {
 				}
 			})
 
-			dot.addEventListener('click', () => goToProductSlide(productId, index))
+			dot.addEventListener('click', () => {
+				goToProductSlide(productId, index)
+				// НОВОЕ: Проверяем и обновляем изображения при клике на точку
+				checkAndUpdateImagesOnInteraction()
+			})
 			dotsContainer.appendChild(dot)
 		})
 	} else {
@@ -1308,7 +1384,11 @@ function initProductCarousel(productId, images, hasRealImages) {
 				}
 			})
 
-			dot.addEventListener('click', () => goToProductSlide(productId, i))
+			dot.addEventListener('click', () => {
+				goToProductSlide(productId, i)
+				// НОВОЕ: Проверяем и обновляем изображения при клике на точку
+				checkAndUpdateImagesOnInteraction()
+			})
 			dotsContainer.appendChild(dot)
 		}
 	}
@@ -1332,6 +1412,9 @@ function initProductCarousel(productId, images, hasRealImages) {
 				} else if (e.target.closest('.next-btn')) {
 					goToProductSlide(productId, (currentSlide + 1) % totalSlides)
 				}
+
+				// НОВОЕ: Проверяем и обновляем изображения при клике на кнопки
+				checkAndUpdateImagesOnInteraction()
 			})
 		})
 }
@@ -1397,6 +1480,9 @@ function goToProductSlide(productId, index) {
 			dot.style.boxShadow = 'none'
 		}
 	})
+
+	// НОВОЕ: Проверяем и обновляем изображения при смене слайда
+	checkAndUpdateImagesOnInteraction()
 }
 
 // Вспомогательная функция для форматирования цены
@@ -1545,7 +1631,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 			allProducts
 		) // ЖДЕМ ЗАВЕРШЕНИЯ
 
-		// 5. Выводим финальный лог
+		// 5. НОВОЕ: Запускаем периодическую проверку изображений
+		startPeriodicImageCheck()
+
+		// 6. Выводим финальный лог
 		const totalLoadTime = performance.now() - pageLoadStartTime
 		console.log(
 			`✅ Финальная загрузка страницы - ${totalLoadTime.toFixed(
