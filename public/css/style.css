@@ -40,13 +40,18 @@ body {
 .hero-background {
 	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
 	position: relative;
-	overflow: hidden;
-	min-height: 40vh; /* Уменьшено с 61vh */
-	max-height: 60vh; /* Уменьшено с 90vh */
+	overflow: visible; /* Изменено с hidden на visible */
+	min-height: auto; /* Убрано фиксированное значение */
+	height: auto; /* Автоматическая высота */
+	max-height: none; /* Убрано ограничение */
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
+	/* УБЕРИТЕ: justify-content: space-between; */
+	/* ДОБАВЬТЕ ВМЕСТО: */
+	justify-content: center; /* Центрируем по вертикали */
+	align-items: center; /* Центрируем по горизонтали */
+	padding: 20px 0; /* Добавляем одинаковые отступы сверху и снизу */
 }
 
 .hero-background::before {
@@ -323,25 +328,24 @@ body {
 /* ========================================== */
 
 .new-arrival {
-	padding-top: 10%;
-	padding-bottom: 20px;
+	padding-top: 0; /* Убрано 10% */
+	padding-bottom: 0; /* Убрано 20px */
 	position: relative;
 	width: 100%;
 	height: auto;
-	min-height: 400px;
+	min-height: auto; /* Изменено с 400px */
 	max-height: none;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
-
 .new-product-wrapper {
 	width: 100%;
 	height: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 15px;
+	padding: 0; /* Уберите padding если он есть */
 }
 
 .new-product {
@@ -352,12 +356,13 @@ body {
 	width: 100%;
 	max-width: 1150px;
 	height: auto;
-	min-height: 400px;
+	min-height: auto; /* Изменено с 400px */
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	position: relative;
 	backdrop-filter: blur(8px);
+	margin: 0; /* Уберите margin если он есть */
 }
 
 .new-product-content {
@@ -668,10 +673,15 @@ body {
 	background: white;
 	border-radius: 20px;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-	margin: 30px auto; /* Уменьшено с 40px */
+	margin: 0 auto; /* Изменено с 30px auto */
 	width: fit-content;
 	max-width: none;
-	flex-grow: 1; /* Растягивается чтобы занять доступное пространство */
+	/* УБЕРИТЕ: flex-grow: 1; */
+	/* ДОБАВЬТЕ ВМЕСТО: */
+	flex-shrink: 0; /* Не сжимается */
+	overflow: visible; /* Добавлено */
+	height: auto; /* Добавлено */
+	min-height: auto; /* Добавлено */
 }
 
 .daily-offer {
@@ -680,9 +690,10 @@ body {
 	border-radius: 20px;
 	width: 100%;
 	box-sizing: border-box;
-	height: 100%;
+	height: auto; /* Изменено с 100% на auto */
+	min-height: auto; /* Добавлено */
+	overflow: visible; /* Добавлено */
 }
-
 /* Уменьшим размер карусели предложения дня */
 .daily-offer-carousel {
 	width: 580px; /* Уменьшено с 650px */
@@ -760,35 +771,79 @@ body {
 /* В медиа-запросах для планшетов добавьте: */
 @media (max-width: 992px) {
 	.hero-background {
-		min-height: 45vh;
-		max-height: 65vh;
+		min-height: auto; /* Убрано фиксированное значение */
+		max-height: none; /* Убрано ограничение */
+		padding: 15px 0; /* Уменьшенный отступ */
 	}
 
 	.daily-offer-background {
 		margin: 20px auto;
+		width: calc(100% - 40px); /* Занимает всю ширину с отступами */
 	}
 }
 
 /* В медиа-запросах для телефонов: */
 @media (max-width: 768px) {
 	.hero-background {
-		min-height: 40vh;
-		max-height: none; /* Убираем ограничение для мобильных */
-		padding-bottom: 30px;
+		min-height: auto; /* Убрано фиксированное значение */
+		max-height: none; /* Убрано ограничение */
+		padding: 10px 0; /* Уменьшенный отступ */
+		overflow: visible; /* Добавлено */
 	}
 
 	.daily-offer {
 		padding: 25px 20px;
+		height: auto; /* Добавлено */
+		min-height: auto; /* Добавлено */
+		overflow: visible; /* Добавлено */
+	}
+
+	.daily-offer-content {
+		max-height: none; /* Убрано ограничение */
+		overflow: visible; /* Добавлено */
+	}
+
+	.daily-offer-main {
+		display: flex; /* Изменено с grid на flex */
+		flex-direction: column; /* Колонкой на мобильных */
+		gap: 30px; /* Уменьшен отступ */
+		align-items: center;
+		width: 100%;
+		height: auto; /* Добавлено */
+	}
+
+	.daily-offer-carousel {
+		width: 100%;
+		max-width: 500px; /* Ограничение максимальной ширины */
+		height: auto; /* Добавлено */
+	}
+
+	.daily-offer-details {
+		min-width: auto; /* Убрано фиксированное значение */
+		max-width: 500px; /* Ограничение максимальной ширины */
+		width: 100%;
+		transform: none; /* Убрано масштабирование */
+		padding: 0 10px; /* Добавлены отступы */
+		box-sizing: border-box;
+	}
+
+	.daily-offer-header {
+		flex-direction: column;
+		gap: 15px;
+		align-items: center;
+		padding-left: 0; /* Убрано смещение */
+		text-align: center;
 	}
 }
 
 .daily-offer-content {
 	width: 100%;
 	max-width: 1250px;
-	max-height: 650px;
+	max-height: none; /* Убрано ограничение */
+	height: auto; /* Добавлено */
 	margin: 0 auto;
+	overflow: visible; /* Добавлено */
 }
-
 .daily-offer-header {
 	display: flex;
 	justify-content: space-between;
@@ -2907,5 +2962,124 @@ body {
 	.burger-link {
 		padding: 8px 12px;
 		font-size: 0.9rem;
+	}
+}
+
+/* Малые телефоны (до 576px) */
+@media (max-width: 576px) {
+	.hero-background {
+		padding: 5px 0; /* Минимальный отступ */
+		overflow: visible; /* Добавлено */
+	}
+
+	.daily-offer-background {
+		width: calc(100% - 20px); /* Уменьшены отступы */
+		margin: 15px auto;
+	}
+
+	.daily-offer {
+		padding: 20px 15px;
+	}
+
+	.daily-offer-carousel {
+		max-width: 100%; /* Занимает всю ширину */
+	}
+
+	.daily-offer-carousel .carousel-container {
+		max-height: 350px; /* Ограничение высоты карусели */
+	}
+
+	.daily-offer-details {
+		padding: 0 5px; /* Уменьшены отступы */
+	}
+
+	.daily-offer-watch-name {
+		font-size: 1.8rem;
+		text-align: center; /* Центрирование на мобильных */
+	}
+
+	.daily-offer-price {
+		flex-wrap: wrap; /* Перенос цен на маленьких экранах */
+		justify-content: center;
+	}
+
+	.daily-offer-stats {
+		margin-top: 15px;
+	}
+
+	.daily-offer-stats .stat {
+		padding: 10px 12px; /* Уменьшены отступы */
+	}
+
+	#dailyOfferBuyButton {
+		padding: 14px 20px;
+		font-size: 1rem;
+	}
+}
+
+/* Очень маленькие телефоны (до 400px) */
+@media (max-width: 400px) {
+	.daily-offer-background {
+		width: calc(100% - 10px); /* Еще меньше отступы */
+		margin: 10px auto 20px;
+		border-radius: 12px;
+	}
+
+	.daily-offer {
+		padding: 15px 10px;
+		border-radius: 12px;
+	}
+
+	.daily-offer-carousel .carousel-container {
+		max-height: 300px; /* Еще меньше высота карусели */
+	}
+
+	.daily-offer-watch-name {
+		font-size: 1.6rem;
+	}
+
+	.daily-offer-price .price {
+		font-size: 1.8rem;
+	}
+
+	.daily-offer-price .price-old {
+		font-size: 1.3rem;
+	}
+
+	.daily-offer-stats .stat {
+		padding: 8px 10px;
+		font-size: 0.9rem;
+	}
+
+	.daily-offer-stats .stat i {
+		font-size: 1rem;
+	}
+
+	.daily-offer-stats .stat span {
+		font-size: 0.9rem;
+	}
+}
+
+/* Дополнительный медиа-запрос для очень маленьких экранов в высоту */
+@media (max-height: 700px) and (max-width: 768px) {
+	.hero-background {
+		min-height: auto;
+		height: auto;
+	}
+
+	.daily-offer {
+		padding: 15px;
+	}
+
+	.daily-offer-carousel .carousel-container {
+		max-height: 250px;
+	}
+
+	.daily-offer-stats {
+		display: none; /* Можно скрыть статистику на очень маленьких экранах */
+	}
+
+	.daily-offer-header {
+		margin-bottom: 15px;
 	}
 }
