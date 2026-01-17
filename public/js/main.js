@@ -659,7 +659,7 @@ function updateDailyOfferInfo(product) {
 	// Обновляем название часов (просто KF181 без "Циферблат")
 	const watchNameElement = document.getElementById('dailyOfferWatchName')
 	if (watchNameElement) {
-		watchNameElement.textContent = formattedName // Просто "KF181"
+		watchNameElement.textContent = `Циферблат ${formattedName}` // Добавили "Циферблат"
 		watchNameElement.style.cssText = `
             font-size: 3rem;
             color: #1a1a1a;
@@ -907,7 +907,7 @@ function updateNewProductInfo(product) {
 	// Обновляем заголовок
 	const titleElement = document.querySelector('.new-product-title')
 	if (titleElement) {
-		titleElement.textContent = formattedName
+		titleElement.textContent = `Циферблат ${formattedName}` // Добавьте здесь
 	}
 
 	// Обновляем описание
@@ -1241,7 +1241,7 @@ function renderProductCard(product, isDailyOffer = false) {
         <div class="product-info">
             <h3 class="product-title" style="cursor: pointer;" data-product-id="${
 							product.id
-						}">${product.name}</h3>
+						}">Циферблат ${product.name}</h3>
             <div class="product-price-container">
                 <span class="product-price">${currentPrice} ₽</span>
                 ${
@@ -1291,7 +1291,6 @@ function renderProductCard(product, isDailyOffer = false) {
 		productCard.appendChild(badge)
 	}
 }
-
 // Добавление обработчиков кликов на картинку и название товара
 function addProductClickHandlers(productCard, productId) {
 	// Клик на карусель (картинку)
