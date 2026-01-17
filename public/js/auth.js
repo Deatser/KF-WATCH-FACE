@@ -372,3 +372,37 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}, 500)
 })
+
+// Обновление бургер-меню при изменении статуса авторизации
+function updateBurgerAuthState(user) {
+	const burgerUserInfo = document.getElementById('burgerUserInfo')
+	const burgerUserEmailDisplay = document.getElementById(
+		'burgerUserEmailDisplay'
+	)
+	const burgerLogoutBtn = document.getElementById('burgerLogoutBtn')
+
+	if (burgerUserInfo && burgerUserEmailDisplay && burgerLogoutBtn) {
+		if (user) {
+			burgerUserEmailDisplay.textContent = user.email
+			burgerUserInfo.style.display = 'block'
+
+			burgerLogoutBtn.addEventListener('click', function () {
+				logoutUser()
+			})
+		} else {
+			burgerUserInfo.style.display = 'none'
+		}
+	}
+}
+
+// Вызовите эту функцию при инициализации и изменении статуса авторизации
+// Добавьте в конец функции initializeAuth():
+if (user) {
+	updateBurgerAuthState(user)
+}
+
+// И в функцию loginUser() после успешного входа:
+updateBurgerAuthState(user)
+
+// И в функцию logoutUser():
+updateBurgerAuthState(null)

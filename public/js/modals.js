@@ -428,6 +428,76 @@ function initPrivacyModal() {
 	})
 }
 
+// Обновленная функция initBurgerMenu
+export function initBurgerMenu() {
+	const burgerBtn = document.getElementById('burgerMenuBtn')
+	const burgerDropdown = document.getElementById('burgerDropdown')
+
+	if (!burgerBtn || !burgerDropdown) return
+
+	// Открытие/закрытие бургер-меню
+	burgerBtn.addEventListener('click', function (e) {
+		e.stopPropagation()
+		burgerDropdown.classList.toggle('show')
+	})
+
+	// Закрытие при клике вне меню
+	document.addEventListener('click', function (e) {
+		if (!burgerDropdown.contains(e.target) && !burgerBtn.contains(e.target)) {
+			burgerDropdown.classList.remove('show')
+		}
+	})
+
+	// Связывание ссылок бургер-меню с существующими модальными окнами
+	document
+		.getElementById('burgerContactsLink')
+		?.addEventListener('click', function (e) {
+			e.preventDefault()
+			burgerDropdown.classList.remove('show')
+			document.getElementById('contactsLink').click()
+		})
+
+	document
+		.getElementById('burgerFaqLink')
+		?.addEventListener('click', function (e) {
+			e.preventDefault()
+			burgerDropdown.classList.remove('show')
+			document.getElementById('faqLink').click()
+		})
+
+	document
+		.getElementById('burgerAboutLink')
+		?.addEventListener('click', function (e) {
+			e.preventDefault()
+			burgerDropdown.classList.remove('show')
+			document.getElementById('aboutLink').click()
+		})
+
+	document
+		.getElementById('burgerInstallGuideLink')
+		?.addEventListener('click', function (e) {
+			e.preventDefault()
+			burgerDropdown.classList.remove('show')
+			document.getElementById('installGuideLink').click()
+		})
+
+	// Для каталога - плавный скролл
+	document
+		.querySelector('.burger-catalog-link')
+		?.addEventListener('click', function (e) {
+			e.preventDefault()
+			burgerDropdown.classList.remove('show')
+			document.querySelector('a[href="#catalog"]').click()
+		})
+
+	// Закрытие меню при клике на любую ссылку внутри
+	document.querySelectorAll('.burger-link').forEach(link => {
+		link.addEventListener('click', function () {
+			burgerDropdown.classList.remove('show')
+		})
+	})
+}
+
 // Экспортируем все функции для использования в main.js
 export {
 	initContactsModal,

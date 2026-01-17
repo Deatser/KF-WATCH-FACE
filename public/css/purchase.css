@@ -1,4 +1,4 @@
-/* purchase.css */
+/* purchase.css - полная версия */
 
 /* Стили для фиксированного хедера на странице покупки */
 .purchase-header {
@@ -105,6 +105,49 @@ body {
 	text-transform: uppercase;
 }
 
+/* Daily бейдж и скидка */
+.daily-badge {
+	background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%) !important;
+	color: white !important;
+	padding: 10px 20px !important;
+	border-radius: 20px !important;
+	font-weight: 700 !important;
+	font-size: 1rem !important;
+	letter-spacing: 0.5px !important;
+	box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3) !important;
+	text-transform: uppercase !important;
+	margin-left: 15px !important;
+	display: inline-block !important;
+}
+
+.discount-badge {
+	background: #ff6b6b !important;
+	color: white !important;
+	padding: 5px 12px !important;
+	border-radius: 8px !important;
+	font-size: 0.9rem !important;
+	font-weight: 700 !important;
+	margin-left: 10px !important;
+	display: inline-block !important;
+}
+
+.current-price.daily-price {
+	color: #ff6b6b !important;
+	font-size: 2.5rem !important;
+	font-weight: 800 !important;
+	display: inline-block;
+}
+
+#oldPrice {
+	text-decoration: line-through !important;
+	color: #999 !important;
+	font-size: 1.1rem !important;
+	margin-left: 15px !important;
+	font-weight: 600 !important;
+	opacity: 0.7 !important;
+	display: inline-block !important;
+}
+
 /* Карусель товара - квадратная как в новинках */
 .product-carousel-large {
 	margin-bottom: 40px;
@@ -151,11 +194,11 @@ body {
 .carousel-controls-large {
 	display: flex;
 	align-items: center;
-	justify-content: center; /* Центрируем весь контейнер */
+	justify-content: center;
 	width: 100%;
-	max-width: 320px; /* Такая же ширина как у картинки */
+	max-width: 320px;
 	margin-top: 15px;
-	gap: 20px; /* Расстояние между кнопками и точками */
+	gap: 20px;
 }
 
 /* Кнопки переключения */
@@ -175,11 +218,11 @@ body {
 	box-shadow: 0 4px 10px rgba(139, 115, 85, 0.2);
 	z-index: 2;
 	flex-shrink: 0;
-	order: 1; /* Левая кнопка - первая */
+	order: 1;
 }
 
 .carousel-nav-btn-outer.next-btn {
-	order: 3; /* Правая кнопка - последняя */
+	order: 3;
 }
 
 .carousel-nav-btn-outer:hover {
@@ -193,8 +236,8 @@ body {
 	gap: 10px;
 	justify-content: center;
 	align-items: center;
-	order: 2; /* Точки в середине */
-	flex: 0 0 auto; /* Не растягивается */
+	order: 2;
+	flex: 0 0 auto;
 }
 
 .carousel-dot-large {
@@ -277,20 +320,6 @@ body {
 	border-radius: 50%;
 	animation: spin 1s linear infinite;
 	margin: 0 auto 15px;
-}
-
-@keyframes spin {
-	0% {
-		transform: rotate(0deg);
-	}
-	100% {
-		transform: rotate(360deg);
-	}
-}
-
-.loading-description p {
-	color: #666;
-	font-size: 1rem;
 }
 
 /* Правая часть: оформление заказа */
@@ -607,14 +636,14 @@ body {
 	font-size: 1.5rem;
 	font-weight: 700;
 	margin-bottom: 20px;
-	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
+	color: #f9f5f0;
 }
 
 .footer-section h4 {
 	font-size: 1.2rem;
 	font-weight: 600;
 	margin-bottom: 20px;
-	color: #f9f5f0; /* Изменено с #8b7355 на #f9f5f0 (белый) */
+	color: #f9f5f0;
 }
 
 .footer-section p {
@@ -678,6 +707,528 @@ body {
 	border-top: 1px solid #333;
 }
 
+/* Стили для меню пользователя на странице покупки */
+.purchase-header .user-menu-container {
+	position: relative;
+}
+
+.purchase-header .user-menu-btn {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1.2rem;
+	color: #4a4a4a;
+	padding: 5px;
+	transition: color 0.3s ease;
+}
+
+.purchase-header .user-menu-btn:hover {
+	color: #8b7355;
+}
+
+.purchase-header .user-menu {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+	padding: 20px;
+	min-width: 280px;
+	z-index: 1000;
+	display: none;
+	margin-top: 10px;
+	animation: fadeIn 0.3s ease;
+}
+
+.purchase-header .user-menu.show {
+	display: block;
+}
+
+.purchase-header .auth-error {
+	color: #ff6b6b;
+	font-size: 0.85rem;
+	margin-bottom: 15px;
+	padding: 8px 12px;
+	background: rgba(255, 107, 107, 0.1);
+	border-radius: 6px;
+	display: none;
+}
+
+.purchase-header .auth-error.show {
+	display: block;
+}
+
+.purchase-header .auth-input {
+	width: 100%;
+	padding: 12px 15px;
+	margin-bottom: 12px;
+	border: 1px solid #e0e0e0;
+	border-radius: 8px;
+	font-family: 'Comfortaa', cursive;
+	font-size: 0.9rem;
+	transition: border-color 0.3s ease;
+}
+
+.purchase-header .auth-input:focus {
+	outline: none;
+	border-color: #8b7355;
+}
+
+.purchase-header .auth-buttons {
+	display: flex;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.purchase-header .auth-btn {
+	flex: 1;
+	padding: 12px;
+	border: none;
+	border-radius: 8px;
+	font-family: 'Comfortaa', cursive;
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.purchase-header .btn-login {
+	background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+	color: white;
+}
+
+.purchase-header .btn-register {
+	background: #f5f5f5;
+	color: #4a4a4a;
+}
+
+.purchase-header .btn-login:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 15px rgba(139, 115, 85, 0.3);
+}
+
+.purchase-header .btn-register:hover {
+	background: #e8e8e8;
+	transform: translateY(-2px);
+}
+
+.purchase-header .btn-logout {
+	width: 100%;
+	padding: 10px;
+	background: #f5f5f5;
+	border: none;
+	border-radius: 8px;
+	font-family: 'Comfortaa', cursive;
+	font-size: 0.9rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.purchase-header .btn-logout:hover {
+	background: #e8e8e8;
+	transform: translateY(-2px);
+}
+
+/* Стиль для ссылки админ панели */
+.purchase-header .admin-link {
+	color: #8b7355 !important;
+	font-weight: 600 !important;
+}
+
+.purchase-header .admin-link i {
+	color: #ffd700 !important;
+	margin-right: 5px;
+}
+
+.purchase-header .admin-link:hover {
+	color: #a89176 !important;
+}
+
+.purchase-header .admin-link:hover i {
+	color: #ffed4e !important;
+}
+
+/* Стили для модальных окон (перенесены из HTML) */
+.about-modal {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.7);
+	z-index: 2000;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	backdrop-filter: blur(5px);
+}
+
+.about-modal.show {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 1;
+}
+
+.about-modal-content {
+	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
+	border-radius: 20px;
+	width: 90%;
+	max-width: 800px;
+	max-height: 80vh;
+	overflow-y: auto;
+	padding: 30px;
+	position: relative;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+	border: 2px solid #8b7355;
+	animation: modalSlideIn 0.4s ease;
+}
+
+.about-modal-close {
+	position: absolute;
+	top: 15px;
+	right: 15px;
+	background: #8b7355;
+	color: white;
+	border: none;
+	border-radius: 50%;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	z-index: 10;
+}
+
+.about-modal-close:hover {
+	background: #a89176;
+	transform: rotate(90deg);
+}
+
+.about-modal-header {
+	text-align: center;
+	margin-bottom: 25px;
+	padding-bottom: 15px;
+	border-bottom: 2px solid rgba(139, 115, 85, 0.3);
+}
+
+.about-modal-header i {
+	font-size: 2.5rem;
+	color: #8b7355;
+	margin-bottom: 10px;
+}
+
+.about-modal-header h2 {
+	color: #1a1a1a;
+	font-size: 1.8rem;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+}
+
+.about-modal-body {
+	color: #4a4a4a;
+}
+
+.about-text {
+	line-height: 1.7;
+}
+
+.about-text p {
+	margin-bottom: 20px;
+	text-align: justify;
+}
+
+.highlight {
+	color: #8b7355;
+	font-weight: 600;
+	font-size: 1.1rem;
+	background: rgba(139, 115, 85, 0.1);
+	padding: 2px 8px;
+	border-radius: 4px;
+}
+
+.feature-section {
+	background: rgba(255, 255, 255, 0.5);
+	border-radius: 12px;
+	padding: 20px;
+	margin-bottom: 20px;
+	border-left: 4px solid #8b7355;
+	transition: transform 0.3s ease;
+}
+
+.feature-section:hover {
+	transform: translateX(5px);
+	background: rgba(255, 255, 255, 0.7);
+}
+
+.feature-section h3 {
+	color: #1a1a1a;
+	font-size: 1.2rem;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.feature-section h3 i {
+	color: #8b7355;
+	font-size: 1rem;
+}
+
+.platform-info {
+	background: linear-gradient(
+		135deg,
+		rgba(139, 115, 85, 0.1) 0%,
+		rgba(168, 145, 118, 0.1) 100%
+	);
+	border-radius: 12px;
+	padding: 20px;
+	margin-bottom: 20px;
+	text-align: center;
+}
+
+.platform-info h3 {
+	color: #1a1a1a;
+	font-size: 1.2rem;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+}
+
+.platform-info h3 i {
+	color: #8b7355;
+	font-size: 1.2rem;
+}
+
+.final-message {
+	text-align: center;
+	padding: 20px;
+	background: rgba(139, 115, 85, 0.1);
+	border-radius: 12px;
+	margin-top: 25px;
+	border: 1px solid rgba(139, 115, 85, 0.2);
+}
+
+.final-message p {
+	font-size: 1.1rem;
+	color: #1a1a1a;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	margin-bottom: 0;
+}
+
+.final-message i {
+	color: #8b7355;
+}
+
+.about-text strong {
+	color: #8b7355;
+	font-weight: 600;
+}
+
+/* Стили для длинных текстов в модальных окнах */
+.legal-text {
+	line-height: 1.6;
+	font-size: 0.95rem;
+	color: #333;
+}
+
+.legal-text h3 {
+	color: #1a1a1a;
+	margin: 25px 0 15px 0;
+	font-size: 1.3rem;
+	border-bottom: 1px solid #e0e0e0;
+	padding-bottom: 8px;
+}
+
+.legal-text h4 {
+	color: #8b7355;
+	margin: 20px 0 10px 0;
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.legal-text p {
+	margin-bottom: 15px;
+	text-align: left;
+}
+
+.legal-text ul {
+	margin: 15px 0 15px 20px;
+	padding-left: 0;
+}
+
+.legal-text li {
+	margin-bottom: 8px;
+	position: relative;
+	padding-left: 15px;
+}
+
+.legal-text .contact-info {
+	background: rgba(139, 115, 85, 0.05);
+	border-radius: 10px;
+	padding: 20px;
+	margin-top: 30px;
+	border-left: 3px solid #8b7355;
+}
+
+.legal-text .contact-info h4 {
+	color: #1a1a1a;
+	margin-top: 0;
+}
+
+/* Стили для модального окна выбора способа установки */
+.install-methods {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+	margin: 20px 0;
+}
+
+.install-method-btn {
+	background: white;
+	border: 2px solid #8b7355;
+	border-radius: 12px;
+	padding: 20px;
+	font-family: 'Comfortaa', cursive;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #1a1a1a;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-align: center;
+	display: block;
+	width: 100%;
+}
+
+.install-method-btn:hover {
+	background: #8b7355;
+	color: white;
+	transform: translateY(-2px);
+	box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
+}
+
+.install-method-btn.active {
+	background: #8b7355;
+	color: white;
+}
+
+/* Стили для детального гайда */
+.guide-content {
+	line-height: 1.7;
+	color: #333;
+}
+
+.guide-content h3 {
+	color: #1a1a1a;
+	margin: 25px 0 15px 0;
+	font-size: 1.3rem;
+}
+
+.guide-content p {
+	margin-bottom: 15px;
+	text-align: left;
+}
+
+.guide-content ol {
+	margin: 15px 0 15px 20px;
+	padding-left: 0;
+}
+
+.guide-content li {
+	margin-bottom: 20px;
+	position: relative;
+	padding-left: 15px;
+	text-align: left;
+}
+
+.guide-content strong {
+	color: #8b7355;
+	font-weight: 600;
+}
+
+.guide-image {
+	width: 100%;
+	max-width: 300px;
+	border-radius: 10px;
+	margin: 10px auto;
+	display: block;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.guide-link {
+	color: #8b7355;
+	text-decoration: none;
+	font-weight: 600;
+	display: inline-block;
+	margin: 5px 0;
+}
+
+.guide-link:hover {
+	text-decoration: underline;
+}
+
+/* Анимации и ключевые кадры (перенесены из JS) */
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes modalSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-30px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+		box-shadow: 0 4px 10px rgba(238, 90, 36, 0.3);
+	}
+	50% {
+		transform: scale(1.05);
+		box-shadow: 0 6px 15px rgba(238, 90, 36, 0.5);
+	}
+	100% {
+		transform: scale(1);
+		box-shadow: 0 4px 10px rgba(238, 90, 36, 0.3);
+	}
+}
+
+.product-details,
+.order-card {
+	animation: fadeIn 0.5s ease;
+}
+
 /* Адаптивность */
 @media (max-width: 1200px) {
 	.purchase-content {
@@ -726,6 +1277,68 @@ body {
 
 	.email-mobile {
 		display: inline-flex;
+	}
+
+	.current-price.daily-price {
+		font-size: 2rem !important;
+	}
+
+	#oldPrice {
+		font-size: 2rem !important;
+		margin-left: 15px !important;
+	}
+
+	.discount-badge {
+		font-size: 1rem !important;
+		padding: 5px 12px !important;
+	}
+
+	/* Адаптивность для модальных окон */
+	.about-modal-content {
+		width: 95%;
+		padding: 20px;
+		max-height: 85vh;
+	}
+
+	.about-modal-header h2 {
+		font-size: 1.5rem;
+	}
+
+	.feature-section,
+	.platform-info {
+		padding: 15px;
+	}
+
+	.feature-section h3,
+	.platform-info h3 {
+		font-size: 1.1rem;
+	}
+
+	.final-message p {
+		font-size: 1rem;
+		flex-direction: column;
+		gap: 5px;
+	}
+
+	.legal-text {
+		font-size: 0.9rem;
+	}
+
+	.legal-text h3 {
+		font-size: 1.2rem;
+	}
+
+	.legal-text h4 {
+		font-size: 1rem;
+	}
+
+	.install-method-btn {
+		padding: 15px;
+		font-size: 1rem;
+	}
+
+	.guide-image {
+		max-width: 100%;
 	}
 }
 
@@ -828,128 +1441,7 @@ body {
 	.footer-section h4 {
 		font-size: 1.1rem;
 	}
-}
 
-/* Анимация загрузки */
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(20px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-.product-details,
-.order-card {
-	animation: fadeIn 0.5s ease;
-}
-
-/* Стили для меню пользователя на странице покупки */
-.purchase-header .user-menu-container {
-	position: relative;
-}
-
-.purchase-header .user-menu-btn {
-	background: none;
-	border: none;
-	cursor: pointer;
-	font-size: 1.2rem;
-	color: #4a4a4a;
-	padding: 5px;
-	transition: color 0.3s ease;
-}
-
-.purchase-header .user-menu-btn:hover {
-	color: #8b7355;
-}
-
-.purchase-header .user-menu {
-	position: absolute;
-	top: 100%;
-	right: 0;
-	background: white;
-	border-radius: 12px;
-	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-	padding: 20px;
-	min-width: 280px;
-	z-index: 1000;
-	display: none;
-	margin-top: 10px;
-	animation: fadeIn 0.3s ease;
-}
-
-.purchase-header .user-menu.show {
-	display: block;
-}
-
-.purchase-header .auth-error {
-	color: #ff6b6b;
-	font-size: 0.85rem;
-	margin-bottom: 15px;
-	padding: 8px 12px;
-	background: rgba(255, 107, 107, 0.1);
-	border-radius: 6px;
-	display: none;
-}
-
-.purchase-header .auth-error.show {
-	display: block;
-}
-
-.purchase-header .auth-input {
-	width: 100%;
-	padding: 12px 15px;
-	margin-bottom: 12px;
-	border: 1px solid #e0e0e0;
-	border-radius: 8px;
-	font-family: 'Comfortaa', cursive;
-	font-size: 0.9rem;
-	transition: border-color 0.3s ease;
-}
-
-.purchase-header .auth-input:focus {
-	outline: none;
-	border-color: #8b7355;
-}
-
-.purchase-header .auth-buttons {
-	display: flex;
-	gap: 10px;
-	margin-top: 10px;
-}
-
-.purchase-header .auth-btn {
-	flex: 1;
-	padding: 12px;
-	border: none;
-	border-radius: 8px;
-	font-family: 'Comfortaa', cursive;
-	font-size: 0.9rem;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all 0.3s ease;
-}
-
-@media (max-width: 768px) {
-	.current-price.daily-price {
-		font-size: 2rem !important;
-	}
-
-	#oldPrice {
-		font-size: 2rem !important;
-		margin-left: 15px !important;
-	}
-
-	.discount-badge {
-		font-size: 1rem !important;
-		padding: 5px 12px !important;
-	}
-}
-
-@media (max-width: 576px) {
 	.current-price.daily-price {
 		font-size: 1.8rem !important;
 	}
@@ -970,59 +1462,290 @@ body {
 	}
 }
 
-.purchase-header .btn-login {
-	background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
-	color: white;
-}
-
-.purchase-header .btn-register {
-	background: #f5f5f5;
-	color: #4a4a4a;
-}
-
-.purchase-header .btn-login:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 6px 15px rgba(139, 115, 85, 0.3);
-}
-
-.purchase-header .btn-register:hover {
-	background: #e8e8e8;
-	transform: translateY(-2px);
-}
-
-.purchase-header .btn-logout {
-	width: 100%;
-	padding: 10px;
-	background: #f5f5f5;
+/* ========== БУРГЕР МЕНЮ ДЛЯ МОБИЛЬНЫХ ========== */
+.burger-menu-btn {
+	display: none;
+	background: none;
 	border: none;
-	border-radius: 8px;
-	font-family: 'Comfortaa', cursive;
-	font-size: 0.9rem;
-	font-weight: 500;
 	cursor: pointer;
+	font-size: 1.5rem;
+	color: #4a4a4a;
+	padding: 8px;
+	transition: color 0.3s ease;
+	z-index: 1001;
+}
+
+.burger-menu-btn:hover {
+	color: #8b7355;
+}
+
+/* Модальное окно бургер-меню */
+.burger-modal {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.9);
+	z-index: 2000;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	backdrop-filter: blur(5px);
+}
+
+.burger-modal.show {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 1;
+}
+
+.burger-modal-content {
+	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
+	border-radius: 20px;
+	width: 90%;
+	max-width: 400px;
+	max-height: 80vh;
+	overflow-y: auto;
+	padding: 30px;
+	position: relative;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+	border: 2px solid #8b7355;
+	animation: modalSlideIn 0.4s ease;
+}
+
+.burger-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 30px;
+	padding-bottom: 15px;
+	border-bottom: 2px solid rgba(139, 115, 85, 0.3);
+}
+
+.burger-modal-header .logo {
+	font-size: 1.2rem;
+	color: #1a1a1a;
+}
+
+.burger-modal-close {
+	background: #8b7355;
+	color: white;
+	border: none;
+	border-radius: 50%;
+	width: 36px;
+	height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 1rem;
 	transition: all 0.3s ease;
 }
 
-.purchase-header .btn-logout:hover {
-	background: #e8e8e8;
-	transform: translateY(-2px);
+.burger-modal-close:hover {
+	background: #a89176;
+	transform: rotate(90deg);
 }
 
-/* Стиль для ссылки админ панели */
-.purchase-header .admin-link {
-	color: #8b7355 !important;
-	font-weight: 600 !important;
+.burger-nav {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
 }
 
-.purchase-header .admin-link i {
-	color: #ffd700 !important;
-	margin-right: 5px;
+.burger-nav-link {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 15px 20px;
+	background: white;
+	border-radius: 12px;
+	text-decoration: none;
+	color: #1a1a1a;
+	font-weight: 500;
+	transition: all 0.3s ease;
+	border: 1px solid #eee;
 }
 
-.purchase-header .admin-link:hover {
-	color: #a89176 !important;
+.burger-nav-link:hover {
+	background: #8b7355;
+	color: white;
+	transform: translateX(5px);
+	box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
 }
 
-.purchase-header .admin-link:hover i {
-	color: #ffed4e !important;
+.burger-nav-link:hover i {
+	color: white;
+}
+
+.burger-nav-link i {
+	color: #8b7355;
+	width: 20px;
+	text-align: center;
+}
+
+.burger-user-section {
+	margin-top: 25px;
+	padding-top: 20px;
+	border-top: 1px solid #eee;
+}
+
+/* Для хедера на странице покупки */
+.purchase-header .nav {
+	display: flex;
+	align-items: center;
+	gap: 25px;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+	/* Планшеты: начинаем скрывать некоторые элементы */
+	.purchase-header .nav .nav-link {
+		font-size: 0.9rem;
+		padding: 5px 8px;
+	}
+}
+
+@media (max-width: 850px) {
+	/* Планшеты (ландшафт) и маленькие ноутбуки */
+	.purchase-header .nav {
+		gap: 15px;
+	}
+
+	.purchase-header .nav .nav-link {
+		font-size: 0.85rem;
+		padding: 5px;
+	}
+}
+
+@media (max-width: 768px) {
+	/* Мобильные устройства: показываем бургер, скрываем обычное меню */
+	.burger-menu-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		order: 3; /* Помещаем справа */
+	}
+
+	.purchase-header .nav {
+		gap: 10px;
+	}
+
+	/* Скрываем все ссылки в навигации кроме логотипа и бургера */
+	.purchase-header .nav .nav-link:not(.logo):not(.user-menu-btn) {
+		display: none;
+	}
+
+	/* Настраиваем контейнер для логотипа, бургера и иконки пользователя */
+	.purchase-header .container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.purchase-header .logo {
+		order: 1;
+		margin-right: auto;
+	}
+
+	.user-menu-container {
+		order: 2;
+		margin-left: 10px;
+	}
+
+	.burger-menu-btn {
+		order: 3;
+		margin-left: 10px;
+	}
+
+	/* Адаптивность контента для мобильных */
+	.purchase-content {
+		grid-template-columns: 1fr;
+		gap: 25px;
+	}
+
+	.product-details,
+	.order-card {
+		padding: 20px;
+	}
+
+	.product-title {
+		font-size: 1.6rem;
+	}
+
+	.carousel-container-large {
+		max-width: 300px;
+	}
+
+	.carousel-controls-large {
+		max-width: 300px;
+	}
+
+	.current-price.daily-price {
+		font-size: 1.8rem !important;
+	}
+
+	#oldPrice {
+		font-size: 1.1rem !important;
+	}
+}
+
+@media (max-width: 576px) {
+	/* Маленькие мобильные устройства */
+	.purchase-header {
+		height: 60px;
+	}
+
+	body {
+		padding-top: 60px;
+	}
+
+	.purchase-container {
+		padding: 15px 0 30px;
+	}
+
+	.product-title {
+		font-size: 1.4rem;
+	}
+
+	.product-title i {
+		font-size: 1.2rem;
+	}
+
+	.carousel-container-large {
+		max-width: 280px;
+	}
+
+	.carousel-controls-large {
+		max-width: 280px;
+	}
+
+	.carousel-nav-btn-outer {
+		width: 28px;
+		height: 28px;
+		font-size: 0.8rem;
+	}
+
+	.breadcrumbs {
+		font-size: 0.8rem;
+		margin-bottom: 20px;
+	}
+
+	.btn-pay {
+		padding: 16px;
+		font-size: 1rem;
+	}
+
+	.burger-modal-content {
+		width: 95%;
+		padding: 20px;
+		max-height: 85vh;
+	}
+
+	.burger-nav-link {
+		padding: 12px 15px;
+		font-size: 0.95rem;
+	}
 }

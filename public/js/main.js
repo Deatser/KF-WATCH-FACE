@@ -8,6 +8,7 @@ import {
 	initAdbGuideModal,
 	initBugjaegerGuideModal,
 	initEscapeKeyHandler,
+	initBurgerMenu,
 } from './modals.js'
 
 const CAROUSEL_CONFIG = {
@@ -1788,6 +1789,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	initContactsModal()
 	initFaqModal()
 	initEscapeKeyHandler()
+	initBurgerMenu()
 
 	// Загружаем товары из папки watch
 	const { products } = await loadProductsFromWatch()

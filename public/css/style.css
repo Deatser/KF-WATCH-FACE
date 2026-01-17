@@ -2654,3 +2654,190 @@ body {
 .daily-offer-watch-name {
 	margin-bottom: 10px !important;
 }
+
+/* ========================================== */
+/* БУРГЕР-МЕНЮ ДЛЯ МОБИЛЬНЫХ (ОБНОВЛЕННОЕ) */
+/* ========================================== */
+
+.burger-menu-btn {
+	display: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1.5rem;
+	color: #4a4a4a;
+	padding: 8px;
+	transition: all 0.3s ease;
+	z-index: 1002;
+}
+
+.burger-menu-btn:hover {
+	color: #8b7355;
+}
+
+/* Бургер-меню как выпадающее (сверху справа) */
+.burger-dropdown {
+	position: fixed;
+	top: 70px; /* Высота хедера */
+	right: 20px;
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+	padding: 20px;
+	min-width: 280px;
+	max-width: 90vw;
+	z-index: 1001;
+	display: none;
+	animation: slideDown 0.3s ease;
+	border: 1px solid #f0f0f0;
+	transform-origin: top right;
+	display: none;
+}
+
+.burger-dropdown.show {
+	display: block;
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px) scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.burger-dropdown::before {
+	content: '';
+	position: absolute;
+	top: -8px;
+	right: 25px;
+	width: 16px;
+	height: 16px;
+	background: white;
+	transform: rotate(45deg);
+	border-top: 1px solid #f0f0f0;
+	border-left: 1px solid #f0f0f0;
+}
+
+.burger-links {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-bottom: 20px;
+}
+
+.burger-link {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	background: #f9f7f3;
+	border-radius: 10px;
+	color: #1a1a1a;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	border: 1px solid transparent;
+}
+
+.burger-link:hover {
+	background: #8b7355;
+	color: white;
+	transform: translateX(5px);
+}
+
+.burger-link i {
+	font-size: 1.1rem;
+	width: 20px;
+	text-align: center;
+}
+
+.burger-link:hover i {
+	color: white;
+}
+
+.burger-user-info {
+	padding: 15px;
+	background: rgba(139, 115, 85, 0.05);
+	border-radius: 10px;
+	margin-top: 10px;
+	border: 1px solid rgba(139, 115, 85, 0.1);
+	text-align: center;
+}
+
+#burgerUserEmailDisplay {
+	color: #4a4a4a;
+	font-size: 0.9rem;
+	margin-bottom: 10px;
+	word-break: break-all;
+}
+
+#burgerLogoutBtn {
+	width: 100%;
+	padding: 10px;
+	background: #f5f5f5;
+	border: none;
+	border-radius: 8px;
+	font-family: 'Comfortaa', cursive;
+	font-size: 0.9rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+#burgerLogoutBtn:hover {
+	background: #e8e8e8;
+}
+
+/* Скрываем форму авторизации в бургер-меню */
+#burgerAuthForm {
+	display: none;
+}
+
+/* ========================================== */
+/* АДАПТАЦИЯ НАВИГАЦИИ ДЛЯ МОБИЛЬНЫХ */
+/* ========================================== */
+
+@media (max-width: 1100px) {
+	.nav {
+		display: none;
+	}
+
+	.burger-menu-btn {
+		display: block;
+	}
+
+	.header .container {
+		justify-content: space-between;
+	}
+}
+
+@media (max-width: 768px) {
+	.burger-dropdown {
+		top: 65px;
+		right: 15px;
+		min-width: 260px;
+	}
+
+	.burger-link {
+		padding: 10px 14px;
+		font-size: 0.95rem;
+	}
+}
+
+@media (max-width: 576px) {
+	.burger-dropdown {
+		top: 60px;
+		right: 10px;
+		min-width: 240px;
+	}
+
+	.burger-link {
+		padding: 8px 12px;
+		font-size: 0.9rem;
+	}
+}
