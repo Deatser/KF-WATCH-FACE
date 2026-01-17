@@ -1035,6 +1035,193 @@ body {
 	font-weight: 600;
 }
 
+/* ========================================== */
+/* БУРГЕР-МЕНЮ ДЛЯ МОБИЛЬНЫХ (ОБНОВЛЕННОЕ) */
+/* ========================================== */
+
+.burger-menu-btn {
+	display: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1.5rem;
+	color: #4a4a4a;
+	padding: 8px;
+	transition: all 0.3s ease;
+	z-index: 1002;
+}
+
+.burger-menu-btn:hover {
+	color: #8b7355;
+}
+
+/* Бургер-меню как выпадающее (сверху справа) */
+.burger-dropdown {
+	position: fixed;
+	top: 70px; /* Высота хедера */
+	right: 20px;
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+	padding: 20px;
+	min-width: 280px;
+	max-width: 90vw;
+	z-index: 1001;
+	display: none;
+	animation: slideDown 0.3s ease;
+	border: 1px solid #f0f0f0;
+	transform-origin: top right;
+}
+
+.burger-dropdown.show {
+	display: block;
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px) scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.burger-dropdown::before {
+	content: '';
+	position: absolute;
+	top: -8px;
+	right: 25px;
+	width: 16px;
+	height: 16px;
+	background: white;
+	transform: rotate(45deg);
+	border-top: 1px solid #f0f0f0;
+	border-left: 1px solid #f0f0f0;
+}
+
+.burger-links {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-bottom: 20px;
+}
+
+.burger-link {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	background: #f9f7f3;
+	border-radius: 10px;
+	color: #1a1a1a;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	border: 1px solid transparent;
+}
+
+.burger-link:hover {
+	background: #8b7355;
+	color: white;
+	transform: translateX(5px);
+}
+
+.burger-link i {
+	font-size: 1.1rem;
+	width: 20px;
+	text-align: center;
+}
+
+.burger-link:hover i {
+	color: white;
+}
+
+/* ========================================== */
+/* ИСПРАВЛЕНИЯ ДЛЯ ХЕДЕРА СТРАНИЦЫ ПОКУПКИ */
+/* ========================================== */
+
+/* Контейнер хедера для страницы покупки */
+.purchase-header .container {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 100%;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+	position: relative;
+}
+
+/* Логотип слева */
+.purchase-header .logo {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: #1a1a1a;
+	text-decoration: none;
+	font-weight: 700;
+	font-size: 1.2rem;
+	z-index: 1002;
+	order: 1;
+	margin-right: auto;
+}
+
+.purchase-header .logo i {
+	color: #8b7355;
+	font-size: 1.5rem;
+}
+
+/* Основная навигация (для ПК) */
+.purchase-header .nav {
+	display: flex;
+	align-items: center;
+	gap: 25px;
+	order: 2;
+}
+
+/* Ссылки навигации для ПК */
+.purchase-header .nav-link:not(.logo):not(.user-menu-btn) {
+	color: #4a4a4a;
+	text-decoration: none;
+	font-weight: 500;
+	font-size: 0.95rem;
+	transition: color 0.3s ease;
+	white-space: nowrap;
+}
+
+.purchase-header .nav-link:not(.logo):not(.user-menu-btn):hover {
+	color: #8b7355;
+}
+
+/* Иконка пользователя справа */
+.purchase-header .user-menu-container {
+	order: 3;
+	position: relative;
+	margin-left: 10px;
+}
+
+/* Бургер-кнопка для мобильных */
+.purchase-header .burger-menu-btn {
+	display: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1.5rem;
+	color: #4a4a4a;
+	padding: 8px;
+	transition: all 0.3s ease;
+	z-index: 1002;
+	order: 4;
+	margin-left: 10px;
+}
+
+.purchase-header .burger-menu-btn:hover {
+	color: #8b7355;
+}
+
 /* Стили для длинных текстов в модальных окнах */
 .legal-text {
 	line-height: 1.6;
@@ -1241,13 +1428,90 @@ body {
 	}
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1100px) {
+	/* Обновляем отображение хедера для планшетов и мобильных */
+	.purchase-header {
+		height: 60px;
+	}
+
+	.purchase-header .burger-menu-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		order: 4; /* Теперь бургер идет после user-menu-btn */
+	}
+
+	.purchase-header .user-menu-container {
+		order: 3;
+	}
+
+	/* Прячем обычные ссылки в навигации */
+	.purchase-header .nav-link:not(.logo):not(.user-menu-btn) {
+		display: none;
+	}
+
+	/* Бургер-меню */
+	.burger-dropdown {
+		top: 60px;
+		right: 15px;
+		min-width: 260px;
+	}
+
+	/* Обновляем body padding */
+	body {
+		padding-top: 60px;
+	}
+
+	/* Бургер-меню */
+	.burger-link {
+		padding: 10px 14px;
+		font-size: 0.95rem;
+	}
+
+	/* Адаптивность контента */
 	.purchase-content {
 		grid-template-columns: 1fr;
+		gap: 25px;
 	}
 
 	.order-section {
 		position: static;
+	}
+
+	.product-details,
+	.order-card {
+		padding: 20px;
+	}
+
+	.product-title {
+		font-size: 1.6rem;
+	}
+
+	.carousel-container-large {
+		max-width: 300px;
+	}
+
+	.carousel-controls-large {
+		max-width: 300px;
+	}
+
+	.current-price.daily-price {
+		font-size: 1.8rem !important;
+	}
+
+	#oldPrice {
+		font-size: 1.1rem !important;
+	}
+}
+
+/* Показываем desktop ссылку по умолчанию, скрываем mobile */
+.email-mobile {
+	display: none;
+}
+
+@media (max-width: 992px) {
+	.purchase-content {
+		grid-template-columns: 1fr;
 	}
 
 	.carousel-container-large {
@@ -1264,13 +1528,24 @@ body {
 	}
 }
 
-/* Показываем desktop ссылку по умолчанию, скрываем mobile */
-.email-mobile {
-	display: none;
+@media (max-width: 850px) {
+	/* Планшеты (ландшафт) и маленькие ноутбуки */
+	.purchase-header .nav {
+		gap: 15px;
+	}
+
+	.purchase-header .nav .nav-link {
+		font-size: 0.85rem;
+		padding: 5px;
+	}
 }
 
-/* На мобильных устройствах показываем mobile ссылку, скрываем desktop */
 @media (max-width: 768px) {
+	/* Мобильные устройства: показываем бургер, скрываем обычное меню */
+	/* (Этот медиа-запрос теперь не используется для переключения на бургер) */
+	/* Он остается только для дополнительных мобильных стилей */
+
+	/* Обновляем отображение email */
 	.email-desktop {
 		display: none;
 	}
@@ -1284,7 +1559,7 @@ body {
 	}
 
 	#oldPrice {
-		font-size: 2rem !important;
+		font-size: 1.8rem !important;
 		margin-left: 15px !important;
 	}
 
@@ -1462,136 +1737,6 @@ body {
 	}
 }
 
-/* ========== БУРГЕР МЕНЮ ДЛЯ МОБИЛЬНЫХ ========== */
-.burger-menu-btn {
-	display: none;
-	background: none;
-	border: none;
-	cursor: pointer;
-	font-size: 1.5rem;
-	color: #4a4a4a;
-	padding: 8px;
-	transition: color 0.3s ease;
-	z-index: 1001;
-}
-
-.burger-menu-btn:hover {
-	color: #8b7355;
-}
-
-/* Модальное окно бургер-меню */
-.burger-modal {
-	display: none;
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.9);
-	z-index: 2000;
-	opacity: 0;
-	transition: opacity 0.3s ease;
-	backdrop-filter: blur(5px);
-}
-
-.burger-modal.show {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	opacity: 1;
-}
-
-.burger-modal-content {
-	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
-	border-radius: 20px;
-	width: 90%;
-	max-width: 400px;
-	max-height: 80vh;
-	overflow-y: auto;
-	padding: 30px;
-	position: relative;
-	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-	border: 2px solid #8b7355;
-	animation: modalSlideIn 0.4s ease;
-}
-
-.burger-modal-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 30px;
-	padding-bottom: 15px;
-	border-bottom: 2px solid rgba(139, 115, 85, 0.3);
-}
-
-.burger-modal-header .logo {
-	font-size: 1.2rem;
-	color: #1a1a1a;
-}
-
-.burger-modal-close {
-	background: #8b7355;
-	color: white;
-	border: none;
-	border-radius: 50%;
-	width: 36px;
-	height: 36px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	font-size: 1rem;
-	transition: all 0.3s ease;
-}
-
-.burger-modal-close:hover {
-	background: #a89176;
-	transform: rotate(90deg);
-}
-
-.burger-nav {
-	display: flex;
-	flex-direction: column;
-	gap: 15px;
-}
-
-.burger-nav-link {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 15px 20px;
-	background: white;
-	border-radius: 12px;
-	text-decoration: none;
-	color: #1a1a1a;
-	font-weight: 500;
-	transition: all 0.3s ease;
-	border: 1px solid #eee;
-}
-
-.burger-nav-link:hover {
-	background: #8b7355;
-	color: white;
-	transform: translateX(5px);
-	box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
-}
-
-.burger-nav-link:hover i {
-	color: white;
-}
-
-.burger-nav-link i {
-	color: #8b7355;
-	width: 20px;
-	text-align: center;
-}
-
-.burger-user-section {
-	margin-top: 25px;
-	padding-top: 20px;
-	border-top: 1px solid #eee;
-}
-
 /* Для хедера на странице покупки */
 .purchase-header .nav {
 	display: flex;
@@ -1608,27 +1753,8 @@ body {
 	}
 }
 
-@media (max-width: 850px) {
-	/* Планшеты (ландшафт) и маленькие ноутбуки */
-	.purchase-header .nav {
-		gap: 15px;
-	}
-
-	.purchase-header .nav .nav-link {
-		font-size: 0.85rem;
-		padding: 5px;
-	}
-}
-
-@media (max-width: 768px) {
-	/* Мобильные устройства: показываем бургер, скрываем обычное меню */
-	.burger-menu-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		order: 3; /* Помещаем справа */
-	}
-
+@media (max-width: 1100px) {
+	/* Планшеты и мобильные: показываем бургер, скрываем обычное меню */
 	.purchase-header .nav {
 		gap: 10px;
 	}
@@ -1658,37 +1784,6 @@ body {
 	.burger-menu-btn {
 		order: 3;
 		margin-left: 10px;
-	}
-
-	/* Адаптивность контента для мобильных */
-	.purchase-content {
-		grid-template-columns: 1fr;
-		gap: 25px;
-	}
-
-	.product-details,
-	.order-card {
-		padding: 20px;
-	}
-
-	.product-title {
-		font-size: 1.6rem;
-	}
-
-	.carousel-container-large {
-		max-width: 300px;
-	}
-
-	.carousel-controls-large {
-		max-width: 300px;
-	}
-
-	.current-price.daily-price {
-		font-size: 1.8rem !important;
-	}
-
-	#oldPrice {
-		font-size: 1.1rem !important;
 	}
 }
 
@@ -1748,4 +1843,20 @@ body {
 		padding: 12px 15px;
 		font-size: 0.95rem;
 	}
+}
+
+.header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 1000;
+	background: rgba(249, 245, 240, 0.95);
+	backdrop-filter: blur(10px);
+	box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
+	height: 80px;
+	width: 100%;
+	display: flex; /* Добавлено */
+	align-items: center; /* Добавлено - выравнивание по вертикали */
 }

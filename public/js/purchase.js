@@ -10,6 +10,7 @@ import {
 	initEscapeKeyHandler,
 	initTermsModal,
 	initPrivacyModal,
+	initBurgerMenu,
 } from './modals.js'
 
 // Глобальные переменные
@@ -138,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	initTermsModal()
 	initPrivacyModal()
 	initUserMenu()
+	initBurgerMenu()
 
 	// Инициализация Firebase и проверка прав админа
 	await initAuth()
@@ -708,7 +710,6 @@ function loginUser() {
 		.auth()
 		.signInWithEmailAndPassword(email, password)
 		.then(userCredential => {
-			showAuthSuccess('Успешный вход!')
 			setTimeout(() => {
 				const userMenu = document.getElementById('userMenu')
 				if (userMenu) {

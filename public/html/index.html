@@ -67,6 +67,303 @@
 				font-size: 0.9rem;
 				font-weight: 600;
 			}
+
+			/* Стили для меню пользователя на главной странице */
+			.header .user-menu-container {
+				position: relative;
+			}
+
+			.header .user-menu-btn {
+				background: none;
+				border: none;
+				cursor: pointer;
+				font-size: 1.2rem;
+				color: #4a4a4a;
+				padding: 5px;
+				transition: color 0.3s ease;
+			}
+
+			.header .user-menu-btn:hover {
+				color: #8b7355;
+			}
+
+			.header .user-menu {
+				position: absolute;
+				top: 100%;
+				right: 0;
+				background: white;
+				border-radius: 12px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+				padding: 20px;
+				min-width: 280px;
+				z-index: 1000;
+				display: none;
+				margin-top: 10px;
+				animation: fadeIn 0.3s ease;
+			}
+
+			.header .user-menu.show {
+				display: block;
+			}
+
+			.header .auth-error {
+				color: #ff6b6b;
+				font-size: 0.85rem;
+				margin-bottom: 15px;
+				padding: 8px 12px;
+				background: rgba(255, 107, 107, 0.1);
+				border-radius: 6px;
+				display: none;
+			}
+
+			.header .auth-error.show {
+				display: block;
+			}
+
+			.header .auth-input {
+				width: 100%;
+				padding: 12px 15px;
+				margin-bottom: 12px;
+				border: 1px solid #e0e0e0;
+				border-radius: 8px;
+				font-family: 'Comfortaa', cursive;
+				font-size: 0.9rem;
+				transition: border-color 0.3s ease;
+			}
+
+			.header .auth-input:focus {
+				outline: none;
+				border-color: #8b7355;
+			}
+
+			.header .auth-buttons {
+				display: flex;
+				gap: 10px;
+				margin-top: 10px;
+			}
+
+			.header .auth-btn {
+				flex: 1;
+				padding: 12px;
+				border: none;
+				border-radius: 8px;
+				font-family: 'Comfortaa', cursive;
+				font-size: 0.9rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.3s ease;
+			}
+
+			.header .btn-login {
+				background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+				color: white;
+			}
+
+			.header .btn-register {
+				background: #f5f5f5;
+				color: #4a4a4a;
+			}
+
+			.header .btn-login:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 15px rgba(139, 115, 85, 0.3);
+			}
+
+			.header .btn-register:hover {
+				background: #e8e8e8;
+				transform: translateY(-2px);
+			}
+
+			.header .btn-logout {
+				width: 100%;
+				padding: 10px;
+				background: #f5f5f5;
+				border: none;
+				border-radius: 8px;
+				font-family: 'Comfortaa', cursive;
+				font-size: 0.9rem;
+				font-weight: 500;
+				cursor: pointer;
+				transition: all 0.3s ease;
+			}
+
+			.header .btn-logout:hover {
+				background: #e8e8e8;
+				transform: translateY(-2px);
+			}
+
+			/* Адаптация для мобильных */
+			@media (max-width: 1100px) {
+				.nav {
+					display: flex;
+					align-items: center;
+					gap: 15px;
+				}
+
+				/* Скрываем обычные ссылки навигации */
+				.nav > a:not(.logo):not(.user-menu-btn) {
+					display: none;
+				}
+
+				/* Логотип слева */
+				.logo {
+					order: 1;
+					margin-right: auto;
+				}
+
+				/* Иконка пользователя - второй элемент */
+				.user-menu-container {
+					display: flex !important;
+					align-items: center;
+					margin-left: 0;
+					order: 2;
+				}
+
+				/* Бургер-кнопка - третий элемент (самый правый) */
+				.burger-menu-btn {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					order: 3;
+					margin-left: 10px;
+					margin-right: 0;
+				}
+
+				.header .container {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					gap: 10px;
+				}
+			}
+
+			@media (max-width: 768px) {
+				.user-menu-btn {
+					font-size: 1.1rem;
+					padding: 6px;
+				}
+
+				.burger-menu-btn {
+					margin-left: 10px;
+					margin-right: 0;
+				}
+			}
+
+			@media (max-width: 576px) {
+				.user-menu-btn {
+					font-size: 1rem;
+					padding: 5px;
+				}
+
+				.header .container {
+					gap: 8px;
+					padding: 10px 15px;
+				}
+
+				.burger-menu-btn {
+					margin-left: 8px;
+					margin-right: 0;
+				}
+			}
+
+			/* Стили для статистики предложения дня - ИСПРАВЛЕННЫЕ */
+			/* На компьютерах: 4 блока друг под другом (4 ряда по 1) */
+			.daily-offer-stats .stats-grid {
+				display: flex;
+				flex-direction: column;
+				gap: 15px;
+				width: 100%;
+			}
+
+			.daily-offer-stats .stat {
+				display: flex;
+				align-items: center;
+				gap: 15px;
+				padding: 16px 20px;
+				background: rgba(248, 242, 233, 0.7);
+				border-radius: 12px;
+				transition: all 0.2s ease;
+				width: 100%;
+				box-sizing: border-box;
+			}
+
+			.daily-offer-stats .stat:hover {
+				background: rgba(248, 242, 233, 0.9);
+				transform: translateX(5px);
+			}
+
+			.daily-offer-stats .stat i {
+				color: #8b7355;
+				font-size: 1.3rem;
+				width: 30px;
+				text-align: center;
+				flex-shrink: 0;
+			}
+
+			.daily-offer-stats .stat span {
+				color: #555;
+				font-size: 1.1rem;
+				font-weight: 500;
+				flex-grow: 1;
+			}
+
+			/* Для планшетов (768px - 1100px) - 2 колонки, 2 ряда */
+			@media (max-width: 1100px) and (min-width: 769px) {
+				.daily-offer-stats .stats-grid {
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 15px;
+				}
+
+				.daily-offer-stats .stat {
+					flex-direction: column;
+					text-align: center;
+					padding: 18px 15px;
+					gap: 12px;
+					min-height: 110px;
+					justify-content: center;
+				}
+
+				.daily-offer-stats .stat i {
+					font-size: 1.4rem;
+					width: auto;
+					margin-bottom: 5px;
+				}
+
+				.daily-offer-stats .stat span {
+					font-size: 1rem;
+					line-height: 1.3;
+				}
+			}
+
+			/* Для мобильных телефонов (до 768px) - 2 колонки, 2 ряда */
+			@media (max-width: 768px) {
+				.daily-offer-stats .stats-grid {
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 12px;
+				}
+
+				.daily-offer-stats .stat {
+					flex-direction: column;
+					text-align: center;
+					padding: 16px 12px;
+					gap: 10px;
+					min-height: 100px;
+					justify-content: center;
+				}
+
+				.daily-offer-stats .stat i {
+					font-size: 1.2rem;
+					width: auto;
+					margin-bottom: 5px;
+				}
+
+				.daily-offer-stats .stat span {
+					font-size: 0.95rem;
+					line-height: 1.2;
+				}
+			}
 		</style>
 	</head>
 
@@ -74,17 +371,12 @@
 		<!-- Общий фон для хедера и новинок -->
 		<div class="hero-background">
 			<!-- Хедер с навигацией -->
-			<header class="header purchase-header">
+			<header class="header">
 				<div class="container">
 					<a href="/" class="logo">
 						<i class="fas fa-clock"></i>
 						<span>KF WATCH FACE</span>
 					</a>
-
-					<!-- Бургер-меню для мобильных -->
-					<button id="burgerMenuBtn" class="burger-menu-btn">
-						<i class="fas fa-bars"></i>
-					</button>
 
 					<nav class="nav">
 						<!-- Ссылка для админов (скрыта по умолчанию) -->
@@ -152,7 +444,46 @@
 								<!-- КОНЕЦ: Добавлен реальный контент формы входа -->
 							</div>
 						</div>
+
+						<!-- Бургер-меню для мобильных -->
+						<button id="burgerMenuBtn" class="burger-menu-btn">
+							<i class="fas fa-bars"></i>
+						</button>
 					</nav>
+
+					<!-- Бургер-меню как выпадающее (сверху справа) -->
+					<div id="burgerDropdown" class="burger-dropdown">
+						<div class="burger-links">
+							<a href="#" class="burger-link" id="burgerContactsLink">
+								<i class="fas fa-address-book"></i>
+								Контакты
+							</a>
+							<a href="#" class="burger-link" id="burgerFaqLink">
+								<i class="fas fa-question-circle"></i>
+								FAQ
+							</a>
+							<a href="#" class="burger-link" id="burgerInstallGuideLink">
+								<i class="fas fa-download"></i>
+								Инструкция по установке
+							</a>
+							<a href="#catalog" class="burger-link burger-catalog-link">
+								<i class="fas fa-th"></i>
+								Каталог
+							</a>
+							<a href="#" class="burger-link" id="burgerAboutLink">
+								<i class="fas fa-info-circle"></i>
+								О нас
+							</a>
+							<a
+								href="https://t.me/krek_free"
+								target="_blank"
+								class="burger-link"
+							>
+								<i class="fab fa-telegram"></i>
+								Telegram
+							</a>
+						</div>
+					</div>
 				</div>
 			</header>
 
@@ -214,21 +545,23 @@
 									Купить сейчас
 								</a>
 								<div class="daily-offer-stats">
-									<div class="stat">
-										<i class="fas fa-sliders-h"></i>
-										<span>Предустановленные ярлыки</span>
-									</div>
-									<div class="stat">
-										<i class="fas fa-palette"></i>
-										<span>Изменяемые цвета</span>
-									</div>
-									<div class="stat">
-										<i class="fas fa-heartbeat"></i>
-										<span>Мониторинг пульса BPM</span>
-									</div>
-									<div class="stat">
-										<i class="fas fa-microchip"></i>
-										<span>WearOS 4+ | AOD | APK файл</span>
+									<div class="stats-grid">
+										<div class="stat">
+											<i class="fas fa-sliders-h"></i>
+											<span>Предустановленные ярлыки</span>
+										</div>
+										<div class="stat">
+											<i class="fas fa-palette"></i>
+											<span>Изменяемые цвета</span>
+										</div>
+										<div class="stat">
+											<i class="fas fa-heartbeat"></i>
+											<span>Мониторинг пульса BPM</span>
+										</div>
+										<div class="stat">
+											<i class="fas fa-microchip"></i>
+											<span>WearOS 4+ | AOD | APK файл</span>
+										</div>
 									</div>
 								</div>
 							</div>

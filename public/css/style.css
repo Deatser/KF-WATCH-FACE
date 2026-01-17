@@ -86,16 +86,19 @@ body {
 	transition: all 0.3s ease;
 	height: 80px;
 	width: 100%;
+	display: flex; /* Добавлено */
+	align-items: center; /* Добавлено - выравнивание по вертикали */
 }
 
+/* КОНТЕЙНЕР ХЕДЕРА ДЛЯ ГЛАВНОЙ СТРАНИЦЫ (как на purchase) */
 .header .container {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 15px 20px;
-	height: 100%;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
 	width: 100%;
-	max-width: 100%;
 }
 
 .header.scrolled {
@@ -103,17 +106,18 @@ body {
 	box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
 }
 
+/* ЛОГОТИП СЛЕВА */
 .logo {
 	display: flex;
 	align-items: center;
-	font-size: 1.4rem;
-	font-weight: 700;
-	letter-spacing: 1px;
+	gap: 10px;
 	color: #1a1a1a;
-	text-transform: uppercase;
 	text-decoration: none;
-	transition: all 0.3s ease;
-	z-index: 1001;
+	font-weight: 700;
+	font-size: 1.2rem;
+	z-index: 1002;
+	order: 1;
+	margin-right: auto;
 }
 
 .logo:hover {
@@ -132,19 +136,22 @@ body {
 	color: #a89176;
 }
 
+/* ОСНОВНАЯ НАВИГАЦИЯ (для ПК) */
 .nav {
 	display: flex;
-	gap: 25px;
 	align-items: center;
+	gap: 25px;
+	order: 2;
 }
 
+/* ССЫЛКИ НАВИГАЦИИ ДЛЯ ПК */
 .nav-link {
 	text-decoration: none;
 	color: #4a4a4a;
-	font-weight: 400;
-	font-size: 0.9rem;
-	letter-spacing: 0.3px;
+	font-weight: 500;
+	font-size: 0.95rem;
 	transition: all 0.3s ease;
+	white-space: nowrap;
 	position: relative;
 	padding: 5px 0;
 }
@@ -165,6 +172,12 @@ body {
 	transition: transform 0.3s ease;
 }
 
+/* Для логотипа и кнопки пользователя отключаем подчеркивание */
+.logo:hover::after,
+.user-menu-btn:hover::after {
+	display: none;
+}
+
 .nav-link i {
 	font-size: 1.2rem;
 }
@@ -173,8 +186,11 @@ body {
 	color: #8b7355;
 }
 
+/* ИКОНКА ПОЛЬЗОВАТЕЛЯ СПРАВА */
 .user-menu-container {
 	position: relative;
+	order: 2; /* ← Измени с 3 на 4 */
+	margin-left: 10px;
 }
 
 .user-menu-btn {
@@ -321,6 +337,25 @@ body {
 	color: #4a4a4a;
 	font-size: 0.9rem;
 	word-break: break-all;
+}
+
+/* БУРГЕР-КНОПКА ДЛЯ МОБИЛЬНЫХ */
+.burger-menu-btn {
+	display: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1.5rem;
+	color: #4a4a4a;
+	padding: 8px;
+	transition: all 0.3s ease;
+	z-index: 1002;
+	order: 4;
+	margin-left: 10px;
+}
+
+.burger-menu-btn:hover {
+	color: #8b7355;
 }
 
 /* ========================================== */
@@ -2162,6 +2197,10 @@ body {
 		font-size: 2.2rem;
 	}
 
+	.section-subtitle {
+		font-size: 1.1rem;
+	}
+
 	.daily-offer-main {
 		grid-template-columns: 1fr;
 		gap: 50px;
@@ -2201,8 +2240,9 @@ body {
 
 	.header {
 		height: 70px;
+		display: flex; /* Добавь здесь тоже */
+		align-items: center; /* Добавь здесь тоже */
 	}
-
 	.logo {
 		font-size: 1.2rem;
 	}
@@ -2211,8 +2251,39 @@ body {
 		font-size: 1.3rem;
 	}
 
+	/* ПЛАНШЕТЫ И МОБИЛЬНЫЕ: ПОКАЗЫВАЕМ БУРГЕР, СКРЫВАЕМ ОБЫЧНОЕ МЕНЮ */
 	.nav {
-		gap: 15px;
+		gap: 10px;
+	}
+
+	/* Скрываем все ссылки в навигации кроме логотипа и бургера */
+	.nav .nav-link:not(.logo):not(.user-menu-btn) {
+		display: none;
+	}
+
+	/* Настраиваем контейнер для логотипа, бургера и иконки пользователя */
+	.header .container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.logo {
+		order: 1;
+		margin-right: auto;
+	}
+
+	.user-menu-container {
+		order: 2;
+		margin-left: 10px;
+	}
+
+	.burger-menu-btn {
+		order: 3;
+		margin-left: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.new-arrival {
@@ -2445,6 +2516,8 @@ body {
 
 	.header {
 		height: 60px;
+		display: flex; /* Добавь здесь тоже */
+		align-items: center; /* Добавь здесь тоже */
 	}
 
 	.header .container {
@@ -2792,6 +2865,7 @@ body {
 	padding: 8px;
 	transition: all 0.3s ease;
 	z-index: 1002;
+	order: 3;
 }
 
 .burger-menu-btn:hover {
@@ -2932,6 +3006,7 @@ body {
 
 	.burger-menu-btn {
 		display: block;
+		order: 3;
 	}
 
 	.header .container {
@@ -3081,5 +3156,43 @@ body {
 
 	.daily-offer-header {
 		margin-bottom: 15px;
+	}
+}
+
+@media (max-width: 1100px) {
+	.nav {
+		display: flex;
+		align-items: center;
+		gap: 15px;
+	}
+
+	.nav > a:not(.user-menu-container) {
+		display: none;
+	}
+
+	.burger-menu-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		order: 3; /* Измените с 2 на 3 */
+		margin-right: 0;
+	}
+
+	.user-menu-container {
+		display: flex !important;
+		align-items: center;
+		margin-left: 0;
+		order: 2; /* Измените с 3 на 2 */
+	}
+
+	.header .container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.logo {
+		margin-right: auto;
 	}
 }

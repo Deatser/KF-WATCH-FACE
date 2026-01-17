@@ -101,8 +101,6 @@ class AuthManager {
 			// Обновляем время последнего входа в базе данных
 			await this.updateLastLoginInDatabase(userCredential.user.uid)
 
-			this.showSuccess('Вход выполнен успешно!')
-			this.closeMenu()
 			this.clearForm()
 		} catch (error) {
 			let errorMessage = 'Ошибка входа'
@@ -240,7 +238,6 @@ class AuthManager {
 	async logout() {
 		try {
 			await this.auth.signOut()
-			this.showSuccess('Выход выполнен успешно!')
 			this.closeMenu()
 
 			// Скрываем ссылку АДМИН ПАНЕЛЬ при выходе
