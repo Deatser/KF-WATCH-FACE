@@ -1,348 +1,380 @@
 <!DOCTYPE html>
 <html lang="ru">
 	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Админ панель - KF WATCH FACE</title>
+		<!DOCTYPE html>
+		<html lang="ru">
+			<head>
+				<!-- Google tag (gtag.js) -->
+				<script
+					async
+					src="https://www.googletagmanager.com/gtag/js?id=G-XRGPB3BKMK"
+				></script>
+				<script>
+					window.dataLayer = window.dataLayer || []
+					function gtag() {
+						dataLayer.push(arguments)
+					}
+					gtag('js', new Date())
+					gtag('config', 'G-XRGPB3BKMK')
+				</script>
+				<!-- Остальная часть head -->
+				<meta charset="UTF-8" />
+				...
+				<meta charset="UTF-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+				<title>Админ панель - KF WATCH FACE</title>
 
-		<!-- Подключаем Firebase -->
-		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+				<!-- Подключаем Firebase -->
+				<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+				<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+				<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-		<!-- Подключаем стили -->
-		<link rel="stylesheet" href="/public/css/admin.css" />
-		<link rel="stylesheet" href="/public/css/style.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-		/>
-		<link
-			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
-			rel="stylesheet"
-		/>
-	</head>
-	<body>
-		<!-- Хедер -->
-		<header class="header">
-			<div class="container">
-				<a href="/" class="logo">
-					<i class="fas fa-clock"></i>
-					<span>KF WATCH FACE</span>
-				</a>
-				<nav class="nav">
-					<a href="/" class="nav-link">Главная</a>
-					<div class="user-menu-container">
-						<button id="userMenuBtn" class="nav-link user-menu-btn">
-							<i class="fas fa-user-circle"></i>
-						</button>
-						<div id="userMenu" class="user-menu">
-							<div id="userInfo" style="display: none">
-								<p
-									id="userEmailDisplay"
-									style="margin-bottom: 10px; font-weight: 500"
-								></p>
-								<button id="logoutBtn" class="btn-logout">Выйти</button>
-							</div>
-						</div>
-					</div>
-				</nav>
-			</div>
-		</header>
-
-		<!-- Контент админ-панели -->
-		<main class="admin-container">
-			<div class="container">
-				<!-- Блок проверки доступа (показывается пока не подтверждены права) -->
-				<div id="accessCheck" class="access-check">
-					<div class="spinner"></div>
-					<h2>Проверка прав доступа...</h2>
-					<p>Пожалуйста, подождите</p>
-				</div>
-
-				<!-- Блок с ошибкой доступа -->
-				<div id="accessDenied" class="access-denied" style="display: none">
-					<i class="fas fa-lock"></i>
-					<h2>Доступ запрещен</h2>
-					<p>У вас недостаточно прав для просмотра этой страницы.</p>
-					<a href="/" class="btn btn-primary">Вернуться на главную</a>
-				</div>
-
-				<!-- Основной контент админ-панели -->
-				<div id="adminContent" class="admin-content" style="display: none">
-					<div class="admin-header">
-						<h1 class="admin-title">
-							<i class="fas fa-crown"></i> Админ панель
-						</h1>
-						<p class="admin-subtitle">Управление товарами и файлами</p>
-					</div>
-
-					<!-- Статистика -->
-					<div class="admin-stats">
-						<div class="stat-card">
-							<div class="stat-icon">
-								<i class="fas fa-folder"></i>
-							</div>
-							<div class="stat-info">
-								<h3 id="totalFolders">0</h3>
-								<p>Папок с товарами</p>
-							</div>
-						</div>
-						<div class="stat-card">
-							<div class="stat-icon">
-								<i class="fas fa-image"></i>
-							</div>
-							<div class="stat-info">
-								<h3 id="totalImages">0</h3>
-								<p>Всего изображений</p>
-							</div>
-						</div>
-						<div class="stat-card">
-							<div class="stat-icon">
-								<i class="fas fa-file-alt"></i>
-							</div>
-							<div class="stat-info">
-								<h3 id="totalFiles">0</h3>
-								<p>Всего файлов</p>
-							</div>
-						</div>
-					</div>
-
-					<!-- Кнопки управления -->
-					<div class="admin-controls">
-						<button id="refreshBtn" class="btn btn-primary">
-							<i class="fas fa-sync-alt"></i> Обновить
-						</button>
-						<button id="createFolderBtn" class="btn btn-secondary">
-							<i class="fas fa-folder-plus"></i> Создать папку
-						</button>
-						<button id="addFilesBtn" class="btn btn-secondary">
-							<i class="fas fa-file-upload"></i> Добавить файлы
-						</button>
-					</div>
-
-					<!-- Модальное окно для создания папки -->
-					<div id="createFolderModal" class="modal" style="display: none">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h3><i class="fas fa-folder-plus"></i> Создать новую папку</h3>
-								<button class="close-btn">&times;</button>
-							</div>
-							<div class="modal-body">
-								<div class="form-group">
-									<label for="folderName">Название папки:</label>
-									<input
-										type="text"
-										id="folderName"
-										placeholder="Например: Товар_1"
-										class="form-input"
-									/>
-									<small class="form-help"
-										>Используйте латиницу, цифры и нижнее подчеркивание</small
-									>
-								</div>
-								<div class="form-group">
-									<label for="folderDescription">Описание (опционально):</label>
-									<textarea
-										id="folderDescription"
-										placeholder="Краткое описание содержимого папки"
-										class="form-textarea"
-										rows="3"
-									></textarea>
-								</div>
-							</div>
-							<div class="modal-footer">
-								<button id="cancelCreateBtn" class="btn btn-secondary">
-									Отмена
+				<!-- Подключаем стили -->
+				<link rel="stylesheet" href="/public/css/admin.css" />
+				<link rel="stylesheet" href="/public/css/style.css" />
+				<link
+					rel="stylesheet"
+					href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+				/>
+				<link
+					href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+					rel="stylesheet"
+				/>
+			</head>
+			<body>
+				<!-- Хедер -->
+				<header class="header">
+					<div class="container">
+						<a href="/" class="logo">
+							<i class="fas fa-clock"></i>
+							<span>KF WATCH FACE</span>
+						</a>
+						<nav class="nav">
+							<a href="/" class="nav-link">Главная</a>
+							<div class="user-menu-container">
+								<button id="userMenuBtn" class="nav-link user-menu-btn">
+									<i class="fas fa-user-circle"></i>
 								</button>
-								<button id="confirmCreateBtn" class="btn btn-primary">
-									Создать папку
+								<div id="userMenu" class="user-menu">
+									<div id="userInfo" style="display: none">
+										<p
+											id="userEmailDisplay"
+											style="margin-bottom: 10px; font-weight: 500"
+										></p>
+										<button id="logoutBtn" class="btn-logout">Выйти</button>
+									</div>
+								</div>
+							</div>
+						</nav>
+					</div>
+				</header>
+
+				<!-- Контент админ-панели -->
+				<main class="admin-container">
+					<div class="container">
+						<!-- Блок проверки доступа (показывается пока не подтверждены права) -->
+						<div id="accessCheck" class="access-check">
+							<div class="spinner"></div>
+							<h2>Проверка прав доступа...</h2>
+							<p>Пожалуйста, подождите</p>
+						</div>
+
+						<!-- Блок с ошибкой доступа -->
+						<div id="accessDenied" class="access-denied" style="display: none">
+							<i class="fas fa-lock"></i>
+							<h2>Доступ запрещен</h2>
+							<p>У вас недостаточно прав для просмотра этой страницы.</p>
+							<a href="/" class="btn btn-primary">Вернуться на главную</a>
+						</div>
+
+						<!-- Основной контент админ-панели -->
+						<div id="adminContent" class="admin-content" style="display: none">
+							<div class="admin-header">
+								<h1 class="admin-title">
+									<i class="fas fa-crown"></i> Админ панель
+								</h1>
+								<p class="admin-subtitle">Управление товарами и файлами</p>
+							</div>
+
+							<!-- Статистика -->
+							<div class="admin-stats">
+								<div class="stat-card">
+									<div class="stat-icon">
+										<i class="fas fa-folder"></i>
+									</div>
+									<div class="stat-info">
+										<h3 id="totalFolders">0</h3>
+										<p>Папок с товарами</p>
+									</div>
+								</div>
+								<div class="stat-card">
+									<div class="stat-icon">
+										<i class="fas fa-image"></i>
+									</div>
+									<div class="stat-info">
+										<h3 id="totalImages">0</h3>
+										<p>Всего изображений</p>
+									</div>
+								</div>
+								<div class="stat-card">
+									<div class="stat-icon">
+										<i class="fas fa-file-alt"></i>
+									</div>
+									<div class="stat-info">
+										<h3 id="totalFiles">0</h3>
+										<p>Всего файлов</p>
+									</div>
+								</div>
+							</div>
+
+							<!-- Кнопки управления -->
+							<div class="admin-controls">
+								<button id="refreshBtn" class="btn btn-primary">
+									<i class="fas fa-sync-alt"></i> Обновить
+								</button>
+								<button id="createFolderBtn" class="btn btn-secondary">
+									<i class="fas fa-folder-plus"></i> Создать папку
+								</button>
+								<button id="addFilesBtn" class="btn btn-secondary">
+									<i class="fas fa-file-upload"></i> Добавить файлы
 								</button>
 							</div>
-						</div>
-					</div>
 
-					<!-- Модальное окно для добавления файлов -->
-					<div id="addFilesModal" class="modal" style="display: none">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h3><i class="fas fa-file-upload"></i> Добавить файлы</h3>
-								<button class="close-btn">&times;</button>
-							</div>
-							<div class="modal-body">
-								<div class="form-group">
-									<label for="selectFolder">Выберите папку:</label>
-									<select id="selectFolder" class="form-select">
-										<option value="">-- Выберите папку --</option>
-										<!-- Папки будут добавляться динамически -->
-									</select>
-								</div>
-								<div class="form-group">
-									<label>Выберите файлы:</label>
-									<div class="file-drop-area" id="fileDropArea">
-										<i class="fas fa-cloud-upload-alt"></i>
-										<p>Перетащите файлы сюда или кликните для выбора</p>
-										<input
-											type="file"
-											id="fileInput"
-											multiple
-											style="display: none"
-										/>
-										<button id="browseFilesBtn" class="btn btn-secondary">
-											Выбрать файлы
+							<!-- Модальное окно для создания папки -->
+							<div id="createFolderModal" class="modal" style="display: none">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h3>
+											<i class="fas fa-folder-plus"></i> Создать новую папку
+										</h3>
+										<button class="close-btn">&times;</button>
+									</div>
+									<div class="modal-body">
+										<div class="form-group">
+											<label for="folderName">Название папки:</label>
+											<input
+												type="text"
+												id="folderName"
+												placeholder="Например: Товар_1"
+												class="form-input"
+											/>
+											<small class="form-help"
+												>Используйте латиницу, цифры и нижнее
+												подчеркивание</small
+											>
+										</div>
+										<div class="form-group">
+											<label for="folderDescription"
+												>Описание (опционально):</label
+											>
+											<textarea
+												id="folderDescription"
+												placeholder="Краткое описание содержимого папки"
+												class="form-textarea"
+												rows="3"
+											></textarea>
+										</div>
+									</div>
+									<div class="modal-footer">
+										<button id="cancelCreateBtn" class="btn btn-secondary">
+											Отмена
+										</button>
+										<button id="confirmCreateBtn" class="btn btn-primary">
+											Создать папку
 										</button>
 									</div>
-									<div id="fileList" class="file-list"></div>
 								</div>
-								<div class="form-group">
-									<label>Типы файлов:</label>
-									<div class="file-types-info">
-										<p>
-											<strong>Изображения:</strong> .jpg, .jpeg, .png, .gif
-											(рекомендуется для товаров)
-										</p>
-										<p>
-											<strong>Описание:</strong> .txt, .md (для описания товара)
-										</p>
-										<p>
-											<strong>Цена:</strong> price.txt (файл с ценой товара)
-										</p>
+							</div>
+
+							<!-- Модальное окно для добавления файлов -->
+							<div id="addFilesModal" class="modal" style="display: none">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h3><i class="fas fa-file-upload"></i> Добавить файлы</h3>
+										<button class="close-btn">&times;</button>
+									</div>
+									<div class="modal-body">
+										<div class="form-group">
+											<label for="selectFolder">Выберите папку:</label>
+											<select id="selectFolder" class="form-select">
+												<option value="">-- Выберите папку --</option>
+												<!-- Папки будут добавляться динамически -->
+											</select>
+										</div>
+										<div class="form-group">
+											<label>Выберите файлы:</label>
+											<div class="file-drop-area" id="fileDropArea">
+												<i class="fas fa-cloud-upload-alt"></i>
+												<p>Перетащите файлы сюда или кликните для выбора</p>
+												<input
+													type="file"
+													id="fileInput"
+													multiple
+													style="display: none"
+												/>
+												<button id="browseFilesBtn" class="btn btn-secondary">
+													Выбрать файлы
+												</button>
+											</div>
+											<div id="fileList" class="file-list"></div>
+										</div>
+										<div class="form-group">
+											<label>Типы файлов:</label>
+											<div class="file-types-info">
+												<p>
+													<strong>Изображения:</strong> .jpg, .jpeg, .png, .gif
+													(рекомендуется для товаров)
+												</p>
+												<p>
+													<strong>Описание:</strong> .txt, .md (для описания
+													товара)
+												</p>
+												<p>
+													<strong>Цена:</strong> price.txt (файл с ценой товара)
+												</p>
+											</div>
+										</div>
+									</div>
+									<div class="modal-footer">
+										<button id="cancelUploadBtn" class="btn btn-secondary">
+											Отмена
+										</button>
+										<button
+											id="confirmUploadBtn"
+											class="btn btn-primary"
+											disabled
+										>
+											<i class="fas fa-upload"></i> Загрузить файлы
+										</button>
 									</div>
 								</div>
 							</div>
-							<div class="modal-footer">
-								<button id="cancelUploadBtn" class="btn btn-secondary">
-									Отмена
-								</button>
-								<button id="confirmUploadBtn" class="btn btn-primary" disabled>
-									<i class="fas fa-upload"></i> Загрузить файлы
-								</button>
-							</div>
-						</div>
-					</div>
 
-					<!-- Модальное окно для просмотра файлов -->
-					<div id="viewFileModal" class="modal" style="display: none">
-						<div class="modal-content large-modal">
-							<div class="modal-header">
-								<h3 id="fileModalTitle">
-									<i class="fas fa-file"></i> Просмотр файла
-								</h3>
-								<button class="close-btn">&times;</button>
-							</div>
-							<div class="modal-body" id="fileModalContent">
-								<!-- Содержимое файла будет отображаться здесь -->
-							</div>
-							<div class="modal-footer">
-								<button id="closeViewBtn" class="btn btn-secondary">
-									Закрыть
-								</button>
-								<button id="downloadFileBtn" class="btn btn-primary">
-									<i class="fas fa-download"></i> Скачать
-								</button>
-							</div>
-						</div>
-					</div>
-
-					<!-- Список товаров -->
-					<div class="products-section">
-						<h2 class="section-title">
-							<i class="fas fa-box"></i> Содержимое папки watch
-						</h2>
-
-						<!-- Индикатор загрузки -->
-						<div id="loadingFolders" class="loading-section">
-							<div class="spinner"></div>
-							<p>Загрузка данных...</p>
-						</div>
-
-						<!-- Список папок -->
-						<div id="foldersList" class="folders-list"></div>
-
-						<!-- Сообщение если нет папок -->
-						<div id="noFolders" class="no-data" style="display: none">
-							<i class="fas fa-folder-open"></i>
-							<h3>Папка watch пуста</h3>
-							<p>
-								Нажмите "Создать папку" чтобы добавить первую папку с товаром
-							</p>
-						</div>
-					</div>
-
-					<!-- Информация о системе -->
-					<div class="system-info">
-						<h2 class="section-title">
-							<i class="fas fa-info-circle"></i> Информация о системе
-						</h2>
-						<div class="info-grid">
-							<div class="info-item">
-								<i class="fas fa-user-shield"></i>
-								<div>
-									<h4>Текущий пользователь</h4>
-									<p id="currentUserEmail">Не авторизован</p>
+							<!-- Модальное окно для просмотра файлов -->
+							<div id="viewFileModal" class="modal" style="display: none">
+								<div class="modal-content large-modal">
+									<div class="modal-header">
+										<h3 id="fileModalTitle">
+											<i class="fas fa-file"></i> Просмотр файла
+										</h3>
+										<button class="close-btn">&times;</button>
+									</div>
+									<div class="modal-body" id="fileModalContent">
+										<!-- Содержимое файла будет отображаться здесь -->
+									</div>
+									<div class="modal-footer">
+										<button id="closeViewBtn" class="btn btn-secondary">
+											Закрыть
+										</button>
+										<button id="downloadFileBtn" class="btn btn-primary">
+											<i class="fas fa-download"></i> Скачать
+										</button>
+									</div>
 								</div>
 							</div>
-							<div class="info-item">
-								<i class="fas fa-database"></i>
-								<div>
-									<h4>База данных</h4>
-									<p>Firebase Realtime Database</p>
+
+							<!-- Список товаров -->
+							<div class="products-section">
+								<h2 class="section-title">
+									<i class="fas fa-box"></i> Содержимое папки watch
+								</h2>
+
+								<!-- Индикатор загрузки -->
+								<div id="loadingFolders" class="loading-section">
+									<div class="spinner"></div>
+									<p>Загрузка данных...</p>
+								</div>
+
+								<!-- Список папок -->
+								<div id="foldersList" class="folders-list"></div>
+
+								<!-- Сообщение если нет папок -->
+								<div id="noFolders" class="no-data" style="display: none">
+									<i class="fas fa-folder-open"></i>
+									<h3>Папка watch пуста</h3>
+									<p>
+										Нажмите "Создать папку" чтобы добавить первую папку с
+										товаром
+									</p>
 								</div>
 							</div>
-							<div class="info-item">
-								<i class="fas fa-clock"></i>
-								<div>
-									<h4>Последнее обновление</h4>
-									<p id="lastUpdate">—</p>
-								</div>
-							</div>
-							<div class="info-item">
-								<i class="fas fa-folder-open"></i>
-								<div>
-									<h4>Путь к папке watch</h4>
-									<p>/public/watch/</p>
+
+							<!-- Информация о системе -->
+							<div class="system-info">
+								<h2 class="section-title">
+									<i class="fas fa-info-circle"></i> Информация о системе
+								</h2>
+								<div class="info-grid">
+									<div class="info-item">
+										<i class="fas fa-user-shield"></i>
+										<div>
+											<h4>Текущий пользователь</h4>
+											<p id="currentUserEmail">Не авторизован</p>
+										</div>
+									</div>
+									<div class="info-item">
+										<i class="fas fa-database"></i>
+										<div>
+											<h4>База данных</h4>
+											<p>Firebase Realtime Database</p>
+										</div>
+									</div>
+									<div class="info-item">
+										<i class="fas fa-clock"></i>
+										<div>
+											<h4>Последнее обновление</h4>
+											<p id="lastUpdate">—</p>
+										</div>
+									</div>
+									<div class="info-item">
+										<i class="fas fa-folder-open"></i>
+										<div>
+											<h4>Путь к папке watch</h4>
+											<p>/public/watch/</p>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			</div>
-		</main>
+				</main>
 
-		<!-- Футер -->
-		<footer class="footer">
-			<div class="container">
-				<div class="footer-content">
-					<div class="footer-section">
-						<h3>KF WATCH FACE</h3>
-						<p>Административная панель<br />для управления товарами</p>
-					</div>
-					<div class="footer-section">
-						<h4>Действия</h4>
-						<a href="/" class="footer-link">Главная страница</a>
-						<a href="/#catalog" class="footer-link">Каталог товаров</a>
-						<button id="logoutFooterBtn" class="footer-link">
-							Выйти из системы
-						</button>
-					</div>
-					<div class="footer-section">
-						<h4>Техническая информация</h4>
-						<p class="footer-link">Версия: 1.0.0</p>
-						<p class="footer-link">
-							Статус: <span id="systemStatus">Активен</span>
+				<!-- Футер -->
+				<footer class="footer">
+					<div class="container">
+						<div class="footer-content">
+							<div class="footer-section">
+								<h3>KF WATCH FACE</h3>
+								<p>Административная панель<br />для управления товарами</p>
+							</div>
+							<div class="footer-section">
+								<h4>Действия</h4>
+								<a href="/" class="footer-link">Главная страница</a>
+								<a href="/#catalog" class="footer-link">Каталог товаров</a>
+								<button id="logoutFooterBtn" class="footer-link">
+									Выйти из системы
+								</button>
+							</div>
+							<div class="footer-section">
+								<h4>Техническая информация</h4>
+								<p class="footer-link">Версия: 1.0.0</p>
+								<p class="footer-link">
+									Статус: <span id="systemStatus">Активен</span>
+								</p>
+							</div>
+						</div>
+						<p class="copyright">
+							© 2026 KF WATCH FACE. Административная панель.
 						</p>
 					</div>
-				</div>
-				<p class="copyright">© 2026 KF WATCH FACE. Административная панель.</p>
-			</div>
-		</footer>
+				</footer>
 
-		<!-- Подключаем скрипты -->
-		<script src="/public/js/firebase-config.js"></script>
-		<script src="/public/js/admin-auth.js"></script>
-		<script>
-			// Стили для модальных окон
-			const modalStyles = `
+				<!-- Подключаем скрипты -->
+				<script src="/public/js/firebase-config.js"></script>
+				<script src="/public/js/admin-auth.js"></script>
+				<script>
+					// Стили для модальных окон
+					const modalStyles = `
 				.modal {
 					display: none;
 					position: fixed;
@@ -637,270 +669,277 @@
 				}
 			`
 
-			// Добавляем стили в DOM
-			const styleSheet = document.createElement('style')
-			styleSheet.textContent = modalStyles
-			document.head.appendChild(styleSheet)
+					// Добавляем стили в DOM
+					const styleSheet = document.createElement('style')
+					styleSheet.textContent = modalStyles
+					document.head.appendChild(styleSheet)
 
-			// Глобальные переменные
-			let currentFolders = []
-			let selectedFiles = []
-			let currentFileData = null
+					// Глобальные переменные
+					let currentFolders = []
+					let selectedFiles = []
+					let currentFileData = null
 
-			// Инициализация при загрузке DOM
-			document.addEventListener('DOMContentLoaded', () => {
-				// Кнопка обновления
-				document.getElementById('refreshBtn').addEventListener('click', () => {
-					location.reload()
-				})
+					// Инициализация при загрузке DOM
+					document.addEventListener('DOMContentLoaded', () => {
+						// Кнопка обновления
+						document
+							.getElementById('refreshBtn')
+							.addEventListener('click', () => {
+								location.reload()
+							})
 
-				// Кнопка создания папки
-				document
-					.getElementById('createFolderBtn')
-					.addEventListener('click', () => {
-						showCreateFolderModal()
+						// Кнопка создания папки
+						document
+							.getElementById('createFolderBtn')
+							.addEventListener('click', () => {
+								showCreateFolderModal()
+							})
+
+						// Кнопка добавления файлов
+						document
+							.getElementById('addFilesBtn')
+							.addEventListener('click', () => {
+								showAddFilesModal()
+							})
+
+						// Инициализация модальных окон
+						initModals()
+
+						// Загружаем папки при загрузке
+						setTimeout(loadFolders, 1000)
 					})
 
-				// Кнопка добавления файлов
-				document.getElementById('addFilesBtn').addEventListener('click', () => {
-					showAddFilesModal()
-				})
+					// Инициализация модальных окон
 
-				// Инициализация модальных окон
-				initModals()
+					// Инициализация модальных окон
+					function initModals() {
+						// Модальное окно создания папки
+						const createFolderModal =
+							document.getElementById('createFolderModal')
+						const closeCreateBtns = createFolderModal.querySelectorAll(
+							'.close-btn, #cancelCreateBtn'
+						)
 
-				// Загружаем папки при загрузке
-				setTimeout(loadFolders, 1000)
-			})
+						closeCreateBtns.forEach(btn => {
+							btn.addEventListener('click', () => {
+								createFolderModal.style.display = 'none'
+							})
+						})
 
-			// Инициализация модальных окон
+						document
+							.getElementById('confirmCreateBtn')
+							.addEventListener('click', createFolder)
 
-			// Инициализация модальных окон
-			function initModals() {
-				// Модальное окно создания папки
-				const createFolderModal = document.getElementById('createFolderModal')
-				const closeCreateBtns = createFolderModal.querySelectorAll(
-					'.close-btn, #cancelCreateBtn'
-				)
+						// Модальное окно добавления файлов
+						const addFilesModal = document.getElementById('addFilesModal')
+						const closeUploadBtns = addFilesModal.querySelectorAll(
+							'.close-btn, #cancelUploadBtn'
+						)
 
-				closeCreateBtns.forEach(btn => {
-					btn.addEventListener('click', () => {
-						createFolderModal.style.display = 'none'
-					})
-				})
+						closeUploadBtns.forEach(btn => {
+							btn.addEventListener('click', () => {
+								addFilesModal.style.display = 'none'
+								resetFileUpload()
+							})
+						})
 
-				document
-					.getElementById('confirmCreateBtn')
-					.addEventListener('click', createFolder)
+						// Модальное окно просмотра файлов - ИСПРАВЛЕНО
+						const viewFileModal = document.getElementById('viewFileModal')
 
-				// Модальное окно добавления файлов
-				const addFilesModal = document.getElementById('addFilesModal')
-				const closeUploadBtns = addFilesModal.querySelectorAll(
-					'.close-btn, #cancelUploadBtn'
-				)
+						// Обработчики для кнопок закрытия в модальном окне просмотра файлов
+						document
+							.querySelectorAll('#viewFileModal .close-btn, #closeViewBtn')
+							.forEach(btn => {
+								btn.addEventListener('click', function (e) {
+									e.preventDefault()
+									e.stopPropagation()
+									viewFileModal.style.display = 'none'
+									currentFileData = null
+								})
+							})
 
-				closeUploadBtns.forEach(btn => {
-					btn.addEventListener('click', () => {
-						addFilesModal.style.display = 'none'
-						resetFileUpload()
-					})
-				})
+						document
+							.getElementById('downloadFileBtn')
+							.addEventListener('click', downloadFile)
 
-				// Модальное окно просмотра файлов - ИСПРАВЛЕНО
-				const viewFileModal = document.getElementById('viewFileModal')
+						// Обработчики для загрузки файлов - ИСПРАВЛЕНО
+						const fileInput = document.getElementById('fileInput')
+						const browseFilesBtn = document.getElementById('browseFilesBtn')
 
-				// Обработчики для кнопок закрытия в модальном окне просмотра файлов
-				document
-					.querySelectorAll('#viewFileModal .close-btn, #closeViewBtn')
-					.forEach(btn => {
-						btn.addEventListener('click', function (e) {
+						// Обработчик для кнопки "Выбрать файлы"
+						browseFilesBtn.addEventListener('click', e => {
 							e.preventDefault()
 							e.stopPropagation()
-							viewFileModal.style.display = 'none'
-							currentFileData = null
+							fileInput.click()
 						})
-					})
 
-				document
-					.getElementById('downloadFileBtn')
-					.addEventListener('click', downloadFile)
+						// Обработчик для изменения выбора файлов
+						fileInput.addEventListener('change', handleFileSelect)
 
-				// Обработчики для загрузки файлов - ИСПРАВЛЕНО
-				const fileInput = document.getElementById('fileInput')
-				const browseFilesBtn = document.getElementById('browseFilesBtn')
+						const fileDropArea = document.getElementById('fileDropArea')
 
-				// Обработчик для кнопки "Выбрать файлы"
-				browseFilesBtn.addEventListener('click', e => {
-					e.preventDefault()
-					e.stopPropagation()
-					fileInput.click()
-				})
+						// Обработчик для клика по области drop - ИСПРАВЛЕНО
+						fileDropArea.addEventListener('click', e => {
+							// Проверяем, что клик не по кнопке "Выбрать файлы"
+							if (!e.target.closest('#browseFilesBtn')) {
+								fileInput.click()
+							}
+						})
 
-				// Обработчик для изменения выбора файлов
-				fileInput.addEventListener('change', handleFileSelect)
+						// Обработчик для изменения выбора папки - ДОБАВЛЕНО
+						document
+							.getElementById('selectFolder')
+							.addEventListener('change', updateUploadButton)
 
-				const fileDropArea = document.getElementById('fileDropArea')
+						// Drag and drop
+						;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(
+							eventName => {
+								fileDropArea.addEventListener(eventName, preventDefaults, false)
+							}
+						)
 
-				// Обработчик для клика по области drop - ИСПРАВЛЕНО
-				fileDropArea.addEventListener('click', e => {
-					// Проверяем, что клик не по кнопке "Выбрать файлы"
-					if (!e.target.closest('#browseFilesBtn')) {
-						fileInput.click()
+						function preventDefaults(e) {
+							e.preventDefault()
+							e.stopPropagation()
+						}
+
+						;['dragenter', 'dragover'].forEach(eventName => {
+							fileDropArea.addEventListener(eventName, highlight, false)
+						})
+						;['dragleave', 'drop'].forEach(eventName => {
+							fileDropArea.addEventListener(eventName, unhighlight, false)
+						})
+
+						function highlight() {
+							fileDropArea.classList.add('drag-over')
+						}
+
+						function unhighlight() {
+							fileDropArea.classList.remove('drag-over')
+						}
+
+						fileDropArea.addEventListener('drop', handleDrop, false)
+
+						// Кнопка подтверждения загрузки
+						document
+							.getElementById('confirmUploadBtn')
+							.addEventListener('click', uploadFiles)
 					}
-				})
 
-				// Обработчик для изменения выбора папки - ДОБАВЛЕНО
-				document
-					.getElementById('selectFolder')
-					.addEventListener('change', updateUploadButton)
-
-				// Drag and drop
-				;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-					fileDropArea.addEventListener(eventName, preventDefaults, false)
-				})
-
-				function preventDefaults(e) {
-					e.preventDefault()
-					e.stopPropagation()
-				}
-
-				;['dragenter', 'dragover'].forEach(eventName => {
-					fileDropArea.addEventListener(eventName, highlight, false)
-				})
-				;['dragleave', 'drop'].forEach(eventName => {
-					fileDropArea.addEventListener(eventName, unhighlight, false)
-				})
-
-				function highlight() {
-					fileDropArea.classList.add('drag-over')
-				}
-
-				function unhighlight() {
-					fileDropArea.classList.remove('drag-over')
-				}
-
-				fileDropArea.addEventListener('drop', handleDrop, false)
-
-				// Кнопка подтверждения загрузки
-				document
-					.getElementById('confirmUploadBtn')
-					.addEventListener('click', uploadFiles)
-			}
-
-			// Показать модальное окно создания папки
-			function showCreateFolderModal() {
-				const modal = document.getElementById('createFolderModal')
-				document.getElementById('folderName').value = ''
-				document.getElementById('folderDescription').value = ''
-				modal.style.display = 'block'
-			}
-
-			// Показать модальное окно добавления файлов
-			// Показать модальное окно добавления файлов
-			function showAddFilesModal() {
-				const modal = document.getElementById('addFilesModal')
-				const selectFolder = document.getElementById('selectFolder')
-
-				// Очищаем и заполняем список папок
-				selectFolder.innerHTML =
-					'<option value="">-- Выберите папку --</option>'
-
-				if (currentFolders.length > 0) {
-					currentFolders.forEach(folder => {
-						const option = document.createElement('option')
-						option.value = folder.name
-						option.textContent = folder.name
-						selectFolder.appendChild(option)
-					})
-				} else {
-					const option = document.createElement('option')
-					option.value = ''
-					option.textContent = 'Нет доступных папок'
-					option.disabled = true
-					selectFolder.appendChild(option)
-				}
-
-				resetFileUpload()
-				modal.style.display = 'block'
-
-				// Устанавливаем фокус на выборе папки для удобства пользователя
-				setTimeout(() => {
-					selectFolder.focus()
-				}, 100)
-			}
-
-			// Загрузка списка папок
-			async function loadFolders() {
-				try {
-					const response = await fetch('/api/watch-content')
-					if (response.ok) {
-						const data = await response.json()
-						currentFolders = data.folders || []
-						displayFolders(currentFolders)
+					// Показать модальное окно создания папки
+					function showCreateFolderModal() {
+						const modal = document.getElementById('createFolderModal')
+						document.getElementById('folderName').value = ''
+						document.getElementById('folderDescription').value = ''
+						modal.style.display = 'block'
 					}
-				} catch (error) {
-					console.error('Ошибка загрузки папок:', error)
-				}
-			}
 
-			// Отображение папок
-			function displayFolders(folders) {
-				const foldersList = document.getElementById('foldersList')
-				const loadingFolders = document.getElementById('loadingFolders')
-				const noFolders = document.getElementById('noFolders')
+					// Показать модальное окно добавления файлов
+					// Показать модальное окно добавления файлов
+					function showAddFilesModal() {
+						const modal = document.getElementById('addFilesModal')
+						const selectFolder = document.getElementById('selectFolder')
 
-				loadingFolders.style.display = 'none'
+						// Очищаем и заполняем список папок
+						selectFolder.innerHTML =
+							'<option value="">-- Выберите папку --</option>'
 
-				if (!folders || folders.length === 0) {
-					noFolders.style.display = 'block'
-					foldersList.innerHTML = ''
-					return
-				}
+						if (currentFolders.length > 0) {
+							currentFolders.forEach(folder => {
+								const option = document.createElement('option')
+								option.value = folder.name
+								option.textContent = folder.name
+								selectFolder.appendChild(option)
+							})
+						} else {
+							const option = document.createElement('option')
+							option.value = ''
+							option.textContent = 'Нет доступных папок'
+							option.disabled = true
+							selectFolder.appendChild(option)
+						}
 
-				noFolders.style.display = 'none'
+						resetFileUpload()
+						modal.style.display = 'block'
 
-				// Обновляем статистику
-				document.getElementById('totalFolders').textContent = folders.length
+						// Устанавливаем фокус на выборе папки для удобства пользователя
+						setTimeout(() => {
+							selectFolder.focus()
+						}, 100)
+					}
 
-				let totalFiles = 0
-				let totalImages = 0
+					// Загрузка списка папок
+					async function loadFolders() {
+						try {
+							const response = await fetch('/api/watch-content')
+							if (response.ok) {
+								const data = await response.json()
+								currentFolders = data.folders || []
+								displayFolders(currentFolders)
+							}
+						} catch (error) {
+							console.error('Ошибка загрузки папок:', error)
+						}
+					}
 
-				// Отображаем папки
-				foldersList.innerHTML = ''
-				folders.forEach(folder => {
-					const fileCount = folder.files ? folder.files.length : 0
-					const imageCount = folder.files
-						? folder.files.filter(f =>
-								['jpg', 'jpeg', 'png', 'gif'].includes(f.type)
-						  ).length
-						: 0
+					// Отображение папок
+					function displayFolders(folders) {
+						const foldersList = document.getElementById('foldersList')
+						const loadingFolders = document.getElementById('loadingFolders')
+						const noFolders = document.getElementById('noFolders')
 
-					totalFiles += fileCount
-					totalImages += imageCount
+						loadingFolders.style.display = 'none'
 
-					const folderItem = createFolderElement(folder)
-					foldersList.appendChild(folderItem)
-				})
+						if (!folders || folders.length === 0) {
+							noFolders.style.display = 'block'
+							foldersList.innerHTML = ''
+							return
+						}
 
-				document.getElementById('totalFiles').textContent = totalFiles
-				document.getElementById('totalImages').textContent = totalImages
-				document.getElementById('lastUpdate').textContent =
-					new Date().toLocaleTimeString()
-			}
+						noFolders.style.display = 'none'
 
-			// Создание элемента папки
-			function createFolderElement(folder) {
-				const div = document.createElement('div')
-				div.className = 'folder-item'
+						// Обновляем статистику
+						document.getElementById('totalFolders').textContent = folders.length
 
-				const fileCount = folder.files ? folder.files.length : 0
-				const imageCount = folder.files
-					? folder.files.filter(f =>
-							['jpg', 'jpeg', 'png', 'gif'].includes(f.type)
-					  ).length
-					: 0
+						let totalFiles = 0
+						let totalImages = 0
 
-				div.innerHTML = `
+						// Отображаем папки
+						foldersList.innerHTML = ''
+						folders.forEach(folder => {
+							const fileCount = folder.files ? folder.files.length : 0
+							const imageCount = folder.files
+								? folder.files.filter(f =>
+										['jpg', 'jpeg', 'png', 'gif'].includes(f.type)
+								  ).length
+								: 0
+
+							totalFiles += fileCount
+							totalImages += imageCount
+
+							const folderItem = createFolderElement(folder)
+							foldersList.appendChild(folderItem)
+						})
+
+						document.getElementById('totalFiles').textContent = totalFiles
+						document.getElementById('totalImages').textContent = totalImages
+						document.getElementById('lastUpdate').textContent =
+							new Date().toLocaleTimeString()
+					}
+
+					// Создание элемента папки
+					function createFolderElement(folder) {
+						const div = document.createElement('div')
+						div.className = 'folder-item'
+
+						const fileCount = folder.files ? folder.files.length : 0
+						const imageCount = folder.files
+							? folder.files.filter(f =>
+									['jpg', 'jpeg', 'png', 'gif'].includes(f.type)
+							  ).length
+							: 0
+
+						div.innerHTML = `
 					<div class="folder-header">
 						<div class="folder-icon">
 							<i class="fas fa-folder"></i>
@@ -948,147 +987,157 @@
 					</div>
 				`
 
-				// Добавляем обработчики событий для кнопок папки
-				div.querySelector('.btn-add-files').addEventListener('click', e => {
-					const folderName = e.target.closest('button').dataset.folder
-					showAddFilesToFolder(folderName)
-				})
+						// Добавляем обработчики событий для кнопок папки
+						div.querySelector('.btn-add-files').addEventListener('click', e => {
+							const folderName = e.target.closest('button').dataset.folder
+							showAddFilesToFolder(folderName)
+						})
 
-				div.querySelector('.btn-rename-folder').addEventListener('click', e => {
-					const folderName = e.target.closest('button').dataset.folder
-					renameFolder(folderName)
-				})
-
-				div.querySelector('.btn-delete-folder').addEventListener('click', e => {
-					const folderName = e.target.closest('button').dataset.folder
-					deleteFolder(folderName)
-				})
-
-				// Добавляем обработчики для кнопок удаления файлов
-				div.querySelectorAll('.delete-file-btn').forEach(btn => {
-					btn.addEventListener('click', e => {
-						e.stopPropagation()
-						const fileItem = e.target.closest('.file-item')
-						const folderName = fileItem.dataset.folder
-						const fileName = fileItem.dataset.file
-						deleteFile(folderName, fileName)
-					})
-				})
-
-				// Добавляем обработчики для клика по названию файла
-				div.querySelectorAll('.file-name').forEach(nameElement => {
-					nameElement.addEventListener('click', e => {
-						e.stopPropagation()
-						const fileItem = e.target.closest('.file-item')
-						const folderName = fileItem.dataset.folder
-						const fileName = fileItem.dataset.file
-						viewFile(folderName, fileName)
-					})
-				})
-
-				// Добавляем обработчик для клика по всей строке файла
-				div.querySelectorAll('.file-item').forEach(fileItem => {
-					fileItem.addEventListener('click', e => {
-						// Если клик не по кнопке удаления
-						if (!e.target.closest('.delete-file-btn')) {
-							const folderName = fileItem.dataset.folder
-							const fileName = fileItem.dataset.file
-							viewFile(folderName, fileName)
-						}
-					})
-				})
-
-				return div
-			}
-
-			// Просмотр файла
-			async function viewFile(folderName, fileName) {
-				try {
-					console.log('Просмотр файла:', { folderName, fileName })
-
-					const response = await fetch(
-						`/api/view-file?folder=${encodeURIComponent(
-							folderName
-						)}&file=${encodeURIComponent(fileName)}`
-					)
-
-					console.log('Ответ сервера:', response.status)
-
-					if (response.ok) {
-						// Для изображений и текстовых файлов используем разные подходы
-						const fileExt = fileName.split('.').pop().toLowerCase()
-						const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(
-							fileExt
-						)
-						const isText = ['txt', 'md', 'json', 'html', 'css', 'js'].includes(
-							fileExt
-						)
-
-						let fileContent = ''
-						let fileTitle = fileName
-
-						if (isImage) {
-							// Для изображений получаем base64
-							const blob = await response.blob()
-							const reader = new FileReader()
-							reader.onloadend = function () {
-								showFileModal(fileTitle, 'image', reader.result, {
-									folderName: folderName,
-									fileName: fileName,
-									size: blob.size,
-									type: fileExt,
-								})
-							}
-							reader.readAsDataURL(blob)
-							return
-						} else if (isText) {
-							// Для текстовых файлов получаем текст
-							fileContent = await response.text()
-							showFileModal(fileTitle, 'text', fileContent, {
-								folderName: folderName,
-								fileName: fileName,
-								size: fileContent.length,
-								type: fileExt,
+						div
+							.querySelector('.btn-rename-folder')
+							.addEventListener('click', e => {
+								const folderName = e.target.closest('button').dataset.folder
+								renameFolder(folderName)
 							})
-						} else {
-							// Для других типов файлов
-							showFileModal(fileTitle, 'other', '', {
-								folderName: folderName,
-								fileName: fileName,
-								type: fileExt,
+
+						div
+							.querySelector('.btn-delete-folder')
+							.addEventListener('click', e => {
+								const folderName = e.target.closest('button').dataset.folder
+								deleteFolder(folderName)
 							})
-						}
-					} else {
-						const error = await response.text()
-						console.log('Ошибка сервера:', error)
-						alert(
-							'Ошибка при открытии файла: ' + (error || 'Неизвестная ошибка')
-						)
+
+						// Добавляем обработчики для кнопок удаления файлов
+						div.querySelectorAll('.delete-file-btn').forEach(btn => {
+							btn.addEventListener('click', e => {
+								e.stopPropagation()
+								const fileItem = e.target.closest('.file-item')
+								const folderName = fileItem.dataset.folder
+								const fileName = fileItem.dataset.file
+								deleteFile(folderName, fileName)
+							})
+						})
+
+						// Добавляем обработчики для клика по названию файла
+						div.querySelectorAll('.file-name').forEach(nameElement => {
+							nameElement.addEventListener('click', e => {
+								e.stopPropagation()
+								const fileItem = e.target.closest('.file-item')
+								const folderName = fileItem.dataset.folder
+								const fileName = fileItem.dataset.file
+								viewFile(folderName, fileName)
+							})
+						})
+
+						// Добавляем обработчик для клика по всей строке файла
+						div.querySelectorAll('.file-item').forEach(fileItem => {
+							fileItem.addEventListener('click', e => {
+								// Если клик не по кнопке удаления
+								if (!e.target.closest('.delete-file-btn')) {
+									const folderName = fileItem.dataset.folder
+									const fileName = fileItem.dataset.file
+									viewFile(folderName, fileName)
+								}
+							})
+						})
+
+						return div
 					}
-				} catch (error) {
-					console.error('Ошибка сети:', error)
-					alert('Ошибка сети: ' + error.message)
-				}
-			}
 
-			// Показать модальное окно с содержимым файла
-			function showFileModal(title, type, content, fileInfo) {
-				currentFileData = fileInfo
+					// Просмотр файла
+					async function viewFile(folderName, fileName) {
+						try {
+							console.log('Просмотр файла:', { folderName, fileName })
 
-				const modal = document.getElementById('viewFileModal')
-				const titleElement = document.getElementById('fileModalTitle')
-				const contentElement = document.getElementById('fileModalContent')
+							const response = await fetch(
+								`/api/view-file?folder=${encodeURIComponent(
+									folderName
+								)}&file=${encodeURIComponent(fileName)}`
+							)
 
-				// Устанавливаем заголовок
-				titleElement.innerHTML = `<i class="${getFileIconClass(
-					fileInfo.type
-				)}"></i> ${title}`
+							console.log('Ответ сервера:', response.status)
 
-				// Очищаем содержимое
-				contentElement.innerHTML = ''
+							if (response.ok) {
+								// Для изображений и текстовых файлов используем разные подходы
+								const fileExt = fileName.split('.').pop().toLowerCase()
+								const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(
+									fileExt
+								)
+								const isText = [
+									'txt',
+									'md',
+									'json',
+									'html',
+									'css',
+									'js',
+								].includes(fileExt)
 
-				// Добавляем информацию о файле
-				const fileInfoHtml = `
+								let fileContent = ''
+								let fileTitle = fileName
+
+								if (isImage) {
+									// Для изображений получаем base64
+									const blob = await response.blob()
+									const reader = new FileReader()
+									reader.onloadend = function () {
+										showFileModal(fileTitle, 'image', reader.result, {
+											folderName: folderName,
+											fileName: fileName,
+											size: blob.size,
+											type: fileExt,
+										})
+									}
+									reader.readAsDataURL(blob)
+									return
+								} else if (isText) {
+									// Для текстовых файлов получаем текст
+									fileContent = await response.text()
+									showFileModal(fileTitle, 'text', fileContent, {
+										folderName: folderName,
+										fileName: fileName,
+										size: fileContent.length,
+										type: fileExt,
+									})
+								} else {
+									// Для других типов файлов
+									showFileModal(fileTitle, 'other', '', {
+										folderName: folderName,
+										fileName: fileName,
+										type: fileExt,
+									})
+								}
+							} else {
+								const error = await response.text()
+								console.log('Ошибка сервера:', error)
+								alert(
+									'Ошибка при открытии файла: ' +
+										(error || 'Неизвестная ошибка')
+								)
+							}
+						} catch (error) {
+							console.error('Ошибка сети:', error)
+							alert('Ошибка сети: ' + error.message)
+						}
+					}
+
+					// Показать модальное окно с содержимым файла
+					function showFileModal(title, type, content, fileInfo) {
+						currentFileData = fileInfo
+
+						const modal = document.getElementById('viewFileModal')
+						const titleElement = document.getElementById('fileModalTitle')
+						const contentElement = document.getElementById('fileModalContent')
+
+						// Устанавливаем заголовок
+						titleElement.innerHTML = `<i class="${getFileIconClass(
+							fileInfo.type
+						)}"></i> ${title}`
+
+						// Очищаем содержимое
+						contentElement.innerHTML = ''
+
+						// Добавляем информацию о файле
+						const fileInfoHtml = `
 					<div class="file-info-large">
 						<div class="file-info-item">
 							<span class="file-info-label">Папка:</span>
@@ -1110,171 +1159,174 @@
 						}
 					</div>
 				`
-				contentElement.innerHTML = fileInfoHtml
+						contentElement.innerHTML = fileInfoHtml
 
-				// Добавляем содержимое файла в зависимости от типа
-				if (type === 'image') {
-					const img = document.createElement('img')
-					img.src = content
-					img.alt = title
-					img.className = 'image-preview'
-					contentElement.appendChild(img)
-				} else if (type === 'text') {
-					const textDiv = document.createElement('div')
-					textDiv.className = 'text-content'
-					textDiv.textContent = content
-					contentElement.appendChild(textDiv)
-				} else {
-					const notSupportedDiv = document.createElement('div')
-					notSupportedDiv.className = 'file-not-supported'
-					notSupportedDiv.innerHTML = `
+						// Добавляем содержимое файла в зависимости от типа
+						if (type === 'image') {
+							const img = document.createElement('img')
+							img.src = content
+							img.alt = title
+							img.className = 'image-preview'
+							contentElement.appendChild(img)
+						} else if (type === 'text') {
+							const textDiv = document.createElement('div')
+							textDiv.className = 'text-content'
+							textDiv.textContent = content
+							contentElement.appendChild(textDiv)
+						} else {
+							const notSupportedDiv = document.createElement('div')
+							notSupportedDiv.className = 'file-not-supported'
+							notSupportedDiv.innerHTML = `
 						<i class="fas fa-file"></i>
 						<h4>Просмотр этого типа файла не поддерживается</h4>
 						<p>Вы можете скачать файл для просмотра в другом приложении</p>
 					`
-					contentElement.appendChild(notSupportedDiv)
-				}
+							contentElement.appendChild(notSupportedDiv)
+						}
 
-				// Показываем модальное окно
-				modal.style.display = 'block'
-			}
-
-			// Скачать файл
-			function downloadFile() {
-				if (!currentFileData) return
-
-				const { folderName, fileName } = currentFileData
-				const downloadUrl = `/api/download-file?folder=${encodeURIComponent(
-					folderName
-				)}&file=${encodeURIComponent(fileName)}`
-
-				// Создаем временную ссылку для скачивания
-				const a = document.createElement('a')
-				a.href = downloadUrl
-				a.download = fileName
-				document.body.appendChild(a)
-				a.click()
-				document.body.removeChild(a)
-			}
-
-			// Создание папки
-			async function createFolder() {
-				const folderName = document.getElementById('folderName').value.trim()
-				const description = document
-					.getElementById('folderDescription')
-					.value.trim()
-
-				if (!folderName) {
-					alert('Пожалуйста, введите название папки')
-					return
-				}
-
-				// Проверка имени папки
-				if (!/^[a-zA-Z0-9_\-]+$/.test(folderName)) {
-					alert(
-						'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание'
-					)
-					return
-				}
-
-				try {
-					console.log('Отправка запроса на создание папки:', {
-						folderName,
-						description,
-					})
-
-					const response = await fetch('/api/create-folder', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							folderName: folderName,
-							description: description,
-						}),
-					})
-
-					console.log('Ответ сервера:', response.status)
-
-					if (response.ok) {
-						const result = await response.json()
-						console.log('Результат:', result)
-						alert('Папка успешно создана!')
-						document.getElementById('createFolderModal').style.display = 'none'
-						loadFolders()
-					} else {
-						const error = await response.json()
-						console.log('Ошибка сервера:', error)
-						alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
+						// Показываем модальное окно
+						modal.style.display = 'block'
 					}
-				} catch (error) {
-					console.error('Ошибка сети:', error)
-					alert('Ошибка сети: ' + error.message)
-				}
-			}
 
-			// Удаление файла
-			async function deleteFile(folderName, fileName) {
-				if (
-					!confirm(
-						`Вы уверены, что хотите удалить файл "${fileName}" из папки "${folderName}"?`
-					)
-				) {
-					return
-				}
+					// Скачать файл
+					function downloadFile() {
+						if (!currentFileData) return
 
-				try {
-					console.log('Отправка запроса на удаление файла:', {
-						folderName,
-						fileName,
-					})
+						const { folderName, fileName } = currentFileData
+						const downloadUrl = `/api/download-file?folder=${encodeURIComponent(
+							folderName
+						)}&file=${encodeURIComponent(fileName)}`
 
-					const response = await fetch('/api/delete-file', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							folderName: folderName,
-							fileName: fileName,
-						}),
-					})
-
-					console.log('Ответ сервера:', response.status)
-
-					if (response.ok) {
-						const result = await response.json()
-						console.log('Результат:', result)
-						alert('Файл успешно удален!')
-						loadFolders()
-					} else {
-						const error = await response.json()
-						console.log('Ошибка сервера:', error)
-						alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
+						// Создаем временную ссылку для скачивания
+						const a = document.createElement('a')
+						a.href = downloadUrl
+						a.download = fileName
+						document.body.appendChild(a)
+						a.click()
+						document.body.removeChild(a)
 					}
-				} catch (error) {
-					console.error('Ошибка сети:', error)
-					alert('Ошибка сети: ' + error.message)
-				}
-			}
 
-			// Обработчик выбора файлов
-			function handleFileSelect(e) {
-				const files = e.target.files
-				addFilesToList(files)
-			}
+					// Создание папки
+					async function createFolder() {
+						const folderName = document
+							.getElementById('folderName')
+							.value.trim()
+						const description = document
+							.getElementById('folderDescription')
+							.value.trim()
 
-			// Обработчик drag and drop
-			function handleDrop(e) {
-				const dt = e.dataTransfer
-				const files = dt.files
-				addFilesToList(files)
-			}
+						if (!folderName) {
+							alert('Пожалуйста, введите название папки')
+							return
+						}
 
-			// Функция для показа уведомлений
-			function showNotification(message, type = 'info') {
-				const notification = document.createElement('div')
-				notification.style.cssText = `
+						// Проверка имени папки
+						if (!/^[a-zA-Z0-9_\-]+$/.test(folderName)) {
+							alert(
+								'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание'
+							)
+							return
+						}
+
+						try {
+							console.log('Отправка запроса на создание папки:', {
+								folderName,
+								description,
+							})
+
+							const response = await fetch('/api/create-folder', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									folderName: folderName,
+									description: description,
+								}),
+							})
+
+							console.log('Ответ сервера:', response.status)
+
+							if (response.ok) {
+								const result = await response.json()
+								console.log('Результат:', result)
+								alert('Папка успешно создана!')
+								document.getElementById('createFolderModal').style.display =
+									'none'
+								loadFolders()
+							} else {
+								const error = await response.json()
+								console.log('Ошибка сервера:', error)
+								alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
+							}
+						} catch (error) {
+							console.error('Ошибка сети:', error)
+							alert('Ошибка сети: ' + error.message)
+						}
+					}
+
+					// Удаление файла
+					async function deleteFile(folderName, fileName) {
+						if (
+							!confirm(
+								`Вы уверены, что хотите удалить файл "${fileName}" из папки "${folderName}"?`
+							)
+						) {
+							return
+						}
+
+						try {
+							console.log('Отправка запроса на удаление файла:', {
+								folderName,
+								fileName,
+							})
+
+							const response = await fetch('/api/delete-file', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									folderName: folderName,
+									fileName: fileName,
+								}),
+							})
+
+							console.log('Ответ сервера:', response.status)
+
+							if (response.ok) {
+								const result = await response.json()
+								console.log('Результат:', result)
+								alert('Файл успешно удален!')
+								loadFolders()
+							} else {
+								const error = await response.json()
+								console.log('Ошибка сервера:', error)
+								alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
+							}
+						} catch (error) {
+							console.error('Ошибка сети:', error)
+							alert('Ошибка сети: ' + error.message)
+						}
+					}
+
+					// Обработчик выбора файлов
+					function handleFileSelect(e) {
+						const files = e.target.files
+						addFilesToList(files)
+					}
+
+					// Обработчик drag and drop
+					function handleDrop(e) {
+						const dt = e.dataTransfer
+						const files = dt.files
+						addFilesToList(files)
+					}
+
+					// Функция для показа уведомлений
+					function showNotification(message, type = 'info') {
+						const notification = document.createElement('div')
+						notification.style.cssText = `
 		position: fixed;
 		top: 20px;
 		right: 20px;
@@ -1288,69 +1340,69 @@
 		font-family: 'Comfortaa', cursive;
 	`
 
-				if (type === 'success') {
-					notification.style.background =
-						'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)'
-				} else if (type === 'error') {
-					notification.style.background =
-						'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)'
-				} else {
-					notification.style.background =
-						'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)'
-				}
+						if (type === 'success') {
+							notification.style.background =
+								'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)'
+						} else if (type === 'error') {
+							notification.style.background =
+								'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)'
+						} else {
+							notification.style.background =
+								'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)'
+						}
 
-				notification.textContent = message
-				document.body.appendChild(notification)
+						notification.textContent = message
+						document.body.appendChild(notification)
 
-				setTimeout(() => {
-					notification.remove()
-				}, 3000)
-			}
-
-			// Добавление файлов в список - ИСПРАВЛЕНО
-			function addFilesToList(files) {
-				let filesAdded = false
-
-				for (let i = 0; i < files.length; i++) {
-					const file = files[i]
-
-					// Проверяем, нет ли уже такого файла
-					if (
-						!selectedFiles.some(
-							f => f.name === file.name && f.size === file.size
-						)
-					) {
-						selectedFiles.push(file)
-						filesAdded = true
+						setTimeout(() => {
+							notification.remove()
+						}, 3000)
 					}
-				}
 
-				if (filesAdded) {
-					updateFileList()
-					updateUploadButton() // Обновляем состояние кнопки после добавления файлов
+					// Добавление файлов в список - ИСПРАВЛЕНО
+					function addFilesToList(files) {
+						let filesAdded = false
 
-					// Показываем уведомление о добавленных файлах
-					if (files.length === 1) {
-						showNotification(`Добавлен файл: ${files[0].name}`, 'success')
-					} else {
-						showNotification(`Добавлено ${files.length} файлов`, 'success')
+						for (let i = 0; i < files.length; i++) {
+							const file = files[i]
+
+							// Проверяем, нет ли уже такого файла
+							if (
+								!selectedFiles.some(
+									f => f.name === file.name && f.size === file.size
+								)
+							) {
+								selectedFiles.push(file)
+								filesAdded = true
+							}
+						}
+
+						if (filesAdded) {
+							updateFileList()
+							updateUploadButton() // Обновляем состояние кнопки после добавления файлов
+
+							// Показываем уведомление о добавленных файлах
+							if (files.length === 1) {
+								showNotification(`Добавлен файл: ${files[0].name}`, 'success')
+							} else {
+								showNotification(`Добавлено ${files.length} файлов`, 'success')
+							}
+						}
 					}
-				}
-			}
 
-			// Обновление списка файлов
-			function updateFileList() {
-				const fileList = document.getElementById('fileList')
+					// Обновление списка файлов
+					function updateFileList() {
+						const fileList = document.getElementById('fileList')
 
-				if (selectedFiles.length === 0) {
-					fileList.innerHTML =
-						'<div style="padding: 20px; text-align: center; color: #999;">Файлы не выбраны</div>'
-					return
-				}
+						if (selectedFiles.length === 0) {
+							fileList.innerHTML =
+								'<div style="padding: 20px; text-align: center; color: #999;">Файлы не выбраны</div>'
+							return
+						}
 
-				fileList.innerHTML = selectedFiles
-					.map(
-						(file, index) => `
+						fileList.innerHTML = selectedFiles
+							.map(
+								(file, index) => `
 					<div class="file-item-preview">
 						<div class="file-info">
 							<div class="file-icon-small">
@@ -1366,284 +1418,288 @@
 						</button>
 					</div>
 				`
-					)
-					.join('')
+							)
+							.join('')
 
-				// Добавляем обработчики для кнопок удаления
-				fileList.querySelectorAll('.remove-file-btn').forEach(btn => {
-					btn.addEventListener('click', e => {
-						const index = parseInt(e.target.closest('button').dataset.index)
-						selectedFiles.splice(index, 1)
+						// Добавляем обработчики для кнопок удаления
+						fileList.querySelectorAll('.remove-file-btn').forEach(btn => {
+							btn.addEventListener('click', e => {
+								const index = parseInt(e.target.closest('button').dataset.index)
+								selectedFiles.splice(index, 1)
+								updateFileList()
+								updateUploadButton()
+							})
+						})
+					}
+
+					// Обновление состояния кнопки загрузки
+					// Обновление состояния кнопки загрузки - ИСПРАВЛЕНО
+					function updateUploadButton() {
+						const folderSelected =
+							document.getElementById('selectFolder').value !== ''
+						const hasFiles = selectedFiles.length > 0
+						const uploadBtn = document.getElementById('confirmUploadBtn')
+
+						// Проверяем оба условия
+						const canUpload = folderSelected && hasFiles
+
+						uploadBtn.disabled = !canUpload
+
+						// Обновляем текст кнопки в зависимости от состояния
+						if (canUpload) {
+							uploadBtn.innerHTML = `<i class="fas fa-upload"></i> Загрузить ${
+								selectedFiles.length
+							} файл${selectedFiles.length !== 1 ? 'ов' : ''}`
+						} else {
+							uploadBtn.innerHTML = `<i class="fas fa-upload"></i> Загрузить файлы`
+						}
+					}
+
+					// Загрузка файлов
+					async function uploadFiles() {
+						const folderName = document.getElementById('selectFolder').value
+
+						if (!folderName) {
+							alert('Пожалуйста, выберите папку')
+							return
+						}
+
+						if (selectedFiles.length === 0) {
+							alert('Пожалуйста, выберите файлы для загрузки')
+							return
+						}
+
+						const formData = new FormData()
+						formData.append('folderName', folderName)
+
+						selectedFiles.forEach(file => {
+							formData.append('files', file)
+						})
+
+						try {
+							console.log('Отправка файлов в папку:', folderName)
+							console.log('Количество файлов:', selectedFiles.length)
+
+							const response = await fetch('/api/upload-files', {
+								method: 'POST',
+								body: formData,
+								// Не указываем Content-Type, он будет установлен автоматически с boundary
+							})
+
+							console.log('Ответ сервера:', response.status)
+
+							if (response.ok) {
+								const result = await response.json()
+								console.log('Результат:', result)
+								alert(
+									`Файлы успешно загружены! Добавлено: ${
+										result.uploadedFiles || result.uploaded
+									} файлов`
+								)
+								document.getElementById('addFilesModal').style.display = 'none'
+								resetFileUpload()
+								loadFolders()
+							} else {
+								const error = await response.json()
+								console.log('Ошибка сервера:', error)
+								alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
+							}
+						} catch (error) {
+							console.error('Ошибка сети:', error)
+							alert('Ошибка сети: ' + error.message)
+						}
+					}
+
+					// Сброс загрузки файлов
+
+					function resetFileUpload() {
+						selectedFiles = []
+						document.getElementById('fileInput').value = '' // ИСПРАВЛЕНО: сбрасываем значение input
 						updateFileList()
-						updateUploadButton()
-					})
-				})
-			}
+						updateUploadButton() // ИСПРАВЛЕНО: обновляем кнопку после сброса
+					}
 
-			// Обновление состояния кнопки загрузки
-			// Обновление состояния кнопки загрузки - ИСПРАВЛЕНО
-			function updateUploadButton() {
-				const folderSelected =
-					document.getElementById('selectFolder').value !== ''
-				const hasFiles = selectedFiles.length > 0
-				const uploadBtn = document.getElementById('confirmUploadBtn')
+					// Показать модальное окно добавления файлов в конкретную папку
+					function showAddFilesToFolder(folderName) {
+						showAddFilesModal()
+						setTimeout(() => {
+							document.getElementById('selectFolder').value = folderName
+							updateUploadButton() // ИСПРАВЛЕНО: обновляем кнопку после установки значения
+						}, 50)
+					}
+					// Переименование папки
+					async function renameFolder(oldName) {
+						const newName = prompt('Введите новое название для папки:', oldName)
 
-				// Проверяем оба условия
-				const canUpload = folderSelected && hasFiles
+						if (!newName || newName === oldName) return
 
-				uploadBtn.disabled = !canUpload
+						if (!/^[a-zA-Z0-9_\-]+$/.test(newName)) {
+							alert(
+								'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание'
+							)
+							return
+						}
 
-				// Обновляем текст кнопки в зависимости от состояния
-				if (canUpload) {
-					uploadBtn.innerHTML = `<i class="fas fa-upload"></i> Загрузить ${
-						selectedFiles.length
-					} файл${selectedFiles.length !== 1 ? 'ов' : ''}`
-				} else {
-					uploadBtn.innerHTML = `<i class="fas fa-upload"></i> Загрузить файлы`
-				}
-			}
+						try {
+							console.log('Отправка запроса на переименование:', {
+								oldName,
+								newName,
+							})
 
-			// Загрузка файлов
-			async function uploadFiles() {
-				const folderName = document.getElementById('selectFolder').value
+							const response = await fetch('/api/rename-folder', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									oldName: oldName,
+									newName: newName,
+								}),
+							})
 
-				if (!folderName) {
-					alert('Пожалуйста, выберите папку')
-					return
-				}
+							console.log('Ответ сервера:', response.status)
 
-				if (selectedFiles.length === 0) {
-					alert('Пожалуйста, выберите файлы для загрузки')
-					return
-				}
+							if (response.ok) {
+								const result = await response.json()
+								console.log('Результат:', result)
+								alert('Папка успешно переименована!')
+								loadFolders()
+							} else {
+								const error = await response.json()
+								console.log('Ошибка сервера:', error)
+								alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
+							}
+						} catch (error) {
+							console.error('Ошибка сети:', error)
+							alert('Ошибка сети: ' + error.message)
+						}
+					}
 
-				const formData = new FormData()
-				formData.append('folderName', folderName)
+					// Удаление папки
+					async function deleteFolder(folderName) {
+						if (
+							!confirm(
+								`Вы уверены, что хотите удалить папку "${folderName}" и все её содержимое?`
+							)
+						) {
+							return
+						}
 
-				selectedFiles.forEach(file => {
-					formData.append('files', file)
-				})
+						try {
+							console.log('Отправка запроса на удаление:', { folderName })
 
-				try {
-					console.log('Отправка файлов в папку:', folderName)
-					console.log('Количество файлов:', selectedFiles.length)
+							const response = await fetch('/api/delete-folder', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									folderName: folderName,
+								}),
+							})
 
-					const response = await fetch('/api/upload-files', {
-						method: 'POST',
-						body: formData,
-						// Не указываем Content-Type, он будет установлен автоматически с boundary
-					})
+							console.log('Ответ сервера:', response.status)
 
-					console.log('Ответ сервера:', response.status)
+							if (response.ok) {
+								const result = await response.json()
+								console.log('Результат:', result)
+								alert('Папка успешно удалена!')
+								loadFolders()
+							} else {
+								const error = await response.json()
+								console.log('Ошибка сервера:', error)
+								alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
+							}
+						} catch (error) {
+							console.error('Ошибка сети:', error)
+							alert('Ошибка сети: ' + error.message)
+						}
+					}
 
-					if (response.ok) {
-						const result = await response.json()
-						console.log('Результат:', result)
-						alert(
-							`Файлы успешно загружены! Добавлено: ${
-								result.uploadedFiles || result.uploaded
-							} файлов`
+					// Вспомогательные функции
+					function getFileIconClass(extension) {
+						const icons = {
+							jpg: 'fas fa-image',
+							jpeg: 'fas fa-image',
+							png: 'fas fa-image',
+							gif: 'fas fa-image',
+							txt: 'fas fa-file-alt',
+							md: 'fas fa-file-alt',
+							pdf: 'fas fa-file-pdf',
+							doc: 'fas fa-file-word',
+							docx: 'fas fa-file-word',
+							xls: 'fas fa-file-excel',
+							xlsx: 'fas fa-file-excel',
+							zip: 'fas fa-file-archive',
+							rar: 'fas fa-file-archive',
+							mp4: 'fas fa-file-video',
+							mp3: 'fas fa-file-audio',
+						}
+						return icons[extension] || 'fas fa-file'
+					}
+
+					function formatFileSize(bytes) {
+						if (!bytes || bytes === 0) return '0 B'
+						const k = 1024
+						const sizes = ['B', 'KB', 'MB', 'GB']
+						const i = Math.floor(Math.log(bytes) / Math.log(k))
+						return (
+							parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 						)
-						document.getElementById('addFilesModal').style.display = 'none'
-						resetFileUpload()
-						loadFolders()
-					} else {
-						const error = await response.json()
-						console.log('Ошибка сервера:', error)
-						alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
 					}
-				} catch (error) {
-					console.error('Ошибка сети:', error)
-					alert('Ошибка сети: ' + error.message)
-				}
-			}
 
-			// Сброс загрузки файлов
+					window.addEventListener('click', e => {
+						const createModal = document.getElementById('createFolderModal')
+						const uploadModal = document.getElementById('addFilesModal')
+						const viewModal = document.getElementById('viewFileModal')
 
-			function resetFileUpload() {
-				selectedFiles = []
-				document.getElementById('fileInput').value = '' // ИСПРАВЛЕНО: сбрасываем значение input
-				updateFileList()
-				updateUploadButton() // ИСПРАВЛЕНО: обновляем кнопку после сброса
-			}
+						// Проверяем, что клик именно по фону модального окна, а не по его содержимому
+						if (e.target === createModal) {
+							createModal.style.display = 'none'
+						}
 
-			// Показать модальное окно добавления файлов в конкретную папку
-			function showAddFilesToFolder(folderName) {
-				showAddFilesModal()
-				setTimeout(() => {
-					document.getElementById('selectFolder').value = folderName
-					updateUploadButton() // ИСПРАВЛЕНО: обновляем кнопку после установки значения
-				}, 50)
-			}
-			// Переименование папки
-			async function renameFolder(oldName) {
-				const newName = prompt('Введите новое название для папки:', oldName)
+						if (e.target === uploadModal) {
+							uploadModal.style.display = 'none'
+							resetFileUpload()
+						}
 
-				if (!newName || newName === oldName) return
-
-				if (!/^[a-zA-Z0-9_\-]+$/.test(newName)) {
-					alert(
-						'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание'
-					)
-					return
-				}
-
-				try {
-					console.log('Отправка запроса на переименование:', {
-						oldName,
-						newName,
+						if (e.target === viewModal) {
+							viewModal.style.display = 'none'
+							currentFileData = null
+						}
 					})
 
-					const response = await fetch('/api/rename-folder', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							oldName: oldName,
-							newName: newName,
-						}),
+					// Предотвращаем закрытие при клике внутри содержимого модальных окон
+					document.querySelectorAll('.modal-content').forEach(modalContent => {
+						modalContent.addEventListener('click', e => {
+							e.stopPropagation()
+						})
 					})
 
-					console.log('Ответ сервера:', response.status)
+					// Закрытие модальных окон по нажатию клавиши Escape
+					document.addEventListener('keydown', e => {
+						if (e.key === 'Escape') {
+							const createModal = document.getElementById('createFolderModal')
+							const uploadModal = document.getElementById('addFilesModal')
+							const viewModal = document.getElementById('viewFileModal')
 
-					if (response.ok) {
-						const result = await response.json()
-						console.log('Результат:', result)
-						alert('Папка успешно переименована!')
-						loadFolders()
-					} else {
-						const error = await response.json()
-						console.log('Ошибка сервера:', error)
-						alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
-					}
-				} catch (error) {
-					console.error('Ошибка сети:', error)
-					alert('Ошибка сети: ' + error.message)
-				}
-			}
+							if (createModal.style.display === 'block') {
+								createModal.style.display = 'none'
+							}
 
-			// Удаление папки
-			async function deleteFolder(folderName) {
-				if (
-					!confirm(
-						`Вы уверены, что хотите удалить папку "${folderName}" и все её содержимое?`
-					)
-				) {
-					return
-				}
+							if (uploadModal.style.display === 'block') {
+								uploadModal.style.display = 'none'
+								resetFileUpload()
+							}
 
-				try {
-					console.log('Отправка запроса на удаление:', { folderName })
-
-					const response = await fetch('/api/delete-folder', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							folderName: folderName,
-						}),
+							if (viewModal.style.display === 'block') {
+								viewModal.style.display = 'none'
+								currentFileData = null
+							}
+						}
 					})
-
-					console.log('Ответ сервера:', response.status)
-
-					if (response.ok) {
-						const result = await response.json()
-						console.log('Результат:', result)
-						alert('Папка успешно удалена!')
-						loadFolders()
-					} else {
-						const error = await response.json()
-						console.log('Ошибка сервера:', error)
-						alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'))
-					}
-				} catch (error) {
-					console.error('Ошибка сети:', error)
-					alert('Ошибка сети: ' + error.message)
-				}
-			}
-
-			// Вспомогательные функции
-			function getFileIconClass(extension) {
-				const icons = {
-					jpg: 'fas fa-image',
-					jpeg: 'fas fa-image',
-					png: 'fas fa-image',
-					gif: 'fas fa-image',
-					txt: 'fas fa-file-alt',
-					md: 'fas fa-file-alt',
-					pdf: 'fas fa-file-pdf',
-					doc: 'fas fa-file-word',
-					docx: 'fas fa-file-word',
-					xls: 'fas fa-file-excel',
-					xlsx: 'fas fa-file-excel',
-					zip: 'fas fa-file-archive',
-					rar: 'fas fa-file-archive',
-					mp4: 'fas fa-file-video',
-					mp3: 'fas fa-file-audio',
-				}
-				return icons[extension] || 'fas fa-file'
-			}
-
-			function formatFileSize(bytes) {
-				if (!bytes || bytes === 0) return '0 B'
-				const k = 1024
-				const sizes = ['B', 'KB', 'MB', 'GB']
-				const i = Math.floor(Math.log(bytes) / Math.log(k))
-				return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-			}
-
-			window.addEventListener('click', e => {
-				const createModal = document.getElementById('createFolderModal')
-				const uploadModal = document.getElementById('addFilesModal')
-				const viewModal = document.getElementById('viewFileModal')
-
-				// Проверяем, что клик именно по фону модального окна, а не по его содержимому
-				if (e.target === createModal) {
-					createModal.style.display = 'none'
-				}
-
-				if (e.target === uploadModal) {
-					uploadModal.style.display = 'none'
-					resetFileUpload()
-				}
-
-				if (e.target === viewModal) {
-					viewModal.style.display = 'none'
-					currentFileData = null
-				}
-			})
-
-			// Предотвращаем закрытие при клике внутри содержимого модальных окон
-			document.querySelectorAll('.modal-content').forEach(modalContent => {
-				modalContent.addEventListener('click', e => {
-					e.stopPropagation()
-				})
-			})
-
-			// Закрытие модальных окон по нажатию клавиши Escape
-			document.addEventListener('keydown', e => {
-				if (e.key === 'Escape') {
-					const createModal = document.getElementById('createFolderModal')
-					const uploadModal = document.getElementById('addFilesModal')
-					const viewModal = document.getElementById('viewFileModal')
-
-					if (createModal.style.display === 'block') {
-						createModal.style.display = 'none'
-					}
-
-					if (uploadModal.style.display === 'block') {
-						uploadModal.style.display = 'none'
-						resetFileUpload()
-					}
-
-					if (viewModal.style.display === 'block') {
-						viewModal.style.display = 'none'
-						currentFileData = null
-					}
-				}
-			})
-		</script>
-	</body>
+				</script>
+			</body>
+		</html>
+	</head>
 </html>

@@ -1,726 +1,764 @@
 <!DOCTYPE html>
 <html lang="ru">
 	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Оформление заказа - KF WATCH FACE</title>
-		<!-- Фавиконка -->
-		<link rel="icon" href="/guide/Logo.png" type="image/png" sizes="32x32" />
-		<!-- Стили -->
-		<link rel="stylesheet" href="/public/css/style.css" />
-		<link rel="stylesheet" href="/public/css/purchase.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-		/>
-		<link
-			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
-			rel="stylesheet"
-		/>
-
-		<!-- Firebase SDK -->
-		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
-		<!-- Добавляем стили для модальных окон -->
-		<style>
-			/* Стили для модального окна "О нас" */
-			.about-modal {
-				display: none;
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background-color: rgba(0, 0, 0, 0.7);
-				z-index: 2000;
-				opacity: 0;
-				transition: opacity 0.3s ease;
-				backdrop-filter: blur(5px);
-			}
-
-			.about-modal.show {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				opacity: 1;
-			}
-
-			.about-modal-content {
-				background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
-				border-radius: 20px;
-				width: 90%;
-				max-width: 800px;
-				max-height: 80vh;
-				overflow-y: auto;
-				padding: 30px;
-				position: relative;
-				box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-				border: 2px solid #8b7355;
-				animation: modalSlideIn 0.4s ease;
-			}
-
-			@keyframes modalSlideIn {
-				from {
-					opacity: 0;
-					transform: translateY(-30px);
-				}
-				to {
-					opacity: 1;
-					transform: translateY(0);
-				}
-			}
-
-			.about-modal-close {
-				position: absolute;
-				top: 15px;
-				right: 15px;
-				background: #8b7355;
-				color: white;
-				border: none;
-				border-radius: 50%;
-				width: 32px;
-				height: 32px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				cursor: pointer;
-				font-size: 1rem;
-				transition: all 0.3s ease;
-				z-index: 10;
-			}
-
-			.about-modal-close:hover {
-				background: #a89176;
-				transform: rotate(90deg);
-			}
-
-			.about-modal-header {
-				text-align: center;
-				margin-bottom: 25px;
-				padding-bottom: 15px;
-				border-bottom: 2px solid rgba(139, 115, 85, 0.3);
-			}
-
-			.about-modal-header i {
-				font-size: 2.5rem;
-				color: #8b7355;
-				margin-bottom: 10px;
-			}
-
-			.about-modal-header h2 {
-				color: #1a1a1a;
-				font-size: 1.8rem;
-				font-weight: 700;
-				letter-spacing: 0.5px;
-			}
-
-			.about-modal-body {
-				color: #4a4a4a;
-			}
-
-			.about-text {
-				line-height: 1.7;
-			}
-
-			.about-text p {
-				margin-bottom: 20px;
-				text-align: justify;
-			}
-
-			.highlight {
-				color: #8b7355;
-				font-weight: 600;
-				font-size: 1.1rem;
-				background: rgba(139, 115, 85, 0.1);
-				padding: 2px 8px;
-				border-radius: 4px;
-			}
-
-			.feature-section {
-				background: rgba(255, 255, 255, 0.5);
-				border-radius: 12px;
-				padding: 20px;
-				margin-bottom: 20px;
-				border-left: 4px solid #8b7355;
-				transition: transform 0.3s ease;
-			}
-
-			.feature-section:hover {
-				transform: translateX(5px);
-				background: rgba(255, 255, 255, 0.7);
-			}
-
-			.feature-section h3 {
-				color: #1a1a1a;
-				font-size: 1.2rem;
-				margin-bottom: 10px;
-				display: flex;
-				align-items: center;
-				gap: 10px;
-			}
-
-			.feature-section h3 i {
-				color: #8b7355;
-				font-size: 1rem;
-			}
-
-			.platform-info {
-				background: linear-gradient(
-					135deg,
-					rgba(139, 115, 85, 0.1) 0%,
-					rgba(168, 145, 118, 0.1) 100%
-				);
-				border-radius: 12px;
-				padding: 20px;
-				margin-bottom: 20px;
-				text-align: center;
-			}
-
-			.platform-info h3 {
-				color: #1a1a1a;
-				font-size: 1.2rem;
-				margin-bottom: 10px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 10px;
-			}
-
-			.platform-info h3 i {
-				color: #8b7355;
-				font-size: 1.2rem;
-			}
-
-			.final-message {
-				text-align: center;
-				padding: 20px;
-				background: rgba(139, 115, 85, 0.1);
-				border-radius: 12px;
-				margin-top: 25px;
-				border: 1px solid rgba(139, 115, 85, 0.2);
-			}
-
-			.final-message p {
-				font-size: 1.1rem;
-				color: #1a1a1a;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 10px;
-				margin-bottom: 0;
-			}
-
-			.final-message i {
-				color: #8b7355;
-			}
-
-			.about-text strong {
-				color: #8b7355;
-				font-weight: 600;
-			}
-
-			/* Стили для длинных текстов в модальных окнах */
-			.legal-text {
-				line-height: 1.6;
-				font-size: 0.95rem;
-				color: #333;
-			}
-
-			.legal-text h3 {
-				color: #1a1a1a;
-				margin: 25px 0 15px 0;
-				font-size: 1.3rem;
-				border-bottom: 1px solid #e0e0e0;
-				padding-bottom: 8px;
-			}
-
-			.legal-text h4 {
-				color: #8b7355;
-				margin: 20px 0 10px 0;
-				font-size: 1.1rem;
-				font-weight: 600;
-			}
-
-			.legal-text p {
-				margin-bottom: 15px;
-				text-align: left;
-			}
-
-			.legal-text ul {
-				margin: 15px 0 15px 20px;
-				padding-left: 0;
-			}
-
-			.legal-text li {
-				margin-bottom: 8px;
-				position: relative;
-				padding-left: 15px;
-			}
-
-			.legal-text .contact-info {
-				background: rgba(139, 115, 85, 0.05);
-				border-radius: 10px;
-				padding: 20px;
-				margin-top: 30px;
-				border-left: 3px solid #8b7355;
-			}
-
-			.legal-text .contact-info h4 {
-				color: #1a1a1a;
-				margin-top: 0;
-			}
-
-			/* Стили для модального окна выбора способа установки */
-			.install-methods {
-				display: flex;
-				flex-direction: column;
-				gap: 15px;
-				margin: 20px 0;
-			}
-
-			.install-method-btn {
-				background: white;
-				border: 2px solid #8b7355;
-				border-radius: 12px;
-				padding: 20px;
-				font-family: 'Comfortaa', cursive;
-				font-size: 1.1rem;
-				font-weight: 600;
-				color: #1a1a1a;
-				cursor: pointer;
-				transition: all 0.3s ease;
-				text-align: center;
-				display: block;
-				width: 100%;
-			}
-
-			.install-method-btn:hover {
-				background: #8b7355;
-				color: white;
-				transform: translateY(-2px);
-				box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
-			}
-
-			.install-method-btn.active {
-				background: #8b7355;
-				color: white;
-			}
-
-			/* Стили для детального гайда */
-			.guide-content {
-				line-height: 1.7;
-				color: #333;
-			}
-
-			.guide-content h3 {
-				color: #1a1a1a;
-				margin: 25px 0 15px 0;
-				font-size: 1.3rem;
-			}
-
-			.guide-content p {
-				margin-bottom: 15px;
-				text-align: left;
-			}
-
-			.guide-content ol {
-				margin: 15px 0 15px 20px;
-				padding-left: 0;
-			}
-
-			.guide-content li {
-				margin-bottom: 20px;
-				position: relative;
-				padding-left: 15px;
-				text-align: left;
-			}
-
-			.guide-content strong {
-				color: #8b7355;
-				font-weight: 600;
-			}
-
-			.guide-image {
-				width: 100%;
-				max-width: 300px;
-				border-radius: 10px;
-				margin: 10px auto;
-				display: block;
-				box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-			}
-
-			.guide-link {
-				color: #8b7355;
-				text-decoration: none;
-				font-weight: 600;
-				display: inline-block;
-				margin: 5px 0;
-			}
-
-			.guide-link:hover {
-				text-decoration: underline;
-			}
-
-			/* Адаптивность для модального окна */
-			@media (max-width: 768px) {
-				.about-modal-content {
-					width: 95%;
-					padding: 20px;
-					max-height: 85vh;
-				}
-
-				.about-modal-header h2 {
-					font-size: 1.5rem;
-				}
-
-				.feature-section,
-				.platform-info {
-					padding: 15px;
-				}
-
-				.feature-section h3,
-				.platform-info h3 {
-					font-size: 1.1rem;
-				}
-
-				.final-message p {
-					font-size: 1rem;
-					flex-direction: column;
-					gap: 5px;
-				}
-
-				.legal-text {
-					font-size: 0.9rem;
-				}
-
-				.legal-text h3 {
-					font-size: 1.2rem;
-				}
-
-				.legal-text h4 {
-					font-size: 1rem;
-				}
-
-				.install-method-btn {
-					padding: 15px;
-					font-size: 1rem;
-				}
-
-				.guide-image {
-					max-width: 100%;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<!-- Хедер -->
-		<header class="header purchase-header">
-			<div class="container">
-				<a href="/" class="logo">
-					<i class="fas fa-clock"></i>
-					<span>KF WATCH FACE</span>
-				</a>
-				<nav class="nav">
-					<!-- Ссылка для админов (скрыта по умолчанию) -->
-					<a
-						href="/admin"
-						class="nav-link admin-link"
-						id="adminPanelLink"
-						style="display: none"
-					>
-						<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
-					</a>
-					<!-- Новые ссылки: Контакты и FAQ -->
-					<a href="#" class="nav-link" id="contactsLink">Контакты</a>
-					<a href="#" class="nav-link" id="faqLink">FAQ</a>
-					<!-- Измененный порядок ссылок -->
-					<a href="#" class="nav-link" id="installGuideLink"
-						>Инструкция по установке</a
-					>
-					<a href="/#catalog" class="nav-link">Каталог</a>
-					<a href="#" class="nav-link" id="aboutLink">О нас</a>
-					<a href="https://t.me/krek_free" target="_blank" class="nav-link">
-						<i class="fab fa-telegram"></i>
-					</a>
-
-					<!-- Иконка рабочего кабинета -->
-					<div class="user-menu-container">
-						<button id="userMenuBtn" class="nav-link user-menu-btn">
-							<i class="fas fa-user-circle"></i>
-						</button>
-						<div id="userMenu" class="user-menu">
-							<div id="userInfo" style="display: none">
-								<p
-									id="userEmailDisplay"
-									style="margin-bottom: 10px; font-weight: 500"
-								></p>
-								<button id="logoutBtn" class="btn-logout">Выйти</button>
-							</div>
-							<div id="authForm">
-								<h3 style="margin-bottom: 15px; font-size: 1.1rem">
-									Вход / Регистрация
-								</h3>
-								<div id="authError" class="auth-error"></div>
-								<input
-									type="email"
-									id="authEmail"
-									placeholder="Email"
-									class="auth-input"
-								/>
-								<input
-									type="password"
-									id="authPassword"
-									placeholder="Пароль"
-									class="auth-input"
-								/>
-								<div class="auth-buttons">
-									<button id="loginBtn" class="auth-btn btn-login">
-										Войти
-									</button>
-									<button id="registerBtn" class="auth-btn btn-register">
-										Регистрация
-									</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</nav>
-			</div>
-		</header>
-
-		<!-- Основной контент -->
-		<main class="purchase-container">
-			<div class="container">
-				<!-- Хлебные крошки -->
-				<div class="breadcrumbs">
-					<a href="/">Главная</a>
-					<i class="fas fa-chevron-right"></i>
-					<a href="/#catalog">Каталог</a>
-					<i class="fas fa-chevron-right"></i>
-					<span id="productNameBreadcrumb">Циферблат</span>
-				</div>
-
-				<!-- Основная информация о товаре -->
-				<div class="purchase-content">
-					<!-- Левая часть: информация о товаре -->
-					<div class="product-details">
-						<div class="product-header">
-							<h1 id="productTitle" class="product-title">
-								<i class="fas fa-clock"></i> Циферблат
-							</h1>
-							<div class="product-badge" id="newBadge" style="display: none">
-								НОВИНКА
-							</div>
-						</div>
-
-						<!-- Карусель товара с кнопками ВНЕ точек -->
-						<div class="product-carousel-large">
-							<div class="carousel-container-large" id="productCarousel">
-								<!-- Изображения будут загружены через JS -->
-							</div>
-
-							<!-- Навигация карусели - кнопки снаружи точек (как на главной) -->
-							<div class="carousel-controls-large">
-								<button class="carousel-nav-btn-outer prev-btn">
-									<i class="fas fa-chevron-left"></i>
-								</button>
-
-								<div class="carousel-dots-container" id="carouselDots">
-									<!-- Точки карусели -->
-								</div>
-
-								<button class="carousel-nav-btn-outer next-btn">
-									<i class="fas fa-chevron-right"></i>
-								</button>
-							</div>
-						</div>
-
-						<!-- Описание товара -->
-						<div class="product-description-section">
-							<h2><i class="fas fa-file-alt"></i> Описание циферблата</h2>
-							<div class="description-content" id="descriptionContent">
-								<!-- Описание загрузится из файла -->
-								<div class="loading-description">
-									<div class="spinner-small"></div>
-									<p>Загрузка описания...</p>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Правая часть: оформление заказа -->
-					<div class="order-section">
-						<div class="order-card">
-							<h2><i class="fas fa-shopping-cart"></i> Ваш заказ</h2>
-
-							<div class="order-summary">
-								<div class="order-item">
-									<div class="order-item-title">
-										<span id="orderProductName">Циферблат</span>
-										<span class="order-quantity">1 шт.</span>
-									</div>
-									<div class="order-item-price">
-										<span class="current-price">150 ₽</span>
-										<span class="old-price" id="oldPrice" style="display: none"
-											>190 ₽</span
-										>
-									</div>
-								</div>
-							</div>
-
-							<!-- Форма для email -->
-							<div class="email-form">
-								<h3><i class="fas fa-envelope"></i> Куда отправить файл?</h3>
-								<input
-									type="email"
-									id="customerEmail"
-									placeholder="Ваш email"
-									class="email-input"
-									required
-								/>
-								<p class="email-notice">
-									<i class="fas fa-info-circle"></i>
-									Ссылка на скачивание циферблата в формате *.apk будет
-									отправлена на указанный email.
-								</p>
-							</div>
-
-							<!-- Кнопка оплаты -->
-							<button id="payButton" class="btn-pay" disabled>
-								<i class="fas fa-lock"></i> Оплатить
-							</button>
-
-							<!-- Уведомление об оплате -->
-							<div class="payment-notice">
-								<p>
-									<i class="fas fa-info-circle"></i>
-									Нажимая кнопку «Оплатить», вы соглашаетесь с
-									<a href="#" class="terms-link" id="termsLink"
-										>Условиями использования</a
-									>
-									и
-									<a href="#" class="terms-link" id="privacyLink"
-										>Политикой конфиденциальности</a
-									>.
-								</p>
-							</div>
-
-							<!-- Информация о доставке -->
-							<div class="delivery-info">
-								<h3>
-									<i class="fas fa-shipping-fast"></i> Что вы получите после
-									оплаты
-								</h3>
-								<ul>
-									<li>
-										<i class="fas fa-link"></i> Ссылку на файл циферблата в
-										формате *.apk
-									</li>
-									<li>
-										<i class="fas fa-book"></i> Инструкцию по установке (через
-										WearLoad, ADB App Control или Bugjaeger)
-									</li>
-									<li>
-										<i class="fas fa-headset"></i> Поддержку по установке в
-										Telegram
-									</li>
-								</ul>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</main>
-
-		<!-- Футер -->
-		<footer class="footer">
-			<div class="container">
-				<div class="footer-content">
-					<div class="footer-section logo-section">
-						<div class="logo-container">
-							<img
-								src="/guide/Logo.png"
-								alt="KF WATCH FACE Logo"
-								class="footer-logo"
-								width="85"
-								height="110"
-							/>
-							<h3>KF WATCH FACE</h3>
-						</div>
-					</div>
-					<div class="footer-section">
-						<h4>Навигация</h4>
-						<div class="footer-links">
-							<a href="#" class="footer-link" id="installGuideLinkFooter"
+		<!DOCTYPE html>
+		<html lang="ru">
+			<head>
+				<!-- Google tag (gtag.js) -->
+				<script
+					async
+					src="https://www.googletagmanager.com/gtag/js?id=G-XRGPB3BKMK"
+				></script>
+				<script>
+					window.dataLayer = window.dataLayer || []
+					function gtag() {
+						dataLayer.push(arguments)
+					}
+					gtag('js', new Date())
+					gtag('config', 'G-XRGPB3BKMK')
+				</script>
+				<!-- Остальная часть head -->
+				<meta charset="UTF-8" />
+				...
+				<meta charset="UTF-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+				<title>Оформление заказа - KF WATCH FACE</title>
+				<!-- Фавиконка -->
+				<link
+					rel="icon"
+					href="/guide/Logo.png"
+					type="image/png"
+					sizes="32x32"
+				/>
+				<!-- Стили -->
+				<link rel="stylesheet" href="/public/css/style.css" />
+				<link rel="stylesheet" href="/public/css/purchase.css" />
+				<link
+					rel="stylesheet"
+					href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+				/>
+				<link
+					href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+					rel="stylesheet"
+				/>
+
+				<!-- Firebase SDK -->
+				<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+				<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+				<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+				<!-- Добавляем стили для модальных окон -->
+				<style>
+					/* Стили для модального окна "О нас" */
+					.about-modal {
+						display: none;
+						position: fixed;
+						top: 0;
+						left: 0;
+						width: 100%;
+						height: 100%;
+						background-color: rgba(0, 0, 0, 0.7);
+						z-index: 2000;
+						opacity: 0;
+						transition: opacity 0.3s ease;
+						backdrop-filter: blur(5px);
+					}
+
+					.about-modal.show {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						opacity: 1;
+					}
+
+					.about-modal-content {
+						background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
+						border-radius: 20px;
+						width: 90%;
+						max-width: 800px;
+						max-height: 80vh;
+						overflow-y: auto;
+						padding: 30px;
+						position: relative;
+						box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+						border: 2px solid #8b7355;
+						animation: modalSlideIn 0.4s ease;
+					}
+
+					@keyframes modalSlideIn {
+						from {
+							opacity: 0;
+							transform: translateY(-30px);
+						}
+						to {
+							opacity: 1;
+							transform: translateY(0);
+						}
+					}
+
+					.about-modal-close {
+						position: absolute;
+						top: 15px;
+						right: 15px;
+						background: #8b7355;
+						color: white;
+						border: none;
+						border-radius: 50%;
+						width: 32px;
+						height: 32px;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						cursor: pointer;
+						font-size: 1rem;
+						transition: all 0.3s ease;
+						z-index: 10;
+					}
+
+					.about-modal-close:hover {
+						background: #a89176;
+						transform: rotate(90deg);
+					}
+
+					.about-modal-header {
+						text-align: center;
+						margin-bottom: 25px;
+						padding-bottom: 15px;
+						border-bottom: 2px solid rgba(139, 115, 85, 0.3);
+					}
+
+					.about-modal-header i {
+						font-size: 2.5rem;
+						color: #8b7355;
+						margin-bottom: 10px;
+					}
+
+					.about-modal-header h2 {
+						color: #1a1a1a;
+						font-size: 1.8rem;
+						font-weight: 700;
+						letter-spacing: 0.5px;
+					}
+
+					.about-modal-body {
+						color: #4a4a4a;
+					}
+
+					.about-text {
+						line-height: 1.7;
+					}
+
+					.about-text p {
+						margin-bottom: 20px;
+						text-align: justify;
+					}
+
+					.highlight {
+						color: #8b7355;
+						font-weight: 600;
+						font-size: 1.1rem;
+						background: rgba(139, 115, 85, 0.1);
+						padding: 2px 8px;
+						border-radius: 4px;
+					}
+
+					.feature-section {
+						background: rgba(255, 255, 255, 0.5);
+						border-radius: 12px;
+						padding: 20px;
+						margin-bottom: 20px;
+						border-left: 4px solid #8b7355;
+						transition: transform 0.3s ease;
+					}
+
+					.feature-section:hover {
+						transform: translateX(5px);
+						background: rgba(255, 255, 255, 0.7);
+					}
+
+					.feature-section h3 {
+						color: #1a1a1a;
+						font-size: 1.2rem;
+						margin-bottom: 10px;
+						display: flex;
+						align-items: center;
+						gap: 10px;
+					}
+
+					.feature-section h3 i {
+						color: #8b7355;
+						font-size: 1rem;
+					}
+
+					.platform-info {
+						background: linear-gradient(
+							135deg,
+							rgba(139, 115, 85, 0.1) 0%,
+							rgba(168, 145, 118, 0.1) 100%
+						);
+						border-radius: 12px;
+						padding: 20px;
+						margin-bottom: 20px;
+						text-align: center;
+					}
+
+					.platform-info h3 {
+						color: #1a1a1a;
+						font-size: 1.2rem;
+						margin-bottom: 10px;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						gap: 10px;
+					}
+
+					.platform-info h3 i {
+						color: #8b7355;
+						font-size: 1.2rem;
+					}
+
+					.final-message {
+						text-align: center;
+						padding: 20px;
+						background: rgba(139, 115, 85, 0.1);
+						border-radius: 12px;
+						margin-top: 25px;
+						border: 1px solid rgba(139, 115, 85, 0.2);
+					}
+
+					.final-message p {
+						font-size: 1.1rem;
+						color: #1a1a1a;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						gap: 10px;
+						margin-bottom: 0;
+					}
+
+					.final-message i {
+						color: #8b7355;
+					}
+
+					.about-text strong {
+						color: #8b7355;
+						font-weight: 600;
+					}
+
+					/* Стили для длинных текстов в модальных окнах */
+					.legal-text {
+						line-height: 1.6;
+						font-size: 0.95rem;
+						color: #333;
+					}
+
+					.legal-text h3 {
+						color: #1a1a1a;
+						margin: 25px 0 15px 0;
+						font-size: 1.3rem;
+						border-bottom: 1px solid #e0e0e0;
+						padding-bottom: 8px;
+					}
+
+					.legal-text h4 {
+						color: #8b7355;
+						margin: 20px 0 10px 0;
+						font-size: 1.1rem;
+						font-weight: 600;
+					}
+
+					.legal-text p {
+						margin-bottom: 15px;
+						text-align: left;
+					}
+
+					.legal-text ul {
+						margin: 15px 0 15px 20px;
+						padding-left: 0;
+					}
+
+					.legal-text li {
+						margin-bottom: 8px;
+						position: relative;
+						padding-left: 15px;
+					}
+
+					.legal-text .contact-info {
+						background: rgba(139, 115, 85, 0.05);
+						border-radius: 10px;
+						padding: 20px;
+						margin-top: 30px;
+						border-left: 3px solid #8b7355;
+					}
+
+					.legal-text .contact-info h4 {
+						color: #1a1a1a;
+						margin-top: 0;
+					}
+
+					/* Стили для модального окна выбора способа установки */
+					.install-methods {
+						display: flex;
+						flex-direction: column;
+						gap: 15px;
+						margin: 20px 0;
+					}
+
+					.install-method-btn {
+						background: white;
+						border: 2px solid #8b7355;
+						border-radius: 12px;
+						padding: 20px;
+						font-family: 'Comfortaa', cursive;
+						font-size: 1.1rem;
+						font-weight: 600;
+						color: #1a1a1a;
+						cursor: pointer;
+						transition: all 0.3s ease;
+						text-align: center;
+						display: block;
+						width: 100%;
+					}
+
+					.install-method-btn:hover {
+						background: #8b7355;
+						color: white;
+						transform: translateY(-2px);
+						box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
+					}
+
+					.install-method-btn.active {
+						background: #8b7355;
+						color: white;
+					}
+
+					/* Стили для детального гайда */
+					.guide-content {
+						line-height: 1.7;
+						color: #333;
+					}
+
+					.guide-content h3 {
+						color: #1a1a1a;
+						margin: 25px 0 15px 0;
+						font-size: 1.3rem;
+					}
+
+					.guide-content p {
+						margin-bottom: 15px;
+						text-align: left;
+					}
+
+					.guide-content ol {
+						margin: 15px 0 15px 20px;
+						padding-left: 0;
+					}
+
+					.guide-content li {
+						margin-bottom: 20px;
+						position: relative;
+						padding-left: 15px;
+						text-align: left;
+					}
+
+					.guide-content strong {
+						color: #8b7355;
+						font-weight: 600;
+					}
+
+					.guide-image {
+						width: 100%;
+						max-width: 300px;
+						border-radius: 10px;
+						margin: 10px auto;
+						display: block;
+						box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+					}
+
+					.guide-link {
+						color: #8b7355;
+						text-decoration: none;
+						font-weight: 600;
+						display: inline-block;
+						margin: 5px 0;
+					}
+
+					.guide-link:hover {
+						text-decoration: underline;
+					}
+
+					/* Адаптивность для модального окна */
+					@media (max-width: 768px) {
+						.about-modal-content {
+							width: 95%;
+							padding: 20px;
+							max-height: 85vh;
+						}
+
+						.about-modal-header h2 {
+							font-size: 1.5rem;
+						}
+
+						.feature-section,
+						.platform-info {
+							padding: 15px;
+						}
+
+						.feature-section h3,
+						.platform-info h3 {
+							font-size: 1.1rem;
+						}
+
+						.final-message p {
+							font-size: 1rem;
+							flex-direction: column;
+							gap: 5px;
+						}
+
+						.legal-text {
+							font-size: 0.9rem;
+						}
+
+						.legal-text h3 {
+							font-size: 1.2rem;
+						}
+
+						.legal-text h4 {
+							font-size: 1rem;
+						}
+
+						.install-method-btn {
+							padding: 15px;
+							font-size: 1rem;
+						}
+
+						.guide-image {
+							max-width: 100%;
+						}
+					}
+				</style>
+			</head>
+			<body>
+				<!-- Хедер -->
+				<header class="header purchase-header">
+					<div class="container">
+						<a href="/" class="logo">
+							<i class="fas fa-clock"></i>
+							<span>KF WATCH FACE</span>
+						</a>
+						<nav class="nav">
+							<!-- Ссылка для админов (скрыта по умолчанию) -->
+							<a
+								href="/admin"
+								class="nav-link admin-link"
+								id="adminPanelLink"
+								style="display: none"
+							>
+								<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
+							</a>
+							<!-- Новые ссылки: Контакты и FAQ -->
+							<a href="#" class="nav-link" id="contactsLink">Контакты</a>
+							<a href="#" class="nav-link" id="faqLink">FAQ</a>
+							<!-- Измененный порядок ссылок -->
+							<a href="#" class="nav-link" id="installGuideLink"
 								>Инструкция по установке</a
 							>
-							<a href="/#catalog" class="footer-link">Каталог</a>
-							<a href="#" class="footer-link" id="aboutLinkFooter">О нас</a>
-							<a href="#" class="footer-link" id="faqLinkFooter">FAQ</a>
-							<a href="#" class="footer-link" id="contactsLinkFooter"
-								>Контакты</a
-							>
-						</div>
-					</div>
-					<div class="footer-section">
-						<h4>Связаться с продавцом</h4>
-						<div class="social-links">
-							<a
-								href="https://t.me/krek_free"
-								target="_blank"
-								class="social-link"
-								><i class="fab fa-telegram"></i
-							></a>
-							<!-- Для ПК (скрывается на мобильных) -->
-							<a
-								href="https://mail.google.com/mail/?view=cm&to=lavrov_dima@mail.ru"
-								class="social-link email-link email-desktop"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<i class="fas fa-envelope"></i>
+							<a href="/#catalog" class="nav-link">Каталог</a>
+							<a href="#" class="nav-link" id="aboutLink">О нас</a>
+							<a href="https://t.me/krek_free" target="_blank" class="nav-link">
+								<i class="fab fa-telegram"></i>
 							</a>
 
-							<!-- Для мобильных (скрывается на ПК) -->
-							<a
-								href="mailto:lavrov_dima@mail.ru"
-								class="social-link email-link email-mobile"
-							>
-								<i class="fas fa-envelope"></i>
-							</a>
+							<!-- Иконка рабочего кабинета -->
+							<div class="user-menu-container">
+								<button id="userMenuBtn" class="nav-link user-menu-btn">
+									<i class="fas fa-user-circle"></i>
+								</button>
+								<div id="userMenu" class="user-menu">
+									<div id="userInfo" style="display: none">
+										<p
+											id="userEmailDisplay"
+											style="margin-bottom: 10px; font-weight: 500"
+										></p>
+										<button id="logoutBtn" class="btn-logout">Выйти</button>
+									</div>
+									<div id="authForm">
+										<h3 style="margin-bottom: 15px; font-size: 1.1rem">
+											Вход / Регистрация
+										</h3>
+										<div id="authError" class="auth-error"></div>
+										<input
+											type="email"
+											id="authEmail"
+											placeholder="Email"
+											class="auth-input"
+										/>
+										<input
+											type="password"
+											id="authPassword"
+											placeholder="Пароль"
+											class="auth-input"
+										/>
+										<div class="auth-buttons">
+											<button id="loginBtn" class="auth-btn btn-login">
+												Войти
+											</button>
+											<button id="registerBtn" class="auth-btn btn-register">
+												Регистрация
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</nav>
+					</div>
+				</header>
+
+				<!-- Основной контент -->
+				<main class="purchase-container">
+					<div class="container">
+						<!-- Хлебные крошки -->
+						<div class="breadcrumbs">
+							<a href="/">Главная</a>
+							<i class="fas fa-chevron-right"></i>
+							<a href="/#catalog">Каталог</a>
+							<i class="fas fa-chevron-right"></i>
+							<span id="productNameBreadcrumb">Циферблат</span>
+						</div>
+
+						<!-- Основная информация о товаре -->
+						<div class="purchase-content">
+							<!-- Левая часть: информация о товаре -->
+							<div class="product-details">
+								<div class="product-header">
+									<h1 id="productTitle" class="product-title">
+										<i class="fas fa-clock"></i> Циферблат
+									</h1>
+									<div
+										class="product-badge"
+										id="newBadge"
+										style="display: none"
+									>
+										НОВИНКА
+									</div>
+								</div>
+
+								<!-- Карусель товара с кнопками ВНЕ точек -->
+								<div class="product-carousel-large">
+									<div class="carousel-container-large" id="productCarousel">
+										<!-- Изображения будут загружены через JS -->
+									</div>
+
+									<!-- Навигация карусели - кнопки снаружи точек (как на главной) -->
+									<div class="carousel-controls-large">
+										<button class="carousel-nav-btn-outer prev-btn">
+											<i class="fas fa-chevron-left"></i>
+										</button>
+
+										<div class="carousel-dots-container" id="carouselDots">
+											<!-- Точки карусели -->
+										</div>
+
+										<button class="carousel-nav-btn-outer next-btn">
+											<i class="fas fa-chevron-right"></i>
+										</button>
+									</div>
+								</div>
+
+								<!-- Описание товара -->
+								<div class="product-description-section">
+									<h2><i class="fas fa-file-alt"></i> Описание циферблата</h2>
+									<div class="description-content" id="descriptionContent">
+										<!-- Описание загрузится из файла -->
+										<div class="loading-description">
+											<div class="spinner-small"></div>
+											<p>Загрузка описания...</p>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Правая часть: оформление заказа -->
+							<div class="order-section">
+								<div class="order-card">
+									<h2><i class="fas fa-shopping-cart"></i> Ваш заказ</h2>
+
+									<div class="order-summary">
+										<div class="order-item">
+											<div class="order-item-title">
+												<span id="orderProductName">Циферблат</span>
+												<span class="order-quantity">1 шт.</span>
+											</div>
+											<div class="order-item-price">
+												<span class="current-price">150 ₽</span>
+												<span
+													class="old-price"
+													id="oldPrice"
+													style="display: none"
+													>190 ₽</span
+												>
+											</div>
+										</div>
+									</div>
+
+									<!-- Форма для email -->
+									<div class="email-form">
+										<h3>
+											<i class="fas fa-envelope"></i> Куда отправить файл?
+										</h3>
+										<input
+											type="email"
+											id="customerEmail"
+											placeholder="Ваш email"
+											class="email-input"
+											required
+										/>
+										<p class="email-notice">
+											<i class="fas fa-info-circle"></i>
+											Ссылка на скачивание циферблата в формате *.apk будет
+											отправлена на указанный email.
+										</p>
+									</div>
+
+									<!-- Кнопка оплаты -->
+									<button id="payButton" class="btn-pay" disabled>
+										<i class="fas fa-lock"></i> Оплатить
+									</button>
+
+									<!-- Уведомление об оплате -->
+									<div class="payment-notice">
+										<p>
+											<i class="fas fa-info-circle"></i>
+											Нажимая кнопку «Оплатить», вы соглашаетесь с
+											<a href="#" class="terms-link" id="termsLink"
+												>Условиями использования</a
+											>
+											и
+											<a href="#" class="terms-link" id="privacyLink"
+												>Политикой конфиденциальности</a
+											>.
+										</p>
+									</div>
+
+									<!-- Информация о доставке -->
+									<div class="delivery-info">
+										<h3>
+											<i class="fas fa-shipping-fast"></i> Что вы получите после
+											оплаты
+										</h3>
+										<ul>
+											<li>
+												<i class="fas fa-link"></i> Ссылку на файл циферблата в
+												формате *.apk
+											</li>
+											<li>
+												<i class="fas fa-book"></i> Инструкцию по установке
+												(через WearLoad, ADB App Control или Bugjaeger)
+											</li>
+											<li>
+												<i class="fas fa-headset"></i> Поддержку по установке в
+												Telegram
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
-				</div>
-				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
-			</div>
-		</footer>
+				</main>
 
-		<script>
-			console.log('Начало загрузки модальных окон...')
+				<!-- Футер -->
+				<footer class="footer">
+					<div class="container">
+						<div class="footer-content">
+							<div class="footer-section logo-section">
+								<div class="logo-container">
+									<img
+										src="/guide/Logo.png"
+										alt="KF WATCH FACE Logo"
+										class="footer-logo"
+										width="85"
+										height="110"
+									/>
+									<h3>KF WATCH FACE</h3>
+								</div>
+							</div>
+							<div class="footer-section">
+								<h4>Навигация</h4>
+								<div class="footer-links">
+									<a href="#" class="footer-link" id="installGuideLinkFooter"
+										>Инструкция по установке</a
+									>
+									<a href="/#catalog" class="footer-link">Каталог</a>
+									<a href="#" class="footer-link" id="aboutLinkFooter">О нас</a>
+									<a href="#" class="footer-link" id="faqLinkFooter">FAQ</a>
+									<a href="#" class="footer-link" id="contactsLinkFooter"
+										>Контакты</a
+									>
+								</div>
+							</div>
+							<div class="footer-section">
+								<h4>Связаться с продавцом</h4>
+								<div class="social-links">
+									<a
+										href="https://t.me/krek_free"
+										target="_blank"
+										class="social-link"
+										><i class="fab fa-telegram"></i
+									></a>
+									<!-- Для ПК (скрывается на мобильных) -->
+									<a
+										href="https://mail.google.com/mail/?view=cm&to=lavrov_dima@mail.ru"
+										class="social-link email-link email-desktop"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<i class="fas fa-envelope"></i>
+									</a>
 
-			// Синхронная загрузка модальных окон
-			const xhr = new XMLHttpRequest()
-			xhr.open('GET', '/html/modals.html', false) // false = синхронный запрос
-			xhr.send()
+									<!-- Для мобильных (скрывается на ПК) -->
+									<a
+										href="mailto:lavrov_dima@mail.ru"
+										class="social-link email-link email-mobile"
+									>
+										<i class="fas fa-envelope"></i>
+									</a>
+								</div>
+							</div>
+						</div>
+						<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
+					</div>
+				</footer>
 
-			if (xhr.status === 200) {
-				const modalHTML = xhr.responseText
-				document.body.insertAdjacentHTML('beforeend', modalHTML)
-				console.log('Модальные окна вставлены в DOM')
+				<script>
+					console.log('Начало загрузки модальных окон...')
 
-				// Проверяем что они есть
-				const modal = document.getElementById('contactsModal')
-				console.log('Проверка contactsModal:', modal ? 'НАЙДЕН' : 'НЕ НАЙДЕН')
-			} else {
-				console.error('Ошибка загрузки modals.html, статус:', xhr.status)
-			}
-		</script>
+					// Синхронная загрузка модальных окон
+					const xhr = new XMLHttpRequest()
+					xhr.open('GET', '/html/modals.html', false) // false = синхронный запрос
+					xhr.send()
 
-		<!-- Подключаем JS файлы -->
-		<script src="/public/js/firebase-config.js"></script>
-		<script src="/public/js/auth.js"></script>
-		<script src="/public/js/purchase.js" type="module"></script>
-	</body>
+					if (xhr.status === 200) {
+						const modalHTML = xhr.responseText
+						document.body.insertAdjacentHTML('beforeend', modalHTML)
+						console.log('Модальные окна вставлены в DOM')
+
+						// Проверяем что они есть
+						const modal = document.getElementById('contactsModal')
+						console.log(
+							'Проверка contactsModal:',
+							modal ? 'НАЙДЕН' : 'НЕ НАЙДЕН'
+						)
+					} else {
+						console.error('Ошибка загрузки modals.html, статус:', xhr.status)
+					}
+				</script>
+
+				<!-- Подключаем JS файлы -->
+				<script src="/public/js/firebase-config.js"></script>
+				<script src="/public/js/auth.js"></script>
+				<script src="/public/js/purchase.js" type="module"></script>
+			</body>
+		</html>
+	</head>
 </html>
