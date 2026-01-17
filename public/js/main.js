@@ -1767,10 +1767,16 @@ function adjustCatalogLayout() {
 		productsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)'
 	} else if (window.innerWidth >= 768) {
 		catalogContainer.style.width = '95%'
-		productsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)'
+		productsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)' // Изменено с 2 на 3
+	} else if (window.innerWidth >= 550) {
+		catalogContainer.style.width = '100%'
+		productsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)' // 2 колонки для средних телефонов
+	} else if (window.innerWidth >= 320) {
+		catalogContainer.style.width = '100%'
+		productsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)' // 2 колонки для маленьких телефонов
 	} else {
 		catalogContainer.style.width = '100%'
-		productsGrid.style.gridTemplateColumns = '1fr'
+		productsGrid.style.gridTemplateColumns = '1fr' // 1 колонка для очень маленьких
 	}
 }
 

@@ -2226,9 +2226,10 @@ body {
 		width: 95% !important;
 	}
 
+	/* ИЗМЕНЕНИЕ: вместо 1fr - 2 колонки */
 	.products-container {
 		grid-template-columns: repeat(2, 1fr) !important;
-		gap: 18px;
+		gap: 15px;
 	}
 
 	.section-title {
@@ -2499,15 +2500,16 @@ body {
 
 	.catalog-container {
 		width: 100% !important;
-		padding: 0 15px;
+		padding: 0 10px; /* Уменьшаем отступы */
 	}
 
+	/* ИЗМЕНЕНИЕ: 2 колонки вместо 1 */
 	.products-container {
-		grid-template-columns: 1fr !important;
-		max-width: 350px;
+		grid-template-columns: repeat(2, 1fr) !important;
+		gap: 12px;
+		max-width: none; /* Убираем ограничение максимальной ширины */
 		margin-left: auto;
 		margin-right: auto;
-		gap: 20px;
 	}
 
 	.section-title {
@@ -2520,16 +2522,36 @@ body {
 		margin-bottom: 30px;
 	}
 
+	/* Оптимизируем размер карточек для 2 колонок */
+	.product-card {
+		border-radius: 10px;
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+	}
+
 	.product-info {
-		padding: 20px;
+		padding: 12px;
 	}
 
 	.product-title {
-		font-size: 1.1rem;
+		font-size: 0.9rem;
+		height: 2.6em; /* Уменьшаем высоту */
+	}
+
+	.product-price-container {
+		margin: 8px 0;
 	}
 
 	.product-price {
-		font-size: 1.15rem;
+		font-size: 1rem;
+	}
+
+	.product-price-old {
+		font-size: 0.85rem;
+	}
+
+	.btn-buy {
+		padding: 10px;
+		font-size: 0.85rem;
 	}
 
 	.footer {
@@ -2592,6 +2614,29 @@ body {
 	}
 }
 
+/* Большие телефоны с широким экраном (минимум 550px ширины) - 3 КОЛОНКИ */
+@media (max-width: 768px) and (min-width: 550px) {
+	.products-container {
+		grid-template-columns: repeat(3, 1fr) !important;
+		gap: 12px;
+	}
+
+	/* Немного уменьшаем размеры для 3 колонок */
+	.product-title {
+		font-size: 0.85rem;
+		height: 2.8em;
+	}
+
+	.product-price {
+		font-size: 0.95rem;
+	}
+
+	.btn-buy {
+		font-size: 0.8rem;
+		padding: 8px 10px;
+	}
+}
+
 /* Очень маленькие телефоны (до 400px) */
 @media (max-width: 400px) {
 	.new-arrival {
@@ -2614,29 +2659,42 @@ body {
 		display: none;
 	}
 
+	/* ИЗМЕНЕНИЕ: Проверяем, нужно ли переходить на 1 колонку */
 	.products-container {
-		gap: 15px;
+		grid-template-columns: repeat(2, 1fr) !important;
+		gap: 10px;
 	}
 
+	/* Оптимизация карточек для очень маленьких экранов */
 	.product-card {
-		border-radius: 12px;
+		border-radius: 8px;
 	}
 
 	.product-info {
-		padding: 15px;
+		padding: 10px;
 	}
 
 	.product-title {
-		font-size: 1rem;
+		font-size: 0.85rem;
+		height: 2.4em;
 	}
 
 	.product-price {
-		font-size: 1.1rem;
+		font-size: 0.9rem;
+	}
+
+	.product-price-old {
+		font-size: 0.75rem;
+	}
+
+	.product-discount {
+		font-size: 0.7rem;
+		padding: 1px 5px;
 	}
 
 	.btn-buy {
-		padding: 10px;
-		font-size: 0.9rem;
+		padding: 8px;
+		font-size: 0.8rem;
 	}
 
 	.daily-offer-background {
@@ -2647,6 +2705,16 @@ body {
 	.daily-offer {
 		padding: 20px 0 30px;
 		border-radius: 12px;
+	}
+
+	/* Если карточки становятся слишком узкими (меньше 140px), переключаемся на 1 колонку */
+	@media (max-width: 320px) {
+		.products-container {
+			grid-template-columns: 1fr !important;
+			max-width: 280px; /* Ограничиваем максимальную ширину для одной колонки */
+			margin-left: auto;
+			margin-right: auto;
+		}
 	}
 }
 
