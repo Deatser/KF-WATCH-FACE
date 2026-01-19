@@ -90,6 +90,20 @@ async def main():
     try:
         # Читаем входные данные
         input_data = sys.stdin.read()
+
+                # ДОБАВЬТЕ декодирование:
+        if input_data.strip():
+            # Убедимся, что это UTF-8
+            try:
+                input_data = input_data.encode('latin-1').decode('utf-8')
+            except:
+                pass  # Оставляем как есть если не получается
+            
+            data = json.loads(input_data)
+        else:
+            data = {'action': 'test'}
+
+            
         if not input_data.strip():
             data = {'action': 'test'}
         else:

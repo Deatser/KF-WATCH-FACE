@@ -1,0 +1,10 @@
+{
+  "orderId": 496075173,
+  "productId": "KF161",
+  "customerEmail": "koranitplay@gmail.com",
+  "price": 120,
+  "productName": "KF 161",
+  "paymentUrl": "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=kfwatchface&OutSum=120.0&InvId=496075173&Culture=ru&Description=%25D0%25A6%25D0%25B8%25D1%2584%25D0%25B5%25D1%2580%25D0%25B1%25D0%25BB%25D0%25B0%25D1%2582%2520KF%2520161&Email=koranitplay%40gmail.com&Recurring=False&SignatureValue=d67f4e520f39eb6e3429ec4181b99e89&IsTest=1&shp_shp_product_id=KF161",
+  "createdAt": "2026-01-19T19:06:48.086Z",
+  "status": "pending"
+}

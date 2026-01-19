@@ -1,0 +1,10 @@
+{
+  "orderId": 494476064,
+  "productId": "KF188",
+  "customerEmail": "koranitplay@gmail.com",
+  "price": 150,
+  "productName": "KF 188",
+  "paymentUrl": "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=kfwatchface&OutSum=150.0&InvId=494476064&Culture=ru&Description=%25D0%25A6%25D0%25B8%25D1%2584%25D0%25B5%25D1%2580%25D0%25B1%25D0%25BB%25D0%25B0%25D1%2582%2520KF%2520188&Email=koranitplay%40gmail.com&Recurring=False&SignatureValue=d3bbda336aa83a67fc305f7c58a9df69&IsTest=1&shp_shp_product_id=KF188",
+  "createdAt": "2026-01-19T19:04:07.380Z",
+  "status": "pending"
+}

@@ -827,9 +827,8 @@ function updateProductUI() {
 	if (!currentProduct) return
 
 	// Форматируем название (KF194 → KF 194)
-	const formattedName =
-		currentProduct.displayName ||
-		currentProduct.name.replace(/(KF)(\d{3})/i, '$1 $2')
+	// Просто используем название как есть
+	const formattedName = currentProduct.name || currentProduct.displayName
 
 	// Обновляем заголовки
 	document.getElementById(
@@ -842,13 +841,9 @@ function updateProductUI() {
 		'orderProductName'
 	).textContent = `Циферблат ${formattedName}`
 
-	// Обновляем бейдж новинки
+	// СКРЫВАЕМ бейдж новинки (он нам не нужен)
 	const newBadge = document.getElementById('newBadge')
-	if (currentProduct.isNewProduct) {
-		newBadge.style.display = 'block'
-	} else {
-		newBadge.style.display = 'none'
-	}
+	newBadge.style.display = 'none' // ВСЕГДА скрыт
 
 	// Обновляем цены (учитываем daily скидку если есть)
 	updateProductPriceDisplay()
@@ -892,10 +887,10 @@ function updateProductPriceDisplay() {
 		}
 	}
 
-	// Обновляем итоговую сумму
-	const totalPrice = document.getElementById('totalPrice')
-	if (totalPrice) {
-		totalPrice.textContent = `${currentProduct.price} ₽`
+	// Скрываем старую цену (если не daily)
+	const oldPriceElement = document.getElementById('oldPrice')
+	if (oldPriceElement && !currentProduct.isDaily) {
+		oldPriceElement.style.display = 'none'
 	}
 }
 
@@ -1199,8 +1194,7 @@ function displayProductDescription(text) {
 function showDefaultDescription() {
 	const descriptionContent = document.getElementById('descriptionContent')
 	const formattedName = currentProduct
-		? currentProduct.displayName ||
-		  currentProduct.name.replace(/(KF)(\d{3})/i, '$1 $2')
+		? currentProduct.displayName || currentProduct.name
 		: ''
 
 	descriptionContent.innerHTML = `
