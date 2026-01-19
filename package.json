@@ -1,11 +1,13 @@
 {
 	"name": "krekfree-shop",
 	"version": "1.0.0",
-	"description": "Магазин циферблатов KREK_FREE",
+	"description": "Магазин циферблатов KREK_FREE с интеграцией Robokassa",
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js",
-		"dev": "nodemon server.js"
+		"dev": "nodemon server.js",
+		"install-python-deps": "python3 -m pip install --user -r requirements.txt",
+		"setup": "bash setup-python.sh"
 	},
 	"dependencies": {
 		"compression": "^1.8.1",
@@ -21,5 +23,9 @@
 	},
 	"engines": {
 		"node": ">=16.0.0"
+	},
+	"render": {
+		"buildCommand": "bash setup-python.sh && npm install",
+		"startCommand": "node server.js"
 	}
 }

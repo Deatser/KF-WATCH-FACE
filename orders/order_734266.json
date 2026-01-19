@@ -1,0 +1,19 @@
+{
+  "orderId": 734266,
+  "productId": "KF188",
+  "customerEmail": "koranitplay@gmail.com",
+  "price": 150,
+  "productName": "KF 188",
+  "paymentUrl": "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=kfwatchface&OutSum=150.0&InvId=734266&Culture=ru&Description=%D0%A0%C2%A6%D0%A0%D1%91%D0%A1%E2%80%9E%D0%A0%C2%B5%D0%A1%D0%82%D0%A0%C2%B1%D0%A0%C2%BB%D0%A0%C2%B0%D0%A1%E2%80%9A+KF+188&Email=koranitplay%40gmail.com&Recurring=False&SignatureValue=3fa5ff32c97553f1395b897ab346ee16&IsTest=1&shp_shp_email=koranitplay@gmail.com&shp_shp_product_id=KF188&shp_shp_user_id=anonymous",
+  "createdAt": "2026-01-19T17:43:54.551Z",
+  "status": "pending",
+  "pythonResult": {
+    "success": true,
+    "payment_url": "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=kfwatchface&OutSum=150.0&InvId=734266&Culture=ru&Description=%D0%A0%C2%A6%D0%A0%D1%91%D0%A1%E2%80%9E%D0%A0%C2%B5%D0%A1%D0%82%D0%A0%C2%B1%D0%A0%C2%BB%D0%A0%C2%B0%D0%A1%E2%80%9A+KF+188&Email=koranitplay%40gmail.com&Recurring=False&SignatureValue=3fa5ff32c97553f1395b897ab346ee16&IsTest=1&shp_shp_email=koranitplay@gmail.com&shp_shp_product_id=KF188&shp_shp_user_id=anonymous",
+    "invoice_id": "734266",
+    "inv_id": 734266,
+    "out_sum": 150,
+    "is_test": true,
+    "method": "jwt_protected"
+  }
+}

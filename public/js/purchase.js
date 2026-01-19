@@ -1309,7 +1309,8 @@ function initEventListeners() {
 }
 
 // Обработка оплаты
-function processPayment() {
+// Обработка оплаты
+async function processPayment() {
 	if (!currentProduct) return
 
 	const emailInput = document.getElementById('customerEmail')
@@ -1330,15 +1331,39 @@ function processPayment() {
 
 	const payButton = document.getElementById('payButton')
 	payButton.disabled = true
-	payButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обработка...'
+	payButton.innerHTML =
+		'<i class="fas fa-spinner fa-spin"></i> Создание платежа...'
 
-	setTimeout(() => {
-		alert(
-			`Заказ на циферблат ${currentProduct.name} оформлен!\n\nСсылка на скачивание и инструкция будут отправлены на email: ${email}\n\nВ ближайшее время с вами также свяжутся в Telegram для поддержки.`
-		)
+	try {
+		// Создаем платеж через API
+		const response = await fetch('/api/payment/create', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				productId: currentProduct.folderName || currentProduct.name,
+				productName: currentProduct.displayName || currentProduct.name,
+				customerEmail: email,
+				price: currentProduct.price || 150,
+			}),
+		})
+
+		const result = await response.json()
+
+		if (!result.success) {
+			throw new Error(result.error || 'Ошибка создания платежа')
+		}
+
+		// Перенаправляем пользователя на страницу оплаты Robokassa
+		window.location.href = result.paymentUrl
+	} catch (error) {
+		console.error('Ошибка создания платежа:', error)
+		alert(`Ошибка при создании платежа: ${error.message}`)
+
 		payButton.disabled = false
 		payButton.innerHTML = '<i class="fas fa-lock"></i> Оплатить'
-	}, 2000)
+	}
 }
 
 // Показать ошибку

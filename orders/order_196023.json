@@ -1,0 +1,31 @@
+{
+  "orderId": 196023,
+  "productId": "KF161",
+  "customerEmail": "koranitplay@gmail.com",
+  "price": 120,
+  "productName": "KF 161",
+  "paymentUrl": "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=demo&OutSum=120.0&InvId=196023&Culture=ru&Description=%D0%A0%C2%A6%D0%A0%D1%91%D0%A1%E2%80%9E%D0%A0%C2%B5%D0%A1%D0%82%D0%A0%C2%B1%D0%A0%C2%BB%D0%A0%C2%B0%D0%A1%E2%80%9A+KF+161&Email=koranitplay%40gmail.com&Recurring=False&SignatureValue=92321ce919b6152e82058bedaaa842c9&IsTest=1&shp_shp_email=koranitplay@gmail.com&shp_shp_product_id=KF161&shp_shp_user_id=anonymous",
+  "createdAt": "2026-01-19T17:16:05.033Z",
+  "status": "pending",
+  "pythonResult": {
+    "success": true,
+    "payment_url": "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=demo&OutSum=120.0&InvId=196023&Culture=ru&Description=%D0%A0%C2%A6%D0%A0%D1%91%D0%A1%E2%80%9E%D0%A0%C2%B5%D0%A1%D0%82%D0%A0%C2%B1%D0%A0%C2%BB%D0%A0%C2%B0%D0%A1%E2%80%9A+KF+161&Email=koranitplay%40gmail.com&Recurring=False&SignatureValue=92321ce919b6152e82058bedaaa842c9&IsTest=1&shp_shp_email=koranitplay@gmail.com&shp_shp_product_id=KF161&shp_shp_user_id=anonymous",
+    "params": {
+      "MerchantLogin": "demo",
+      "OutSum": 120,
+      "InvId": 196023,
+      "Email": "koranitplay@gmail.com",
+      "Description": "Циферблат KF 161",
+      "SignatureValue": "92321ce919b6152e82058bedaaa842c9",
+      "Culture": "ru",
+      "IsTest": true,
+      "shp_shp_product_id": "KF161",
+      "shp_shp_email": "koranitplay@gmail.com",
+      "shp_shp_user_id": "anonymous"
+    },
+    "inv_id": 196023,
+    "out_sum": 120,
+    "is_test": true,
+    "method": "open_link"
+  }
+}
