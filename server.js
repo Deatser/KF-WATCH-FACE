@@ -1010,6 +1010,13 @@ app.get('/purchase.html', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'purchase.html'))
 })
 
+app.get('/success', (req, res) => {
+	res.sendFile(path.join(__dirname, 'public', 'html', 'success.html'))
+})
+
+app.get('/fail', (req, res) => {
+	res.sendFile(path.join(__dirname, 'public', 'html', 'fail.html'))
+})
 // ==================== МАРШРУТЫ ДЛЯ ГАЙДОВ ====================
 
 app.get('/api/guides/check', (req, res) => {

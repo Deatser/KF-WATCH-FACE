@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Ошибка оплаты - KF WATCH FACE</title>
+		<!-- Фавиконка -->
+		<link rel="icon" href="/guide/Logo.png" type="image/png" sizes="32x32" />
+		<!-- Стили -->
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/purchase.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<style>
+			/* Дополнительные стили для страницы ошибки */
+			.result-container {
+				min-height: calc(100vh - 70px - 200px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 40px 20px;
+			}
+
+			.result-card {
+				background: white;
+				border-radius: 20px;
+				padding: 40px;
+				max-width: 500px;
+				width: 100%;
+				text-align: center;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+				border: 2px solid #ff6b6b;
+				animation: fadeInUp 0.6s ease;
+			}
+
+			.result-icon {
+				font-size: 4rem;
+				margin-bottom: 20px;
+			}
+
+			.error .result-icon {
+				color: #ff6b6b;
+			}
+
+			.result-title {
+				font-size: 2rem;
+				font-weight: 700;
+				color: #1a1a1a;
+				margin-bottom: 15px;
+			}
+
+			.result-message {
+				font-size: 1.1rem;
+				color: #666;
+				line-height: 1.6;
+				margin-bottom: 30px;
+			}
+
+			.error-details {
+				background: rgba(255, 107, 107, 0.05);
+				border-radius: 12px;
+				padding: 20px;
+				margin-bottom: 25px;
+				text-align: left;
+				border: 1px solid rgba(255, 107, 107, 0.2);
+			}
+
+			.error-details p {
+				margin: 8px 0;
+				color: #333;
+			}
+
+			.error-details strong {
+				color: #ff6b6b;
+				font-weight: 600;
+			}
+
+			.result-actions {
+				display: flex;
+				flex-direction: column;
+				gap: 15px;
+				margin-top: 25px;
+			}
+
+			.btn-primary,
+			.btn-secondary {
+				padding: 16px 24px;
+				border-radius: 12px;
+				font-family: 'Comfortaa', cursive;
+				font-size: 1rem;
+				font-weight: 600;
+				text-decoration: none;
+				text-align: center;
+				transition: all 0.3s ease;
+				display: block;
+				width: 100%;
+				border: none;
+				cursor: pointer;
+			}
+
+			.btn-primary {
+				background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+				color: white;
+			}
+
+			.btn-primary:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+			}
+
+			.btn-secondary {
+				background: #f5f5f5;
+				color: #1a1a1a;
+				border: 1px solid #e0e0e0;
+			}
+
+			.btn-secondary:hover {
+				background: #e8e8e8;
+				transform: translateY(-2px);
+			}
+
+			.troubleshooting {
+				margin-top: 25px;
+				padding-top: 20px;
+				border-top: 1px solid #eee;
+				text-align: left;
+			}
+
+			.troubleshooting h3 {
+				color: #1a1a1a;
+				font-size: 1.2rem;
+				margin-bottom: 15px;
+				text-align: center;
+			}
+
+			.troubleshooting ul {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+			}
+
+			.troubleshooting li {
+				margin-bottom: 12px;
+				padding-left: 25px;
+				position: relative;
+				color: #666;
+				font-size: 0.95rem;
+			}
+
+			.troubleshooting li i {
+				color: #ff6b6b;
+				position: absolute;
+				left: 0;
+				top: 3px;
+			}
+
+			.support-info {
+				margin-top: 25px;
+				padding-top: 20px;
+				border-top: 1px solid #eee;
+				font-size: 0.9rem;
+				color: #666;
+			}
+
+			.support-info a {
+				color: #8b7355;
+				text-decoration: none;
+				font-weight: 600;
+			}
+
+			.support-info a:hover {
+				text-decoration: underline;
+			}
+
+			@keyframes fadeInUp {
+				from {
+					opacity: 0;
+					transform: translateY(30px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			/* Анимация для иконки */
+			.error .result-icon i {
+				animation: errorIcon 0.6s ease;
+			}
+
+			@keyframes errorIcon {
+				0% {
+					transform: scale(0);
+				}
+				70% {
+					transform: scale(1.1);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+
+			/* Адаптивность */
+			@media (max-width: 768px) {
+				.result-card {
+					padding: 30px 20px;
+				}
+
+				.result-icon {
+					font-size: 3rem;
+				}
+
+				.result-title {
+					font-size: 1.7rem;
+				}
+			}
+
+			@media (max-width: 576px) {
+				.result-container {
+					padding: 20px 15px;
+				}
+
+				.result-card {
+					padding: 25px 15px;
+				}
+
+				.result-title {
+					font-size: 1.5rem;
+				}
+
+				.result-message {
+					font-size: 1rem;
+				}
+
+				.troubleshooting li {
+					font-size: 0.9rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Хедер -->
+		<header class="header purchase-header">
+			<div class="container">
+				<a href="/" class="logo">
+					<i class="fas fa-clock"></i>
+					<span>KF WATCH FACE</span>
+				</a>
+			</div>
+		</header>
+
+		<!-- Основной контент -->
+		<main class="purchase-container">
+			<div class="container">
+				<div class="result-container">
+					<div class="result-card error">
+						<div class="result-icon">
+							<i class="fas fa-exclamation-circle"></i>
+						</div>
+
+						<h1 class="result-title">Оплата не прошла</h1>
+
+						<div class="result-message">
+							<p>К сожалению, произошла ошибка при обработке платежа.</p>
+							<p>Ваши средства не были списаны.</p>
+						</div>
+
+						<div class="error-details">
+							<p><strong>Возможные причины:</strong></p>
+							<p>• Недостаточно средств на карте</p>
+							<p>• Банк отклонил операцию</p>
+							<p>• Превышен лимит операции</p>
+							<p>• Технические неполадки платежной системы</p>
+						</div>
+
+						<div class="result-actions">
+							<button id="retryPaymentBtn" class="btn-primary">
+								<i class="fas fa-redo"></i> Попробовать оплатить снова
+							</button>
+							<a href="/" class="btn-secondary">
+								<i class="fas fa-home"></i> Вернуться на главную
+							</a>
+							<a href="/#catalog" class="btn-secondary">
+								<i class="fas fa-th"></i> Посмотреть другие циферблаты
+							</a>
+						</div>
+
+						<div class="troubleshooting">
+							<h3>Рекомендации:</h3>
+							<ul>
+								<li>
+									<i class="fas fa-check-circle"></i> Проверьте баланс вашей
+									карты
+								</li>
+								<li>
+									<i class="fas fa-check-circle"></i> Убедитесь, что карта
+									поддерживает онлайн-платежи
+								</li>
+								<li>
+									<i class="fas fa-check-circle"></i> Попробуйте другую карту
+									или способ оплаты
+								</li>
+								<li>
+									<i class="fas fa-check-circle"></i> Обратитесь в банк,
+									выпустивший карту
+								</li>
+							</ul>
+						</div>
+
+						<div class="support-info">
+							<p>
+								Проблема не решается? Напишите нам в
+								<a href="https://t.me/krek_free" target="_blank">Telegram</a>
+								или на <a href="mailto:lavrov_dima@mail.ru">email</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Футер -->
+		<footer class="footer">
+			<div class="container">
+				<div class="footer-content">
+					<div class="footer-section logo-section">
+						<div class="logo-container">
+							<img
+								src="/guide/Logo.png"
+								alt="KF WATCH FACE Logo"
+								class="footer-logo"
+								width="85"
+								height="110"
+							/>
+							<h3>KF WATCH FACE</h3>
+						</div>
+					</div>
+					<div class="footer-section">
+						<h4>Навигация</h4>
+						<div class="footer-links">
+							<a href="#" class="footer-link install-guide-link"
+								>Инструкция по установке</a
+							>
+							<a href="/#catalog" class="footer-link">Каталог</a>
+							<a href="#" class="footer-link about-link">О нас</a>
+							<a href="#" class="footer-link faq-link">FAQ</a>
+							<a href="#" class="footer-link contacts-link">Контакты</a>
+						</div>
+					</div>
+					<div class="footer-section">
+						<h4>Связаться с продавцом</h4>
+						<div class="social-links">
+							<a
+								href="https://t.me/krek_free"
+								target="_blank"
+								class="social-link"
+							>
+								<i class="fab fa-telegram"></i>
+							</a>
+							<a
+								href="mailto:lavrov_dima@mail.ru"
+								class="social-link email-link"
+							>
+								<i class="fas fa-envelope"></i>
+							</a>
+						</div>
+					</div>
+				</div>
+				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
+			</div>
+		</footer>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				// Получаем данные о товаре из localStorage
+				const productData = localStorage.getItem('lastPurchaseProduct')
+				const customerEmail = localStorage.getItem('lastPurchaseEmail')
+
+				// Кнопка "Попробовать оплатить снова"
+				const retryPaymentBtn = document.getElementById('retryPaymentBtn')
+
+				if (retryPaymentBtn && productData) {
+					retryPaymentBtn.addEventListener('click', function () {
+						try {
+							const product = JSON.parse(productData)
+
+							// Создаем форму для повторной оплаты
+							const form = document.createElement('form')
+							form.method = 'POST'
+							form.action = '/api/payment/retry'
+
+							const productIdInput = document.createElement('input')
+							productIdInput.type = 'hidden'
+							productIdInput.name = 'productId'
+							productIdInput.value = product.folderName || product.name
+
+							const productNameInput = document.createElement('input')
+							productNameInput.type = 'hidden'
+							productNameInput.name = 'productName'
+							productNameInput.value = product.displayName || product.name
+
+							const priceInput = document.createElement('input')
+							priceInput.type = 'hidden'
+							priceInput.name = 'price'
+							priceInput.value = product.price || 150
+
+							const emailInput = document.createElement('input')
+							emailInput.type = 'hidden'
+							emailInput.name = 'customerEmail'
+							emailInput.value = customerEmail || ''
+
+							form.appendChild(productIdInput)
+							form.appendChild(productNameInput)
+							form.appendChild(priceInput)
+							form.appendChild(emailInput)
+
+							document.body.appendChild(form)
+							form.submit()
+						} catch (error) {
+							console.error('Ошибка при попытке повторной оплаты:', error)
+							alert(
+								'Не удалось создать форму оплаты. Пожалуйста, вернитесь на страницу товара и попробуйте снова.'
+							)
+							window.location.href = '/'
+						}
+					})
+				} else {
+					// Если данных нет, показываем кнопку для возврата в каталог
+					retryPaymentBtn.innerHTML =
+						'<i class="fas fa-th"></i> Перейти в каталог'
+					retryPaymentBtn.addEventListener('click', function () {
+						window.location.href = '/#catalog'
+					})
+				}
+
+				// Инициализация ссылок в футере
+				initFooterLinks()
+			})
+
+			function initFooterLinks() {
+				// Обработчики для ссылок футера
+				document.querySelectorAll('.install-guide-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						window.location.href = '/#install-guide'
+					})
+				})
+
+				document.querySelectorAll('.about-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						const aboutModal = document.getElementById('aboutModal')
+						if (aboutModal) {
+							aboutModal.classList.add('show')
+						} else {
+							window.location.href = '/#about'
+						}
+					})
+				})
+
+				document.querySelectorAll('.faq-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						const faqModal = document.getElementById('faqModal')
+						if (faqModal) {
+							faqModal.classList.add('show')
+						}
+					})
+				})
+
+				document.querySelectorAll('.contacts-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						const contactsModal = document.getElementById('contactsModal')
+						if (contactsModal) {
+							contactsModal.classList.add('show')
+						}
+					})
+				})
+			}
+		</script>
+	</body>
+</html>

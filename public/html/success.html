@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Оплата успешна - KF WATCH FACE</title>
+		<!-- Фавиконка -->
+		<link rel="icon" href="/guide/Logo.png" type="image/png" sizes="32x32" />
+		<!-- Стили -->
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/purchase.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<style>
+			/* Дополнительные стили для страницы успеха/ошибки */
+			.result-container {
+				min-height: calc(100vh - 70px - 200px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 40px 20px;
+			}
+
+			.result-card {
+				background: white;
+				border-radius: 20px;
+				padding: 40px;
+				max-width: 500px;
+				width: 100%;
+				text-align: center;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+				border: 2px solid #8b7355;
+				animation: fadeInUp 0.6s ease;
+			}
+
+			.result-icon {
+				font-size: 4rem;
+				margin-bottom: 20px;
+			}
+
+			.success .result-icon {
+				color: #4caf50;
+			}
+
+			.error .result-icon {
+				color: #ff6b6b;
+			}
+
+			.result-title {
+				font-size: 2rem;
+				font-weight: 700;
+				color: #1a1a1a;
+				margin-bottom: 15px;
+			}
+
+			.result-message {
+				font-size: 1.1rem;
+				color: #666;
+				line-height: 1.6;
+				margin-bottom: 30px;
+			}
+
+			.result-details {
+				background: #f9f9f9;
+				border-radius: 12px;
+				padding: 20px;
+				margin-bottom: 25px;
+				text-align: left;
+				border: 1px solid #eee;
+			}
+
+			.result-details p {
+				margin: 8px 0;
+				color: #333;
+			}
+
+			.result-details strong {
+				color: #8b7355;
+				font-weight: 600;
+			}
+
+			.result-actions {
+				display: flex;
+				flex-direction: column;
+				gap: 15px;
+				margin-top: 25px;
+			}
+
+			.btn-primary,
+			.btn-secondary {
+				padding: 16px 24px;
+				border-radius: 12px;
+				font-family: 'Comfortaa', cursive;
+				font-size: 1rem;
+				font-weight: 600;
+				text-decoration: none;
+				text-align: center;
+				transition: all 0.3s ease;
+				display: block;
+				width: 100%;
+				border: none;
+				cursor: pointer;
+			}
+
+			.btn-primary {
+				background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+				color: white;
+			}
+
+			.btn-primary:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 10px 25px rgba(139, 115, 85, 0.3);
+			}
+
+			.btn-secondary {
+				background: #f5f5f5;
+				color: #1a1a1a;
+				border: 1px solid #e0e0e0;
+			}
+
+			.btn-secondary:hover {
+				background: #e8e8e8;
+				transform: translateY(-2px);
+			}
+
+			.support-info {
+				margin-top: 25px;
+				padding-top: 20px;
+				border-top: 1px solid #eee;
+				font-size: 0.9rem;
+				color: #666;
+			}
+
+			.support-info a {
+				color: #8b7355;
+				text-decoration: none;
+				font-weight: 600;
+			}
+
+			.support-info a:hover {
+				text-decoration: underline;
+			}
+
+			@keyframes fadeInUp {
+				from {
+					opacity: 0;
+					transform: translateY(30px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			/* Анимация для иконки */
+			.success .result-icon i {
+				animation: successIcon 0.6s ease;
+			}
+
+			@keyframes successIcon {
+				0% {
+					transform: scale(0);
+				}
+				70% {
+					transform: scale(1.2);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+
+			/* Адаптивность */
+			@media (max-width: 768px) {
+				.result-card {
+					padding: 30px 20px;
+				}
+
+				.result-icon {
+					font-size: 3rem;
+				}
+
+				.result-title {
+					font-size: 1.7rem;
+				}
+			}
+
+			@media (max-width: 576px) {
+				.result-container {
+					padding: 20px 15px;
+				}
+
+				.result-card {
+					padding: 25px 15px;
+				}
+
+				.result-title {
+					font-size: 1.5rem;
+				}
+
+				.result-message {
+					font-size: 1rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Хедер -->
+		<header class="header purchase-header">
+			<div class="container">
+				<a href="/" class="logo">
+					<i class="fas fa-clock"></i>
+					<span>KF WATCH FACE</span>
+				</a>
+			</div>
+		</header>
+
+		<!-- Основной контент -->
+		<main class="purchase-container">
+			<div class="container">
+				<div class="result-container">
+					<div class="result-card success">
+						<div class="result-icon">
+							<i class="fas fa-check-circle"></i>
+						</div>
+
+						<h1 class="result-title">Оплата успешна!</h1>
+
+						<div class="result-message">
+							<p>Спасибо за покупку! Ваш заказ успешно оплачен.</p>
+							<p>
+								Ссылка на скачивание циферблата была отправлена на указанный
+								email.
+							</p>
+						</div>
+
+						<div class="result-details">
+							<p><strong>Что дальше:</strong></p>
+							<p>1. Проверьте вашу почту (в том числе папку "Спам")</p>
+							<p>2. Скачайте файл циферблата в формате *.apk</p>
+							<p>3. Установите циферблат на ваши часы по инструкции</p>
+						</div>
+
+						<div class="result-actions">
+							<a href="mailto:" class="btn-primary" id="checkEmailBtn">
+								<i class="fas fa-envelope"></i> Проверить почту
+							</a>
+							<a href="/" class="btn-secondary">
+								<i class="fas fa-home"></i> Вернуться на главную
+							</a>
+							<a href="/#catalog" class="btn-secondary">
+								<i class="fas fa-th"></i> Посмотреть другие циферблаты
+							</a>
+						</div>
+
+						<div class="support-info">
+							<p>Возникли проблемы с получением файла?</p>
+							<p>
+								Напишите нам в
+								<a href="https://t.me/krek_free" target="_blank">Telegram</a>
+								или на <a href="mailto:lavrov_dima@mail.ru">email</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Футер -->
+		<footer class="footer">
+			<div class="container">
+				<div class="footer-content">
+					<div class="footer-section logo-section">
+						<div class="logo-container">
+							<img
+								src="/guide/Logo.png"
+								alt="KF WATCH FACE Logo"
+								class="footer-logo"
+								width="85"
+								height="110"
+							/>
+							<h3>KF WATCH FACE</h3>
+						</div>
+					</div>
+					<div class="footer-section">
+						<h4>Навигация</h4>
+						<div class="footer-links">
+							<a href="#" class="footer-link install-guide-link"
+								>Инструкция по установке</a
+							>
+							<a href="/#catalog" class="footer-link">Каталог</a>
+							<a href="#" class="footer-link about-link">О нас</a>
+							<a href="#" class="footer-link faq-link">FAQ</a>
+							<a href="#" class="footer-link contacts-link">Контакты</a>
+						</div>
+					</div>
+					<div class="footer-section">
+						<h4>Связаться с продавцом</h4>
+						<div class="social-links">
+							<a
+								href="https://t.me/krek_free"
+								target="_blank"
+								class="social-link"
+							>
+								<i class="fab fa-telegram"></i>
+							</a>
+							<a
+								href="mailto:lavrov_dima@mail.ru"
+								class="social-link email-link"
+							>
+								<i class="fas fa-envelope"></i>
+							</a>
+						</div>
+					</div>
+				</div>
+				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
+			</div>
+		</footer>
+
+		<script>
+			// Получаем email из URL или localStorage
+			document.addEventListener('DOMContentLoaded', function () {
+				// Пытаемся получить email из URL
+				const urlParams = new URLSearchParams(window.location.search)
+				const email =
+					urlParams.get('email') || localStorage.getItem('lastPurchaseEmail')
+
+				if (email) {
+					const checkEmailBtn = document.getElementById('checkEmailBtn')
+					if (checkEmailBtn) {
+						// Используем mailto для Gmail
+						if (email.includes('@gmail.com')) {
+							checkEmailBtn.href = `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(
+								email
+							)}`
+						} else {
+							// Для других почтовых сервисов используем mailto
+							checkEmailBtn.href = `mailto:${email}`
+						}
+
+						// Сохраняем email для кнопки "Вернуться к оплате" на странице ошибки
+						localStorage.setItem('lastPurchaseEmail', email)
+					}
+				}
+
+				// Очищаем localStorage через 1 час
+				setTimeout(() => {
+					localStorage.removeItem('lastPurchaseEmail')
+				}, 3600000)
+
+				// Инициализация ссылок в футере
+				initFooterLinks()
+			})
+
+			function initFooterLinks() {
+				// Обработчики для ссылок футера
+				document.querySelectorAll('.install-guide-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						window.location.href = '/#install-guide'
+					})
+				})
+
+				document.querySelectorAll('.about-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						const aboutModal = document.getElementById('aboutModal')
+						if (aboutModal) {
+							aboutModal.classList.add('show')
+						} else {
+							window.location.href = '/#about'
+						}
+					})
+				})
+
+				document.querySelectorAll('.faq-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						const faqModal = document.getElementById('faqModal')
+						if (faqModal) {
+							faqModal.classList.add('show')
+						}
+					})
+				})
+
+				document.querySelectorAll('.contacts-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						const contactsModal = document.getElementById('contactsModal')
+						if (contactsModal) {
+							contactsModal.classList.add('show')
+						}
+					})
+				})
+			}
+		</script>
+	</body>
+</html>
