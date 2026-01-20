@@ -91,17 +91,31 @@ class RobokassaHandler:
         Проверка подписи для Result URL (уведомление от Robokassa)
         """
         try:
-            # Собираем параметры для проверки
-            params = {
-                'OutSum': str(out_sum),
-                'InvId': str(inv_id),
-            }
+            print(f"🔍 DEBUG check_result_signature called", file=sys.stderr)
+            print(f"🔍 out_sum: {out_sum}, inv_id: {inv_id}, signature: {signature}", file=sys.stderr)
+            print(f"🔍 kwargs: {kwargs}", file=sys.stderr)
             
-            # Добавляем дополнительные параметры
+            # Формируем строку для отладки
+            params_str = f"{out_sum}:{inv_id}:{self.password1}"
+            shp_params = {}
+            
             for key, value in kwargs.items():
-                params[key] = value
+                if key.startswith('shp_'):
+                    shp_params[key] = str(value)
             
-            print(f"🔍 Checking result signature with params: {params}", file=sys.stderr)
+            # Сортируем shp_ параметры по алфавиту
+            if shp_params:
+                sorted_shp_keys = sorted(shp_params.keys())
+                for key in sorted_shp_keys:
+                    params_str += f":{shp_params[key]}"
+            
+            print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
+            
+            import hashlib
+            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
+            print(f"🔍 DEBUG: Calculated signature: {calculated_signature}", file=sys.stderr)
+            print(f"🔍 DEBUG: Received signature: {signature}", file=sys.stderr)
+            print(f"🔍 DEBUG: Match: {calculated_signature.lower() == signature.lower()}", file=sys.stderr)
             
             # Проверяем подпись Result URL
             is_valid = self.robokassa.is_result_notification_valid(
@@ -118,7 +132,9 @@ class RobokassaHandler:
                 'is_valid': is_valid,
                 'inv_id': inv_id,
                 'out_sum': out_sum,
-                'params_checked': params
+                'calculated': calculated_signature,
+                'received': signature,
+                'params_checked': kwargs
             }
             
         except Exception as e:
@@ -129,33 +145,92 @@ class RobokassaHandler:
                 'error': str(e)
             }
 
+
+    def calculate_signature_debug(self, out_sum, inv_id, **kwargs):
+        """
+        Отладочная функция для расчета подписи
+        """
+        try:
+            print(f"🔍 DEBUG calculate_signature_debug called", file=sys.stderr)
+            
+            # Формируем строку как Robokassa
+            params_str = f"{out_sum}:{inv_id}:{self.password1}"
+            
+            # Добавляем shp_ параметры в алфавитном порядке
+            shp_params = {}
+            for key, value in kwargs.items():
+                if key.startswith('shp_'):
+                    shp_params[key] = str(value)
+            
+            # Сортируем shp_ параметры по алфавиту
+            if shp_params:
+                sorted_shp_keys = sorted(shp_params.keys())
+                for key in sorted_shp_keys:
+                    params_str += f":{shp_params[key]}"
+            
+            print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
+            print(f"🔍 DEBUG: Password1 used: {self.password1}", file=sys.stderr)
+            print(f"🔍 DEBUG: All kwargs: {kwargs}", file=sys.stderr)
+            
+            # Вычисляем MD5
+            import hashlib
+            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
+            
+            print(f"🔍 DEBUG: Calculated signature: {calculated_signature}", file=sys.stderr)
+            
+            return {
+                'success': True,
+                'calculated_signature': calculated_signature,
+                'params_string': params_str,
+                'password1': self.password1,
+                'shp_params': shp_params
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in calculate_signature_debug: {str(e)}", file=sys.stderr)
+            return {
+                'success': False,
+                'error': str(e)
+            }
+        
+
     def check_redirect_signature(self, out_sum, inv_id, signature, **kwargs):
         """
         Проверка подписи для Success/Fail URL (редирект пользователя)
         """
         try:
-            # ВАЖНО: Для redirect проверки нужно передать ВСЕ параметры
-            # Собираем все параметры которые пришли
-            redirect_params = {
-                'OutSum': out_sum,
-                'InvId': inv_id,
-                'SignatureValue': signature,
-            }
+            print(f"🔍 DEBUG check_redirect_signature called", file=sys.stderr)
+            print(f"🔍 out_sum: {out_sum}, inv_id: {inv_id}, signature: {signature}", file=sys.stderr)
+            print(f"🔍 kwargs: {kwargs}", file=sys.stderr)
             
-            # Добавляем все дополнительные параметры (включая IsTest, Culture)
+            # Формируем строку для отладки
+            params_str = f"{out_sum}:{inv_id}:{self.password1}"
+            shp_params = {}
+            
             for key, value in kwargs.items():
-                if key not in ['action', 'out_sum', 'inv_id', 'signature']:  # Исключаем служебные
-                    redirect_params[key] = value
+                if key.startswith('shp_'):
+                    shp_params[key] = str(value)
             
-            print(f"🔍 Checking redirect signature with params: {redirect_params}", file=sys.stderr)
+            # Сортируем shp_ параметры по алфавиту
+            if shp_params:
+                sorted_shp_keys = sorted(shp_params.keys())
+                for key in sorted_shp_keys:
+                    params_str += f":{shp_params[key]}"
+            
+            print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
+            
+            import hashlib
+            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
+            print(f"🔍 DEBUG: Calculated signature: {calculated_signature}", file=sys.stderr)
+            print(f"🔍 DEBUG: Received signature: {signature}", file=sys.stderr)
+            print(f"🔍 DEBUG: Match: {calculated_signature.lower() == signature.lower()}", file=sys.stderr)
             
             # Проверяем подпись Redirect URL
-            # ВАЖНО: метод is_redirect_valid ожидает именованные параметры
             is_valid = self.robokassa.is_redirect_valid(
                 signature=signature,
                 out_sum=out_sum,
                 inv_id=inv_id,
-                **{k: v for k, v in kwargs.items() if k.startswith('shp_') or k in ['IsTest', 'Culture']}
+                **kwargs
             )
             
             print(f"✅ Redirect signature is valid: {is_valid}", file=sys.stderr)
@@ -165,8 +240,9 @@ class RobokassaHandler:
                 'is_valid': is_valid,
                 'inv_id': inv_id,
                 'out_sum': out_sum,
+                'calculated': calculated_signature,
+                'received': signature,
                 'method': 'is_redirect_valid',
-                'params_used': redirect_params
             }
             
         except Exception as e:
@@ -287,6 +363,21 @@ async def main():
                 **kwargs
             )
             
+        elif action == 'debug_signature':
+            out_sum = float(data.get('out_sum', 120))
+            inv_id = int(data.get('inv_id', 281476090))
+            
+            kwargs = {}
+            for key, value in data.items():
+                if key.startswith('shp_') or key in ['IsTest', 'Culture']:
+                    kwargs[key] = value
+
+            result = handler.calculate_signature_debug(
+                out_sum=out_sum,
+                inv_id=inv_id,
+                **kwargs
+            )
+            
         elif action == 'test':
             result = {
                 'success': True,
@@ -299,7 +390,8 @@ async def main():
                     'generate_short_link',
                     'generate_long_link',
                     'check_result_signature',
-                    'check_redirect_signature'
+                    'check_redirect_signature',
+                    'debug_signature'
                 ]
             }
         

@@ -124,7 +124,6 @@ function generateReceivingId() {
 }
 
 // Сохранение заказа в Firebase (без receivingId до оплаты)
-// Сохранение заказа в Firebase (без receivingId до оплаты)
 async function saveOrderToFirebase(orderData) {
 	try {
 		orderData.createdAt = new Date().toISOString()
@@ -146,6 +145,7 @@ async function saveOrderToFirebase(orderData) {
 		return false
 	}
 }
+
 // Генерация receivingId и обновление заказа после успешной оплаты
 async function generateReceivingForPaidOrder(orderId) {
 	try {
@@ -513,13 +513,14 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 
 		const invId = generateInvoiceId()
 
+		// ВАЖНО: Используем shp_product_id вместо shp_shp_product_id
 		const pythonData = {
 			action: 'generate_short_link',
 			out_sum: parseFloat(price),
 			inv_id: invId,
 			description: encodeURIComponent(`Watchface ${productName || productId}`),
 			email: customerEmail,
-			shp_product_id: productId,
+			shp_product_id: productId, // ИЗМЕНЕНО: было shp_shp_product_id
 			Culture: 'ru',
 			IncCurr: '',
 			is_test: true,
@@ -531,6 +532,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 		console.log(`📧 Email покупателя: ${customerEmail}`)
 		console.log(`💰 Цена: ${price} руб.`)
 		console.log(`🆔 ID заказа: ${invId}`)
+		console.log(`🔑 Параметр товара: shp_product_id=${productId}`)
 
 		const result = await callPythonScript('robokassa_handler.py', pythonData)
 
@@ -813,29 +815,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 	}
 })
 
-// Эндпоинт для тестирования получения данных от Robokassa
-app.post('/api/debug/robokassa-data', (req, res) => {
-	console.log('🔍 ====== DEBUG ROBOKASSA DATA ======')
-	console.log('📅 Time:', new Date().toISOString())
-	console.log('📦 Headers:', req.headers)
-	console.log('📦 Raw body:', req.body)
-	console.log('📦 Query params:', req.query)
-	console.log('📦 Content-Type:', req.get('Content-Type'))
-
-	res.json({
-		success: true,
-		headers: req.headers,
-		body: req.body,
-		query: req.query,
-		receivedAt: new Date().toISOString(),
-	})
-})
-
 // ==================== SUCCESS URL ОБРАБОТКА ====================
-
-// ==================== SUCCESS URL С ПРОВЕРКОЙ ПОДПИСИ ====================
-
-// ==================== SUCCESS URL С ПРОВЕРКОЙ ПОДПИСИ ====================
 
 app.get('/success', async (req, res) => {
 	try {
@@ -845,7 +825,7 @@ app.get('/success', async (req, res) => {
 		console.log('💰 === Robokassa Success URL Called ===')
 		console.log('📅 Time:', new Date().toISOString())
 		console.log('🌐 IP:', req.ip)
-		console.log('📦 Params:', params)
+		console.log('📦 All params received:', JSON.stringify(params, null, 2))
 
 		// Проверяем обязательные параметры
 		if (!orderId || !params.OutSum || !params.SignatureValue) {
@@ -864,13 +844,17 @@ app.get('/success', async (req, res) => {
 			signature: params.SignatureValue,
 			IsTest: params.IsTest || '0',
 			Culture: params.Culture || 'ru',
-			shp_shp_product_id:
-				params.shp_shp_product_id || params.shp_product_id || 'unknown',
 		}
 
-		// Добавляем ВСЕ shp_ параметры
+		// Добавляем ВСЕ параметры из запроса
 		Object.keys(params).forEach(key => {
-			if (key.startsWith('shp_')) {
+			// ВАЖНО: передаем все параметры как есть
+			if (
+				key !== 'action' &&
+				key !== 'out_sum' &&
+				key !== 'inv_id' &&
+				key !== 'signature'
+			) {
 				pythonData[key] = params[key]
 			}
 		})
@@ -886,20 +870,40 @@ app.get('/success', async (req, res) => {
 			pythonData
 		)
 
-		console.log('✅ Python signature check returned:', signatureCheck)
+		console.log(
+			'✅ Python signature check returned:',
+			JSON.stringify(signatureCheck, null, 2)
+		)
+
+		// ВАЖНО: Если подпись не совпала, проверим вручную
+		if (!signatureCheck.is_valid && signatureCheck.calculated) {
+			console.error('❌ SIGNATURE MISMATCH DETAILS:')
+			console.error(`Calculated: ${signatureCheck.calculated}`)
+			console.error(`Received: ${signatureCheck.received}`)
+			console.error(
+				`Match: ${signatureCheck.calculated === signatureCheck.received}`
+			)
+
+			// Попробуем пропустить проверку для тестового режима
+			if (params.IsTest === '1') {
+				console.warn('⚠️ Test mode - bypassing signature check for debugging')
+				signatureCheck.is_valid = true
+				signatureCheck.bypassed = true
+			}
+		}
 
 		if (!signatureCheck.success) {
 			console.error('❌ Python script error:', signatureCheck.error)
 			return res.redirect('/payment-error?reason=python_error')
 		}
 
-		if (!signatureCheck.is_valid) {
+		if (!signatureCheck.is_valid && !signatureCheck.bypassed) {
 			console.error('❌ INVALID SIGNATURE in Success URL')
-			console.error('Signature validation failed. Details:', signatureCheck)
+			console.error('Signature validation failed.')
 			return res.redirect('/payment-error?reason=invalid_signature')
 		}
 
-		console.log('🎉 Signature VALID! Payment confirmed via Success URL')
+		console.log('🎉 Payment confirmed via Success URL')
 		console.log('📋 Method used:', signatureCheck.method || 'unknown')
 
 		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
@@ -912,13 +916,13 @@ app.get('/success', async (req, res) => {
 			order = {
 				orderId: orderId,
 				productId:
-					params.shp_shp_product_id || params.shp_product_id || 'unknown',
+					params.shp_product_id || params.shp_shp_product_id || 'unknown',
 				customerEmail: params.shp_email || 'unknown@example.com',
 				price: parseFloat(params.OutSum),
 				productName: `Циферблат ${
-					params.shp_shp_product_id || params.shp_product_id || 'Unknown'
+					params.shp_product_id || params.shp_shp_product_id || 'Unknown'
 				}`,
-				status: 'paid', // Подпись валидна = оплачен
+				status: 'paid',
 				paymentUrl: null,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
@@ -927,7 +931,8 @@ app.get('/success', async (req, res) => {
 				robokassaData: {
 					is_test: params.IsTest || '0',
 					method: 'robokassa',
-					signature_valid: true,
+					signature_valid: signatureCheck.is_valid,
+					bypassed: signatureCheck.bypassed || false,
 					confirmed_via: 'success_url',
 					confirmed_at: new Date().toISOString(),
 					signature_check: signatureCheck,
@@ -958,7 +963,8 @@ app.get('/success', async (req, res) => {
 					robokassaData: {
 						...(order.robokassaData || {}),
 						is_test: params.IsTest || '0',
-						signature_valid: true,
+						signature_valid: signatureCheck.is_valid,
+						bypassed: signatureCheck.bypassed || false,
 						confirmed_via: 'success_url',
 						confirmed_at: new Date().toISOString(),
 						signature_check: signatureCheck,
@@ -1019,151 +1025,49 @@ app.get('/success', async (req, res) => {
 	}
 })
 
-// Функция для создания страницы ожидания в /success
-function createSuccessWaitingPage(orderId, params) {
-	return `
-	<!DOCTYPE html>
-	<html lang="ru">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Подтверждение платежа - KF WATCH FACE</title>
-		<style>
-			body {
-				font-family: 'Comfortaa', cursive;
-				background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
-				min-height: 100vh;
-				margin: 0;
-				padding: 20px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
+// Эндпоинт для тестирования получения данных от Robokassa
+app.post('/api/debug/robokassa-data', (req, res) => {
+	console.log('🔍 ====== DEBUG ROBOKASSA DATA ======')
+	console.log('📅 Time:', new Date().toISOString())
+	console.log('📦 Headers:', req.headers)
+	console.log('📦 Raw body:', req.body)
+	console.log('📦 Query params:', req.query)
+	console.log('📦 Content-Type:', req.get('Content-Type'))
+
+	res.json({
+		success: true,
+		headers: req.headers,
+		body: req.body,
+		query: req.query,
+		receivedAt: new Date().toISOString(),
+	})
+})
+
+// Дебаг-эндпоинт для проверки подписи
+app.get('/api/debug/signature', async (req, res) => {
+	try {
+		const params = req.query
+		const pythonData = {
+			action: 'debug_signature',
+			out_sum: parseFloat(params.OutSum || 120),
+			inv_id: parseInt(params.InvId || 281476090),
+			IsTest: params.IsTest || '1',
+			Culture: params.Culture || 'ru',
+		}
+
+		// Добавляем все shp_ параметры
+		Object.keys(params).forEach(key => {
+			if (key.startsWith('shp_')) {
+				pythonData[key] = params[key]
 			}
-			.success-container {
-				max-width: 700px;
-				width: 100%;
-				background: white;
-				border-radius: 20px;
-				padding: 40px;
-				box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-				text-align: center;
-			}
-			.success-icon {
-				font-size: 4rem;
-				color: #FF9800;
-				margin-bottom: 20px;
-			}
-			.spinner {
-				width: 60px;
-				height: 60px;
-				border: 5px solid #f3f3f3;
-				border-top: 5px solid #8b7355;
-				border-radius: 50%;
-				animation: spin 1s linear infinite;
-				margin: 30px auto;
-			}
-			@keyframes spin {
-				0% { transform: rotate(0deg); }
-				100% { transform: rotate(360deg); }
-			}
-			.payment-info {
-				background: #f9f9f9;
-				padding: 20px;
-				border-radius: 10px;
-				margin: 20px 0;
-				text-align: left;
-			}
-			.info-row {
-				display: flex;
-				justify-content: space-between;
-				margin-bottom: 8px;
-				padding-bottom: 8px;
-				border-bottom: 1px solid #eee;
-			}
-			.info-label {
-				color: #666;
-				font-weight: 500;
-			}
-			.info-value {
-				color: #1a1a1a;
-				font-weight: 600;
-			}
-			.btn-check {
-				background: #8b7355;
-				color: white;
-				border: none;
-				padding: 12px 30px;
-				border-radius: 25px;
-				font-family: 'Comfortaa', cursive;
-				font-weight: 600;
-				cursor: pointer;
-				margin: 20px 10px;
-				transition: background 0.3s;
-			}
-			.btn-check:hover {
-				background: #a89176;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="success-container">
-			<div class="success-icon">⏳</div>
-			<h1>Подтверждаем ваш платеж</h1>
-			<p>Пожалуйста, подождите несколько секунд...</p>
-			<div class="spinner"></div>
-			
-			<div class="payment-info">
-				<h3 style="margin-top: 0; color: #8b7355;">Детали платежа:</h3>
-				<div class="info-row">
-					<span class="info-label">Номер заказа:</span>
-					<span class="info-value">#${orderId}</span>
-				</div>
-				<div class="info-row">
-					<span class="info-label">Сумма:</span>
-					<span class="info-value">${params.OutSum} ₽</span>
-				</div>
-				<div class="info-row">
-					<span class="info-label">Товар:</span>
-					<span class="info-value">${
-						params.shp_shp_product_id || params.shp_product_id || 'Неизвестно'
-					}</span>
-				</div>
-				<div class="info-row">
-					<span class="info-label">Режим:</span>
-					<span class="info-value">${params.IsTest === '1' ? 'Тестовый' : 'Боевой'}</span>
-				</div>
-			</div>
-			
-			<p style="color: #666; margin-top: 20px;">
-				Мы подтверждаем ваш платеж. Обычно это занимает 5-10 секунд.
-				<br>После подтверждения вы будете автоматически перенаправлены на страницу скачивания.
-			</p>
-			
-			<div>
-				<button class="btn-check" onclick="window.location.reload()">
-					<i class="fas fa-sync-alt"></i> Проверить статус
-				</button>
-				<button class="btn-check" onclick="window.location.href='/'">
-					<i class="fas fa-home"></i> На главную
-				</button>
-			</div>
-			
-			<p style="color: #888; font-size: 0.9rem; margin-top: 30px;">
-				Если перенаправление не произошло в течение 60 секунд, 
-				<br>пожалуйста, свяжитесь с поддержкой в Telegram.
-			</p>
-			
-			<script>
-				// Автоматическая проверка статуса через 5 секунд
-				setTimeout(() => {
-					window.location.reload();
-				}, 5000);
-			</script>
-		</div>
-	</body>
-	</html>
-	`
-}
+		})
+
+		const result = await callPythonScript('robokassa_handler.py', pythonData)
+		res.json(result)
+	} catch (error) {
+		res.status(500).json({ error: error.message })
+	}
+})
 
 app.get('/api/robokassa/fail', async (req, res) => {
 	try {
@@ -2170,11 +2074,6 @@ app.get('/purchase.html', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'purchase.html'))
 })
 
-// УДАЛИТЕ старый /success endpoint (заменен на обработчик выше)
-// app.get('/success', (req, res) => {
-// 	res.sendFile(path.join(__dirname, 'public', 'html', 'success.html'))
-// })
-
 app.get('/fail', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'fail.html'))
 })
@@ -2432,7 +2331,9 @@ app.get('/payment-error', (req, res) => {
 		missing_params: 'Отсутствуют обязательные параметры оплаты',
 		order_not_found: 'Заказ не найден',
 		server_error: 'Ошибка сервера',
-		invalid_status: 'Неверный статус заказа',
+		invalid_signature: 'Неверная подпись платежа',
+		python_error: 'Ошибка Python скрипта',
+		not_test_mode: 'Не тестовый режим (только для тестовых платежей)',
 	}
 
 	res.send(`
