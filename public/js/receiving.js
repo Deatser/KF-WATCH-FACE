@@ -100,14 +100,109 @@ function displayOrderDetails(order) {
 }
 
 // Настройка кнопки скачивания
-function setupDownloadButton(receivingId) {
+async function setupDownloadButton(receivingId, productId) {
 	const downloadBtn = document.getElementById('downloadBtn')
+	const fileSizeElement = document.getElementById('fileSize')
 
-	downloadBtn.innerHTML = '<i class="fas fa-download"></i> Скачать файл (*.apk)'
-	downloadBtn.disabled = false
-	downloadBtn.onclick = () => {
-		window.location.href = `/api/download/watchface/${receivingId}`
-		trackDownload(receivingId)
+	if (!downloadBtn) {
+		console.error('❌ Кнопка downloadBtn не найдена')
+		return
+	}
+
+	// Сначала проверяем доступ
+	try {
+		console.log(`🔍 Проверяем доступ для receivingId: ${receivingId}`)
+
+		const response = await fetch(`/api/check-access/${receivingId}`)
+		const data = await response.json()
+
+		console.log('📊 Результат проверки:', data)
+
+		if (data.success && data.accessible) {
+			// Проверяем количество файлов
+			const apkCheck = await fetch(
+				`/api/check-apk-files/${data.productId || productId}`
+			)
+			const apkData = await apkCheck.json()
+
+			let downloadText = '<i class="fas fa-download"></i> Скачать файл'
+			let fileInfo = ''
+
+			if (apkData.success && apkData.fileCount > 1) {
+				downloadText = `<i class="fas fa-download"></i> Скачать ${apkData.fileCount} файла`
+				const totalSize = apkData.files.reduce((sum, f) => sum + f.size, 0)
+				const totalMB = (totalSize / 1024 / 1024).toFixed(1)
+				fileInfo = `~${totalMB} MB | ${apkData.fileCount} файла`
+			}
+
+			if (apkData.success && apkData.fileCount == 1) {
+				const totalSize = apkData.files.reduce((sum, f) => sum + f.size, 0)
+				const totalMB = (totalSize / 1024 / 1024).toFixed(1)
+				fileInfo = `~${totalMB} MB | 1 файл`
+			}
+
+			// Доступ разрешен
+			downloadBtn.innerHTML = downloadText
+			downloadBtn.disabled = false
+			downloadBtn.style.opacity = '1'
+			downloadBtn.style.cursor = 'pointer'
+
+			// Обновляем информацию о размере файла
+			if (fileSizeElement) {
+				fileSizeElement.textContent = fileInfo
+			}
+
+			// Обработчик скачивания
+			downloadBtn.onclick = () => {
+				console.log(`🖱️ Нажата кнопка скачивания для: ${receivingId}`)
+
+				// Открываем защищенный маршрут в том же окне
+				window.location.href = `/api/secure-download/${receivingId}`
+
+				// Логируем в Google Analytics
+				if (typeof gtag !== 'undefined') {
+					gtag('event', 'download_started', {
+						event_category: 'Order',
+						event_label: receivingId,
+						file_count: apkData.fileCount || 1,
+						value: 1,
+					})
+				}
+			}
+		} else {
+			// Доступ запрещен
+			downloadBtn.innerHTML = '<i class="fas fa-lock"></i> Доступ запрещен'
+			downloadBtn.disabled = true
+			downloadBtn.style.opacity = '0.5'
+			downloadBtn.style.cursor = 'not-allowed'
+
+			// Показываем сообщение об ошибке
+			const orderDetails = document.getElementById('orderDetails')
+			if (orderDetails) {
+				orderDetails.innerHTML += `
+                    <div class="error-message" style="
+                        background: #fff3cd;
+                        border: 1px solid #ffc107;
+                        color: #856404;
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin-top: 20px;
+                    ">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Внимание:</strong> ${
+													data.message || 'Доступ к файлу запрещен.'
+												}
+                    </div>
+                `
+			}
+		}
+	} catch (error) {
+		console.error('❌ Ошибка проверки доступа:', error)
+
+		downloadBtn.innerHTML =
+			'<i class="fas fa-exclamation-triangle"></i> Ошибка проверки'
+		downloadBtn.disabled = true
+		downloadBtn.style.opacity = '0.5'
 	}
 }
 
@@ -127,7 +222,9 @@ function showError(message) {
     `
 
 	const downloadBtn = document.getElementById('downloadBtn')
-	downloadBtn.style.display = 'none'
+	if (downloadBtn) {
+		downloadBtn.style.display = 'none'
+	}
 }
 
 // Отслеживание скачивания
@@ -373,7 +470,7 @@ function initAllModals() {
 	}
 }
 
-// Основная функция инициализации
+// Обновить initReceivingPage
 async function initReceivingPage() {
 	console.log('🚀 Инициализация страницы получения заказа...')
 
@@ -381,30 +478,14 @@ async function initReceivingPage() {
 
 	if (order) {
 		displayOrderDetails(order)
-		setupDownloadButton(order.receivingId || getReceivingIdFromURL())
-
-		// Показываем размер файла если есть
-		const fileSizeElement = document.getElementById('fileSize')
-		if (fileSizeElement && order.productId) {
-			fileSizeElement.textContent = '~5-10 MB'
-		}
+		await setupDownloadButton(
+			order.receivingId || getReceivingIdFromURL(),
+			order.productId
+		)
 	}
 
 	// Инициализируем все модальные окна
 	initAllModals()
-
-	// Проверяем доступность модальных окон
-	setTimeout(() => {
-		const modal = document.getElementById('contactsModal')
-		console.log(
-			'Модальные окна на странице получения:',
-			modal ? '✅ Загружены' : '❌ Не загружены'
-		)
-
-		// Также проверяем наличие кнопок в модальном окне
-		const methodButtons = document.querySelectorAll('.install-method-btn')
-		console.log('Кнопки методов установки найдены:', methodButtons.length)
-	}, 100)
 }
 
 // Запуск при загрузке страницы

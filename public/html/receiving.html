@@ -277,21 +277,20 @@
 						</div>
 					</div>
 
-					<!-- Секция скачивания -->
+					<!-- Секция скачивания - ОДИН блок -->
 					<div class="download-section">
 						<h2><i class="fas fa-download"></i> Скачайте файл циферблата</h2>
 						<p style="margin-bottom: 25px; color: #555">
 							Файл циферблата в формате APK готов к скачиванию
 						</p>
 						<button id="downloadBtn" class="btn-download" disabled>
-							<i class="fas fa-spinner fa-spin"></i> Загрузка...
+							<i class="fas fa-spinner fa-spin"></i> Проверка доступа...
 						</button>
 						<p style="margin-top: 15px; color: #666; font-size: 0.9rem">
-							Размер файла: <span id="fileSize">...</span> | Формат: APK
+							<i class="fas fa-info-circle"></i> Размер:
+							<span id="fileSize">~5-10 MB</span> | Формат: APK
 						</p>
 					</div>
-
-					<!-- ... остальной код без изменений ... -->
 
 					<!-- Важное напоминание -->
 					<div class="reminder-box">
@@ -312,20 +311,42 @@
 						<div class="install-buttons">
 							<button class="install-btn" id="wearloadBtn">
 								<i class="fas fa-mobile-alt"></i> WearLoad
-								<span>рекомендуем</span>
 							</button>
 							<button class="install-btn" id="adbBtn">
 								<i class="fas fa-cogs"></i> ADB App Control
-								<span>через ПК</span>
 							</button>
 							<button class="install-btn" id="bugjaegerBtn">
 								<i class="fas fa-bug"></i> Bugjaeger
-								<span>через смартфон</span>
 							</button>
+						</div>
+
+						<div
+							class="install-description"
+							style="
+								margin-top: 25px;
+								padding: 20px;
+								background: rgba(139, 115, 85, 0.05);
+								border-radius: 12px;
+								border-left: 3px solid #8b7355;
+							"
+						>
+							<p style="margin-bottom: 15px">
+								<strong>WearLoad</strong> - Мы рекомендуем использовать именно
+								этот способ установки через смартфон как самый простой, быстрый
+								и автоматизированный.
+							</p>
+							<p style="margin-bottom: 15px">
+								<strong>ADB App Control</strong> - Если вы предпочитаете
+								устанавливать циферблаты через ПК, то выбирайте этот способ
+								установки.
+							</p>
+							<p style="margin-bottom: 0">
+								<strong>Bugjaeger</strong> - Если вы предпочитаете устанавливать
+								циферблаты через смартфон, то выбирайте этот способ установки.
+							</p>
 						</div>
 					</div>
 
-					<!-- ... остальной код без изменений ... -->
 					<!-- Ссылка вернуться в магазин -->
 					<div class="back-to-shop">
 						<a href="/" class="btn-buy">

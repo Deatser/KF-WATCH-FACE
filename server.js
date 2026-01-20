@@ -5,6 +5,7 @@ const multer = require('multer')
 const compression = require('compression')
 const { spawn, exec } = require('child_process')
 const crypto = require('crypto')
+const archiver = require('archiver')
 
 // Firebase версия 10+ импорт
 const { initializeApp } = require('firebase/app')
@@ -20,6 +21,341 @@ const {
 
 const app = express()
 const PORT = process.env.PORT || 3000
+
+// Путь к защищенному хранилищу APK
+const APK_STORAGE_PATH = path.join(__dirname, 'secure-apk-storage')
+
+// Создаем защищенную папку если нет
+if (!fs.existsSync(APK_STORAGE_PATH)) {
+	fs.mkdirSync(APK_STORAGE_PATH, { recursive: true })
+	console.log(`🔐 Создана защищенная папка для APK: ${APK_STORAGE_PATH}`)
+}
+
+// ==================== ФУНКЦИЯ: Получить APK по productId ====================
+function findAPKFileByProductId(productId) {
+	try {
+		// productId должен быть в формате KFXXX
+		const match = productId.match(/KF(\d{3})/i)
+		if (!match) {
+			console.log(`❌ Неверный формат productId: ${productId}`)
+			return null
+		}
+
+		const normalizedId = match[0].toUpperCase() // KF001
+		const apkDirPath = path.join(__dirname, 'apk', normalizedId)
+
+		console.log(`🔍 Ищем APK для: ${normalizedId}, путь: ${apkDirPath}`)
+
+		if (!fs.existsSync(apkDirPath)) {
+			console.log(`❌ Папка не существует: ${apkDirPath}`)
+			return null
+		}
+
+		// Ищем .apk файлы в папке
+		const files = fs.readdirSync(apkDirPath)
+		console.log(`📁 Файлы в папке ${normalizedId}:`, files)
+
+		const apkFile = files.find(file => file.toLowerCase().endsWith('.apk'))
+
+		if (!apkFile) {
+			console.log(`❌ APK файл не найден в ${normalizedId}`)
+			return null
+		}
+
+		const fullPath = path.join(apkDirPath, apkFile)
+		console.log(`✅ Найден APK: ${fullPath}`)
+
+		return {
+			path: fullPath,
+			name: apkFile,
+			productId: normalizedId,
+		}
+	} catch (error) {
+		console.error('❌ Ошибка поиска APK:', error)
+		return null
+	}
+}
+
+// ==================== ЗАЩИЩЕННЫЙ МАРШРУТ ДЛЯ СКАЧИВАНИЯ ВСЕХ APK ====================
+app.get('/api/secure-download/:receivingId', async (req, res) => {
+	try {
+		console.log(`🔐 === ЗАПРОС НА ЗАЩИЩЕННОЕ СКАЧИВАНИЕ ===`)
+		console.log(`📦 ReceivingId: ${req.params.receivingId}`)
+		console.log(`🌐 IP: ${req.ip}`)
+		console.log(`📱 User-Agent: ${req.headers['user-agent']}`)
+
+		const { receivingId } = req.params
+
+		// 1. ПОЛУЧАЕМ И ПРОВЕРЯЕМ ЗАКАЗ
+		let order = await getOrderByReceivingIdFromFirebase(receivingId)
+
+		if (!order) {
+			order = getOrderByReceivingId(receivingId)
+		}
+
+		if (!order) {
+			console.log(`❌ Заказ не найден для receivingId: ${receivingId}`)
+			return res.status(404).json({
+				success: false,
+				error: 'Заказ не найден',
+			})
+		}
+
+		if (order.status !== 'paid') {
+			console.log(
+				`❌ Заказ не оплачен: ${order.orderId}, статус: ${order.status}`
+			)
+			return res.status(403).json({
+				success: false,
+				error: 'Заказ не оплачен',
+			})
+		}
+
+		console.log(`✅ Заказ найден: ${order.orderId}`)
+		console.log(`📦 ProductId: ${order.productId}`)
+		console.log(`📧 Email: ${order.customerEmail}`)
+
+		// 2. ИЗВЛЕКАЕМ KFXXX ИЗ ДАННЫХ ЗАКАЗА
+		let watchfaceId = null
+		const possibleSources = [
+			order.productId,
+			order.productName,
+			order.folderName,
+		]
+
+		for (const source of possibleSources) {
+			if (source) {
+				const match = source.match(/KF(\d{3})/i)
+				if (match) {
+					watchfaceId = match[0].toUpperCase()
+					console.log(`🎯 Найден watchfaceId: ${watchfaceId} в ${source}`)
+					break
+				}
+			}
+		}
+
+		if (!watchfaceId) {
+			console.log(`❌ Не удалось извлечь KFXXX из заказа:`, order)
+			return res.status(400).json({
+				success: false,
+				error: 'Не удалось определить циферблат',
+			})
+		}
+
+		// 3. ИЩЕМ ВСЕ APK ФАЙЛЫ
+		const apkFiles = findAllAPKFilesByProductId(watchfaceId)
+
+		if (apkFiles.length === 0) {
+			console.log(`❌ APK файлы не найдены для ${watchfaceId}`)
+			return res.status(404).json({
+				success: false,
+				error: 'Файлы циферблата не найдены',
+			})
+		}
+
+		console.log(`📦 Найдено APK файлов: ${apkFiles.length} для ${watchfaceId}`)
+		apkFiles.forEach((file, index) => {
+			console.log(
+				`   ${index + 1}. ${file.name} (${(file.size / 1024 / 1024).toFixed(
+					2
+				)} MB)`
+			)
+		})
+
+		// 4. ЕСЛИ ТОЛЬКО ОДИН ФАЙЛ - отправляем с ОРИГИНАЛЬНЫМ именем
+		if (apkFiles.length === 1) {
+			const apkData = apkFiles[0]
+			console.log(`📤 Отправка одного файла: ${apkData.name}`)
+
+			// ОРИГИНАЛЬНОЕ имя файла
+			const originalFileName = apkData.name
+
+			res.setHeader('Content-Type', 'application/vnd.android.package-archive')
+			res.setHeader(
+				'Content-Disposition',
+				`attachment; filename="${originalFileName}"`
+			)
+			res.setHeader('X-Content-Type-Options', 'nosniff')
+			res.setHeader(
+				'Cache-Control',
+				'no-store, no-cache, must-revalidate, private'
+			)
+
+			const fileStream = fs.createReadStream(apkData.path)
+			fileStream.pipe(res)
+		} else {
+			// 5. ЕСЛИ НЕСКОЛЬКО ФАЙЛОВ - создаем ZIP архив с ОРИГИНАЛЬНЫМИ именами
+			console.log(`📦 Создание ZIP архива с ${apkFiles.length} файлами`)
+
+			const zipFileName = `${watchfaceId}_watchfaces_${order.orderId}.zip`
+
+			res.setHeader('Content-Type', 'application/zip')
+			res.setHeader(
+				'Content-Disposition',
+				`attachment; filename="${zipFileName}"`
+			)
+			res.setHeader('X-Content-Type-Options', 'nosniff')
+			res.setHeader(
+				'Cache-Control',
+				'no-store, no-cache, must-revalidate, private'
+			)
+
+			// Создаем ZIP архив
+			const archive = archiver('zip', {
+				zlib: { level: 9 }, // Максимальное сжатие
+			})
+
+			archive.on('error', err => {
+				console.error('❌ Ошибка создания архива:', err)
+				res.status(500).json({ error: 'Ошибка создания архива' })
+			})
+
+			archive.on('warning', err => {
+				if (err.code === 'ENOENT') {
+					console.log('⚠️ Предупреждение архиватора:', err)
+				} else {
+					console.error('❌ Ошибка архиватора:', err)
+					throw err
+				}
+			})
+
+			archive.on('end', () => {
+				console.log(`✅ Архив создан: ${archive.pointer()} байт`)
+			})
+
+			// Пайпим архив в ответ
+			archive.pipe(res)
+
+			// Добавляем все APK файлы в архив с ОРИГИНАЛЬНЫМИ именами
+			apkFiles.forEach((apkData, index) => {
+				archive.file(apkData.path, { name: apkData.name }) // Оригинальное имя
+				console.log(`   📁 Добавлен в архив: ${apkData.name}`)
+			})
+
+			// Завершаем архив
+			archive.finalize()
+
+			console.log(`✅ Создание ZIP архива начато`)
+		}
+
+		// 6. Логируем успешное скачивание
+		console.log(`✅ Файл(ы) отправлены`)
+		console.log(`👤 Покупатель: ${order.customerEmail}`)
+		console.log(`💰 Цена: ${order.price} руб.`)
+		console.log(`🎯 Watchface: ${watchfaceId}`)
+		console.log(`📊 Количество файлов: ${apkFiles.length}`)
+	} catch (error) {
+		console.error('❌ КРИТИЧЕСКАЯ ОШИБКА:', error)
+		res.status(500).json({
+			success: false,
+			error: 'Ошибка сервера при скачивании',
+		})
+	}
+})
+
+// ==================== ПРОСТАЯ ПРОВЕРКА ДОСТУПА ====================
+app.get('/api/check-access/:receivingId', async (req, res) => {
+	try {
+		const { receivingId } = req.params
+
+		// Минимальная проверка - только для JS на клиенте
+		const order = await getOrderByReceivingIdFromFirebase(receivingId)
+
+		if (!order || order.status !== 'paid') {
+			return res.json({
+				success: false,
+				accessible: false,
+				message: 'Доступ запрещен',
+			})
+		}
+
+		return res.json({
+			success: true,
+			accessible: true,
+			productName: order.productName || `Циферблат ${order.productId}`,
+			orderId: order.orderId,
+		})
+	} catch (error) {
+		return res.json({
+			success: false,
+			accessible: false,
+			message: 'Ошибка проверки',
+		})
+	}
+})
+
+// ==================== ФУНКЦИЯ: Найти ВСЕ APK файлы по productId ====================
+function findAllAPKFilesByProductId(productId) {
+	try {
+		// Извлекаем KFXXX из productId
+		const match = productId.match(/KF(\d{3})/i)
+		if (!match) {
+			console.log(`❌ Неверный формат productId: ${productId}`)
+			return []
+		}
+
+		const normalizedId = match[0].toUpperCase() // KF159
+		const apkDirPath = path.join(__dirname, 'apk', normalizedId)
+
+		console.log(`🔍 Ищем ВСЕ APK для: ${normalizedId}, путь: ${apkDirPath}`)
+
+		if (!fs.existsSync(apkDirPath)) {
+			console.log(`❌ Папка не существует: ${apkDirPath}`)
+			return []
+		}
+
+		// Ищем ВСЕ .apk файлы в папке
+		const allFiles = fs.readdirSync(apkDirPath)
+		console.log(`📁 Все файлы в папке ${normalizedId}:`, allFiles)
+
+		const apkFiles = allFiles
+			.filter(file => file.toLowerCase().endsWith('.apk'))
+			.map(file => {
+				const fullPath = path.join(apkDirPath, file)
+				const stats = fs.statSync(fullPath)
+				return {
+					path: fullPath,
+					name: file, // ОРИГИНАЛЬНОЕ имя
+					originalName: file, // Сохраняем оригинальное имя
+					size: stats.size,
+					sizeMB: (stats.size / 1024 / 1024).toFixed(2) + ' MB',
+					productId: normalizedId,
+				}
+			})
+
+		console.log(`✅ Найдено APK файлов: ${apkFiles.length}`)
+
+		return apkFiles
+	} catch (error) {
+		console.error('❌ Ошибка поиска APK:', error)
+		return []
+	}
+}
+// ==================== API ДЛЯ ПРОВЕРКИ КОЛИЧЕСТВА ФАЙЛОВ ====================
+app.get('/api/check-apk-files/:kfId', (req, res) => {
+	try {
+		const { kfId } = req.params
+		const normalizedId = kfId.toUpperCase()
+		const apkFiles = findAllAPKFilesByProductId(normalizedId)
+
+		res.json({
+			success: true,
+			productId: normalizedId,
+			fileCount: apkFiles.length,
+			files: apkFiles.map(f => ({
+				name: f.name,
+				size: f.size,
+				sizeMB: f.sizeMB,
+			})),
+		})
+	} catch (error) {
+		res.json({
+			success: false,
+			error: error.message,
+			fileCount: 0,
+		})
+	}
+})
 
 // Добавьте это ДО всех маршрутов robokassa
 const bodyParser = require('body-parser')
