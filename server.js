@@ -124,32 +124,28 @@ function generateReceivingId() {
 }
 
 // Сохранение заказа в Firebase (без receivingId до оплаты)
+// Сохранение заказа в Firebase (без receivingId до оплаты)
 async function saveOrderToFirebase(orderData) {
 	try {
-		// НЕ генерируем receivingId до оплаты!
-		// orderData.receivingId = null
-		// orderData.receivingUrl = null
-
 		orderData.createdAt = new Date().toISOString()
 		orderData.updatedAt = new Date().toISOString()
 		orderData.receivingId = null // Будет сгенерирован после оплаты
 		orderData.receivingUrl = null // Будет сгенерирован после оплаты
+		orderData.status = 'pending' // Убедитесь что статус установлен
 
 		// Сохраняем заказ в Firebase без receivingId
 		await set(ref(database, `orders/${orderData.orderId}`), orderData)
 
-		// НЕ создаем индекс orderByReceivingId до оплаты
-
 		console.log(`✅ Заказ сохранен в Firebase (pending): ${orderData.orderId}`)
 		console.log(`🔒 Receiving ID: будет сгенерирован после оплаты`)
 
+		// Возвращаем true вместо receivingId
 		return true
 	} catch (error) {
 		console.error('❌ Ошибка сохранения заказа в Firebase:', error)
 		return false
 	}
 }
-
 // Генерация receivingId и обновление заказа после успешной оплаты
 async function generateReceivingForPaidOrder(orderId) {
 	try {
@@ -383,38 +379,77 @@ function callPythonScript(scriptName, data) {
 				...process.env,
 				PYTHONIOENCODING: 'utf-8',
 				PYTHONUTF8: '1',
+				LC_ALL: 'en_US.UTF-8',
+				LANG: 'en_US.UTF-8',
 			},
 		})
 		let stdout = ''
 		let stderr = ''
 
 		pythonProcess.stdout.on('data', data => {
-			stdout += data.toString()
+			stdout += data.toString('utf8')
 		})
 
 		pythonProcess.stderr.on('data', data => {
-			stderr += data.toString()
+			stderr += data.toString('utf8')
+			console.log('🐍 Python stderr:', data.toString('utf8'))
 		})
 
 		pythonProcess.on('close', code => {
-			if (code === 0 && stdout.trim()) {
+			console.log(`🐍 Python exit code: ${code}`)
+			console.log(`🐍 Python stdout length: ${stdout.length}`)
+			console.log(`🐍 Python stderr length: ${stderr.length}`)
+
+			if (stdout.trim()) {
+				console.log(
+					`🐍 Python stdout (first 500 chars): ${stdout.substring(0, 500)}`
+				)
+			}
+
+			if (code === 0) {
 				try {
-					const result = JSON.parse(stdout)
-					resolve(result)
+					// Очищаем stdout от возможных не-JSON сообщений
+					const cleanStdout = stdout.trim()
+					const lastBraceIndex = cleanStdout.lastIndexOf('}')
+					const firstBraceIndex = cleanStdout.indexOf('{')
+
+					if (lastBraceIndex > firstBraceIndex && firstBraceIndex >= 0) {
+						const jsonStr = cleanStdout.substring(
+							firstBraceIndex,
+							lastBraceIndex + 1
+						)
+						console.log(
+							`🐍 Trying to parse JSON: ${jsonStr.substring(0, 200)}...`
+						)
+						const result = JSON.parse(jsonStr)
+						resolve(result)
+					} else {
+						console.error('🐍 No valid JSON found in stdout')
+						console.error('🐍 Full stdout:', cleanStdout)
+						reject(new Error('Python script did not return valid JSON'))
+					}
 				} catch (parseError) {
+					console.error('🐍 JSON parse error:', parseError.message)
+					console.error('🐍 Raw stdout:', stdout)
+					console.error('🐍 Raw stderr:', stderr)
 					reject(new Error(`Ошибка парсинга JSON: ${parseError.message}`))
 				}
 			} else {
+				console.error('🐍 Python process failed')
+				console.error('🐍 stderr:', stderr)
 				reject(new Error(`Python ошибка: ${stderr || 'Неизвестная ошибка'}`))
 			}
 		})
 
 		pythonProcess.on('error', error => {
+			console.error('🐍 Python spawn error:', error)
 			reject(new Error(`Ошибка запуска Python: ${error.message}`))
 		})
 
 		// И при записи данных:
-		pythonProcess.stdin.write(JSON.stringify(data, null, 2), 'utf8')
+		const inputData = JSON.stringify(data, null, 2)
+		console.log(`🐍 Sending to Python: ${inputData}`)
+		pythonProcess.stdin.write(inputData, 'utf8')
 		pythonProcess.stdin.end()
 	})
 }
@@ -509,7 +544,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			productId,
 			customerEmail,
 			price,
-			productName,
+			productName: productName || `Циферблат ${productId}`,
 			paymentUrl: result.payment_url,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
@@ -521,29 +556,38 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			},
 		}
 
-		// Генерируем receiving ID и сохраняем в Firebase
-		const receivingId = await saveOrderToFirebase(orderData)
+		// Сохраняем заказ в Firebase (возвращает true/false)
+		const saveResult = await saveOrderToFirebase(orderData)
 
-		if (!receivingId) {
+		if (!saveResult) {
 			// Fallback: сохраняем локально если Firebase не работает
 			console.log('⚠️  Firebase не работает, сохраняем локально')
 			const oldReceivingId = saveOrderWithReceivingId(orderData)
 			if (!oldReceivingId) {
 				throw new Error('Ошибка сохранения заказа')
 			}
+
+			// В локальной версии receivingId генерируется сразу
+			res.json({
+				success: true,
+				paymentUrl: result.payment_url,
+				orderId: invId,
+				receivingId: oldReceivingId,
+				message: 'Ссылка для оплаты успешно создана (локальное сохранение)',
+				test_mode: result.is_test || true,
+			})
+			return
 		}
 
 		console.log(`✅ Python успешно создал ссылку`)
 		console.log(`🔗 Ссылка оплаты: ${result.payment_url}`)
-		console.log(`🔑 Receiving ID: ${receivingId}`)
-		console.log(`🔗 Receiving URL: /purchase/receiving/${receivingId}`)
 		console.log(`💾 Заказ сохранен в Firebase: orders/${invId}`)
 
 		res.json({
 			success: true,
 			paymentUrl: result.payment_url,
 			orderId: invId,
-			receivingId: receivingId,
+			receivingId: null, // НЕТ receivingId до оплаты!
 			message: 'Ссылка для оплаты успешно создана',
 			test_mode: result.is_test || true,
 		})
@@ -552,7 +596,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 		res.status(500).json({
 			success: false,
 			error: error.message,
-			message: 'Не удалось создать ссылку оплата',
+			message: 'Не удалось создать ссылку оплаты',
 		})
 	}
 })

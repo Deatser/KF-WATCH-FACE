@@ -49,6 +49,7 @@ class RobokassaHandler:
             }
             
         except Exception as e:
+            print(f"❌ Error in generate_open_payment_link: {str(e)}", file=sys.stderr)
             return {
                 'success': False,
                 'error': str(e),
@@ -81,6 +82,7 @@ class RobokassaHandler:
             }
             
         except Exception as e:
+            print(f"❌ Error in generate_protected_payment_link: {str(e)}", file=sys.stderr)
             # Если JWT не сработал, возвращаемся к классическому методу
             return await self.generate_open_payment_link(out_sum, inv_id, description, email, **kwargs)
 
@@ -99,6 +101,8 @@ class RobokassaHandler:
             for key, value in kwargs.items():
                 params[key] = value
             
+            print(f"🔍 Checking result signature with params: {params}", file=sys.stderr)
+            
             # Проверяем подпись Result URL
             is_valid = self.robokassa.is_result_notification_valid(
                 signature=signature,
@@ -106,6 +110,8 @@ class RobokassaHandler:
                 inv_id=inv_id,
                 **kwargs
             )
+            
+            print(f"✅ Result signature is valid: {is_valid}", file=sys.stderr)
             
             return {
                 'success': True,
@@ -116,6 +122,7 @@ class RobokassaHandler:
             }
             
         except Exception as e:
+            print(f"❌ Error in check_result_signature: {str(e)}", file=sys.stderr)
             return {
                 'success': False,
                 'is_valid': False,
@@ -140,7 +147,7 @@ class RobokassaHandler:
                 if key not in ['action', 'out_sum', 'inv_id', 'signature']:  # Исключаем служебные
                     redirect_params[key] = value
             
-            print(f"🔍 Проверяем подпись с параметрами: {redirect_params}")
+            print(f"🔍 Checking redirect signature with params: {redirect_params}", file=sys.stderr)
             
             # Проверяем подпись Redirect URL
             # ВАЖНО: метод is_redirect_valid ожидает именованные параметры
@@ -150,6 +157,8 @@ class RobokassaHandler:
                 inv_id=inv_id,
                 **{k: v for k, v in kwargs.items() if k.startswith('shp_') or k in ['IsTest', 'Culture']}
             )
+            
+            print(f"✅ Redirect signature is valid: {is_valid}", file=sys.stderr)
             
             return {
                 'success': True,
@@ -161,59 +170,7 @@ class RobokassaHandler:
             }
             
         except Exception as e:
-            print(f"❌ Ошибка проверки подписи: {str(e)}")
-            return {
-                'success': False,
-                'is_valid': False,
-                'error': str(e)
-            }
-
-    def check_redirect_signature_manual(self, out_sum, inv_id, signature, **kwargs):
-        """
-        Ручная проверка подписи для Success/Fail URL (альтернативный метод)
-        Используется если стандартный не работает
-        """
-        try:
-            # Собираем строку для хэширования в правильном порядке
-            params_str = f"{out_sum}:{inv_id}:{self.password1}"
-            
-            # Добавляем shp_ параметры в алфавитном порядке
-            shp_params = {}
-            for key, value in kwargs.items():
-                if key.startswith('shp_'):
-                    shp_params[key] = value
-            
-            # Сортируем shp_ параметры по алфавиту
-            if shp_params:
-                sorted_shp_keys = sorted(shp_params.keys())
-                for key in sorted_shp_keys:
-                    params_str += f":{shp_params[key]}"
-            
-            print(f"🔍 Формируем строку для хэша: {params_str}")
-            
-            # Вычисляем MD5
-            import hashlib
-            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest().lower()
-            received_signature = signature.lower()
-            
-            print(f"🔍 Рассчитанная подпись: {calculated_signature}")
-            print(f"🔍 Полученная подпись: {received_signature}")
-            
-            is_valid = calculated_signature == received_signature
-            
-            return {
-                'success': True,
-                'is_valid': is_valid,
-                'calculated_signature': calculated_signature,
-                'received_signature': received_signature,
-                'inv_id': inv_id,
-                'out_sum': out_sum,
-                'method': 'manual_md5',
-                'match': is_valid
-            }
-            
-        except Exception as e:
-            print(f"❌ Ошибка ручной проверки подписи: {str(e)}")
+            print(f"❌ Error in check_redirect_signature: {str(e)}", file=sys.stderr)
             return {
                 'success': False,
                 'is_valid': False,
@@ -225,18 +182,27 @@ async def main():
         # Читаем входные данные
         input_data = sys.stdin.read()
 
-        # Декодирование для корректной работы с кириллицей
+        print(f"📦 Received input data length: {len(input_data)}", file=sys.stderr)
+        
         if input_data.strip():
             try:
-                input_data = input_data.encode('latin-1').decode('utf-8')
-            except:
-                pass  # Оставляем как есть если не получается
-            
-            data = json.loads(input_data)
+                # Пробуем прочитать как UTF-8
+                data = json.loads(input_data)
+                print(f"📦 Successfully parsed JSON data", file=sys.stderr)
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON decode error: {e}", file=sys.stderr)
+                print(f"❌ Raw input (first 500 chars): {input_data[:500]}", file=sys.stderr)
+                error_result = {
+                    'success': False,
+                    'error': f'Invalid JSON input: {str(e)}'
+                }
+                print(json.dumps(error_result, ensure_ascii=False))
+                sys.exit(1)
         else:
             data = {'action': 'test'}
+            print(f"⚠️ No input data, using test data", file=sys.stderr)
 
-        print(f"📦 Получены данные: {json.dumps(data, ensure_ascii=False)}", file=sys.stderr)
+        print(f"📦 Action: {data.get('action')}", file=sys.stderr)
         
         action = data.get('action', 'test')
         is_test = data.get('is_test', True)
@@ -291,8 +257,7 @@ async def main():
                 if key.startswith('shp_') or key in ['IsTest', 'Culture']:
                     kwargs[key] = value
             
-            print(f"🔍 Проверка Result подписи: out_sum={out_sum}, inv_id={inv_id}, signature={signature}", file=sys.stderr)
-            print(f"🔍 Доп. параметры: {kwargs}", file=sys.stderr)
+            print(f"🔍 Checking result signature: out_sum={out_sum}, inv_id={inv_id}", file=sys.stderr)
             
             result = handler.check_result_signature(
                 out_sum=out_sum,
@@ -312,76 +277,15 @@ async def main():
                 if key.startswith('shp_') or key in ['IsTest', 'Culture', 'IncCurr']:
                     kwargs[key] = value
             
-            print(f"🔍 Проверка Redirect подписи: out_sum={out_sum}, inv_id={inv_id}, signature={signature}", file=sys.stderr)
-            print(f"🔍 Доп. параметры: {kwargs}", file=sys.stderr)
+            print(f"🔍 Checking redirect signature: out_sum={out_sum}, inv_id={inv_id}", file=sys.stderr)
+            print(f"🔍 Additional params: {kwargs}", file=sys.stderr)
             
-            # Сначала пробуем стандартный метод
             result = handler.check_redirect_signature(
                 out_sum=out_sum,
                 inv_id=inv_id,
                 signature=signature,
                 **kwargs
             )
-            
-            # Если стандартный метод не сработал, пробуем ручной
-            if not result.get('success') or not result.get('is_valid'):
-                print("⚠️  Стандартная проверка не удалась, пробуем ручную...", file=sys.stderr)
-                manual_result = handler.check_redirect_signature_manual(
-                    out_sum=out_sum,
-                    inv_id=inv_id,
-                    signature=signature,
-                    **kwargs
-                )
-                
-                # Используем ручной результат если он успешен
-                if manual_result.get('success'):
-                    result = manual_result
-            
-        elif action == 'test_redirect_signature':
-            # Тестовый endpoint для проверки подписи
-            out_sum = float(data.get('out_sum', 150))
-            inv_id = int(data.get('inv_id', 257099702))
-            signature = data.get('signature', 'c0b86a37c1fc9daecfaa97fc86a21296')
-            
-            kwargs = {
-                'shp_shp_product_id': data.get('shp_shp_product_id', 'KF188'),
-                'IsTest': data.get('IsTest', '1'),
-                'Culture': data.get('Culture', 'ru')
-            }
-            
-            print(f"🧪 ТЕСТ ПРОВЕРКИ ПОДПИСИ:", file=sys.stderr)
-            print(f"  OutSum: {out_sum}", file=sys.stderr)
-            print(f"  InvId: {inv_id}", file=sys.stderr)
-            print(f"  Signature: {signature}", file=sys.stderr)
-            print(f"  Params: {kwargs}", file=sys.stderr)
-            
-            # Пробуем оба метода
-            result1 = handler.check_redirect_signature(
-                out_sum=out_sum,
-                inv_id=inv_id,
-                signature=signature,
-                **kwargs
-            )
-            
-            result2 = handler.check_redirect_signature_manual(
-                out_sum=out_sum,
-                inv_id=inv_id,
-                signature=signature,
-                **kwargs
-            )
-            
-            result = {
-                'success': True,
-                'standard_method': result1,
-                'manual_method': result2,
-                'test_data': {
-                    'out_sum': out_sum,
-                    'inv_id': inv_id,
-                    'signature': signature,
-                    'params': kwargs,
-                    'password1': handler.password1
-                }
-            }
             
         elif action == 'test':
             result = {
@@ -395,8 +299,7 @@ async def main():
                     'generate_short_link',
                     'generate_long_link',
                     'check_result_signature',
-                    'check_redirect_signature',
-                    'test_redirect_signature'
+                    'check_redirect_signature'
                 ]
             }
         
@@ -407,11 +310,14 @@ async def main():
         print(json.dumps(result, ensure_ascii=False))
         
     except Exception as e:
+        print(f"❌ Critical error in main: {str(e)}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        
         # В случае ошибки выводим только JSON
         error_result = {
             'success': False, 
             'error': str(e),
-            'traceback': str(sys.exc_info())
         }
         print(json.dumps(error_result, ensure_ascii=False))
         sys.exit(1)
