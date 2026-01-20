@@ -4,6 +4,7 @@ const path = require('path')
 const multer = require('multer')
 const compression = require('compression')
 const { spawn, exec } = require('child_process')
+const crypto = require('crypto')
 
 // Firebase версия 10+ импорт
 const { initializeApp } = require('firebase/app')
@@ -117,12 +118,12 @@ function getFolderFiles(folderPath) {
 // ==================== FIREBASE ORDER FUNCTIONS ====================
 
 // Генерация уникального ID для ссылки получения
-function generateReceivingId() {
-	const timestamp = Date.now().toString(36)
-	const random = Math.random().toString(36).substring(2, 8)
-	return `${timestamp}${random}`.toUpperCase()
-}
+// ==================== FIREBASE ORDER FUNCTIONS ====================
 
+// Генерация уникального ID для ссылки получения в формате UUID v4
+function generateReceivingId() {
+	return crypto.randomUUID() // Встроенная функция Node.js 14.17.0+
+}
 // Сохранение заказа в Firebase (без receivingId до оплаты)
 async function saveOrderToFirebase(orderData) {
 	try {
@@ -270,6 +271,9 @@ function saveOrderWithReceivingId(orderData) {
 		orderData.receivingUrl = `/purchase/receiving/${receivingId}`
 		orderData.createdAt = new Date().toISOString()
 
+		// Безопасное имя файла (заменяем дефисы)
+		const safeReceivingId = receivingId.replace(/-/g, '_')
+
 		// Сохраняем по двум ключам для быстрого поиска
 		const orderFileById = path.join(
 			__dirname,
@@ -279,7 +283,7 @@ function saveOrderWithReceivingId(orderData) {
 		const orderFileByReceivingId = path.join(
 			__dirname,
 			'orders',
-			`receiving_${receivingId}.json`
+			`receiving_${safeReceivingId}.json`
 		)
 
 		fs.writeFileSync(orderFileById, JSON.stringify(orderData, null, 2))
@@ -294,10 +298,12 @@ function saveOrderWithReceivingId(orderData) {
 
 function getOrderByReceivingId(receivingId) {
 	try {
+		// Безопасное имя файла для UUID
+		const safeReceivingId = receivingId.replace(/-/g, '_')
 		const orderFile = path.join(
 			__dirname,
 			'orders',
-			`receiving_${receivingId}.json`
+			`receiving_${safeReceivingId}.json`
 		)
 
 		if (fs.existsSync(orderFile)) {
