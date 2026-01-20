@@ -4,8 +4,30 @@ const path = require('path')
 const multer = require('multer')
 const compression = require('compression')
 const { spawn, exec } = require('child_process')
+
+// Firebase версия 10+ импорт
+const { initializeApp } = require('firebase/app')
+const {
+	getDatabase,
+	ref,
+	set,
+	get,
+	update,
+	push,
+	child,
+} = require('firebase/database')
+
 const app = express()
 const PORT = process.env.PORT || 3000
+
+// Добавьте это ДО всех маршрутов robokassa
+const bodyParser = require('body-parser')
+
+// Парсинг application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }))
+
+// Парсинг application/json
+app.use(bodyParser.json())
 
 // Middleware
 app.use(compression())
@@ -16,6 +38,24 @@ app.use(express.static('public'))
 // Добавляем статическую раздачу для папки guide
 app.use('/guide', express.static(path.join(__dirname, 'public', 'guide')))
 app.use('/static', express.static(path.join(__dirname, 'public')))
+
+// Инициализация Firebase
+const firebaseConfig = {
+	apiKey: 'AIzaSyAINukGK-Eklftf-2cKG1eE6UeViUocwU0',
+	authDomain: 'krekfree.firebaseapp.com',
+	projectId: 'krekfree',
+	storageBucket: 'krekfree.firebasestorage.app',
+	messagingSenderId: '234608388001',
+	appId: '1:234608388001:web:d1d9514062221de856cde0',
+	measurementId: 'G-XRGPB3BKMK',
+	databaseURL:
+		'https://krekfree-default-rtdb.europe-west1.firebasedatabase.app/',
+}
+
+// Инициализируем Firebase
+const firebaseApp = initializeApp(firebaseConfig)
+const database = getDatabase(firebaseApp)
+console.log('✅ Firebase инициализирован в server.js')
 
 // Конфигурация multer для загрузки файлов
 const storage = multer.diskStorage({
@@ -37,7 +77,7 @@ const upload = multer({ storage: storage })
 const requiredFolders = [
 	'uploads',
 	path.join('public', 'guide', 'WearLoad'),
-	'orders',
+	'orders', // Оставляем для обратной совместимости
 ]
 
 requiredFolders.forEach(folder => {
@@ -71,6 +111,222 @@ function getFolderFiles(folderPath) {
 	} catch (error) {
 		console.error('Ошибка чтения файлов папки:', error)
 		return []
+	}
+}
+
+// ==================== FIREBASE ORDER FUNCTIONS ====================
+
+// Генерация уникального ID для ссылки получения
+function generateReceivingId() {
+	const timestamp = Date.now().toString(36)
+	const random = Math.random().toString(36).substring(2, 8)
+	return `${timestamp}${random}`.toUpperCase()
+}
+
+// Сохранение заказа в Firebase (без receivingId до оплаты)
+async function saveOrderToFirebase(orderData) {
+	try {
+		// НЕ генерируем receivingId до оплаты!
+		// orderData.receivingId = null
+		// orderData.receivingUrl = null
+
+		orderData.createdAt = new Date().toISOString()
+		orderData.updatedAt = new Date().toISOString()
+		orderData.receivingId = null // Будет сгенерирован после оплаты
+		orderData.receivingUrl = null // Будет сгенерирован после оплаты
+
+		// Сохраняем заказ в Firebase без receivingId
+		await set(ref(database, `orders/${orderData.orderId}`), orderData)
+
+		// НЕ создаем индекс orderByReceivingId до оплаты
+
+		console.log(`✅ Заказ сохранен в Firebase (pending): ${orderData.orderId}`)
+		console.log(`🔒 Receiving ID: будет сгенерирован после оплаты`)
+
+		return true
+	} catch (error) {
+		console.error('❌ Ошибка сохранения заказа в Firebase:', error)
+		return false
+	}
+}
+
+// Генерация receivingId и обновление заказа после успешной оплаты
+async function generateReceivingForPaidOrder(orderId) {
+	try {
+		const receivingId = generateReceivingId()
+
+		const updates = {
+			receivingId: receivingId,
+			receivingUrl: `/purchase/receiving/${receivingId}`,
+			updatedAt: new Date().toISOString(),
+		}
+
+		// Обновляем заказ с receivingId
+		await update(ref(database, `orders/${orderId}`), updates)
+
+		// Создаем индекс для быстрого поиска по receivingId
+		await set(ref(database, `orderByReceivingId/${receivingId}`), {
+			orderId: orderId,
+			status: 'paid',
+			receivingId: receivingId,
+		})
+
+		console.log(
+			`✅ Generated receivingId for paid order ${orderId}: ${receivingId}`
+		)
+		return receivingId
+	} catch (error) {
+		console.error('❌ Ошибка генерации receivingId:', error)
+		return null
+	}
+}
+
+// Получение заказа по receivingId из Firebase
+async function getOrderByReceivingIdFromFirebase(receivingId) {
+	try {
+		// Сначала получаем индекс
+		const indexSnapshot = await get(
+			ref(database, `orderByReceivingId/${receivingId}`)
+		)
+
+		if (!indexSnapshot.exists()) {
+			return null
+		}
+
+		const indexData = indexSnapshot.val()
+
+		// Проверяем что заказ оплачен (индекс создается только для paid заказов)
+		if (indexData.status !== 'paid') {
+			return null
+		}
+
+		// Получаем полный заказ
+		const orderSnapshot = await get(
+			ref(database, `orders/${indexData.orderId}`)
+		)
+
+		if (!orderSnapshot.exists()) {
+			return null
+		}
+
+		const order = orderSnapshot.val()
+
+		// Дополнительная проверка
+		if (order.status !== 'paid' || order.receivingId !== receivingId) {
+			return null
+		}
+
+		return order
+	} catch (error) {
+		console.error('❌ Ошибка чтения заказа из Firebase:', error)
+		return null
+	}
+}
+
+// Получение заказа по orderId из Firebase
+async function getOrderByOrderIdFromFirebase(orderId) {
+	try {
+		const snapshot = await get(ref(database, `orders/${orderId}`))
+
+		if (!snapshot.exists()) {
+			return null
+		}
+
+		return snapshot.val()
+	} catch (error) {
+		console.error('❌ Ошибка чтения заказа из Firebase:', error)
+		return null
+	}
+}
+
+// Обновление статуса заказа в Firebase
+async function updateOrderStatusInFirebase(orderId, updates) {
+	try {
+		updates.updatedAt = new Date().toISOString()
+
+		// Обновляем основной объект заказа
+		await update(ref(database, `orders/${orderId}`), updates)
+
+		// Получаем заказ для получения receivingId
+		const order = await getOrderByOrderIdFromFirebase(orderId)
+		if (order && order.receivingId) {
+			// Обновляем индекс
+			await update(ref(database, `orderByReceivingId/${order.receivingId}`), {
+				status: updates.status || order.status,
+				updatedAt: new Date().toISOString(),
+			})
+		}
+
+		console.log(`✅ Статус заказа ${orderId} обновлен в Firebase`)
+		return true
+	} catch (error) {
+		console.error('❌ Ошибка обновления заказа в Firebase:', error)
+		return false
+	}
+}
+
+// ==================== BACKUP: Локальное сохранение (для обратной совместимости) ====================
+
+function saveOrderWithReceivingId(orderData) {
+	try {
+		const receivingId = generateReceivingId()
+		orderData.receivingId = receivingId
+		orderData.receivingUrl = `/purchase/receiving/${receivingId}`
+		orderData.createdAt = new Date().toISOString()
+
+		// Сохраняем по двум ключам для быстрого поиска
+		const orderFileById = path.join(
+			__dirname,
+			'orders',
+			`order_${orderData.orderId}.json`
+		)
+		const orderFileByReceivingId = path.join(
+			__dirname,
+			'orders',
+			`receiving_${receivingId}.json`
+		)
+
+		fs.writeFileSync(orderFileById, JSON.stringify(orderData, null, 2))
+		fs.writeFileSync(orderFileByReceivingId, JSON.stringify(orderData, null, 2))
+
+		return receivingId
+	} catch (error) {
+		console.error('Ошибка сохранения заказа локально:', error)
+		return null
+	}
+}
+
+function getOrderByReceivingId(receivingId) {
+	try {
+		const orderFile = path.join(
+			__dirname,
+			'orders',
+			`receiving_${receivingId}.json`
+		)
+
+		if (fs.existsSync(orderFile)) {
+			const data = fs.readFileSync(orderFile, 'utf8')
+			return JSON.parse(data)
+		}
+		return null
+	} catch (error) {
+		console.error('Ошибка чтения заказа локально:', error)
+		return null
+	}
+}
+
+function getOrderByOrderId(orderId) {
+	try {
+		const orderFile = path.join(__dirname, 'orders', `order_${orderId}.json`)
+
+		if (fs.existsSync(orderFile)) {
+			const data = fs.readFileSync(orderFile, 'utf8')
+			return JSON.parse(data)
+		}
+		return null
+	} catch (error) {
+		console.error('Ошибка чтения заказа локально:', error)
+		return null
 	}
 }
 
@@ -212,33 +468,26 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 		}
 
 		function generateInvoiceId() {
-			// База: текущий timestamp в секундах (10-11 цифр)
 			const timestampPart = Math.floor(Date.now() / 1000)
-
-			// Случайная часть: 4 случайные цифры
 			const randomPart = Math.floor(Math.random() * 10000)
-
-			// Объединяем: получаем 14-15 уникальных цифр
 			const uniqueId = parseInt(
 				timestampPart.toString() + randomPart.toString().padStart(4, '0')
 			)
-
-			// Берем последние 9 цифр (чтобы не превышать разумные пределы)
-			return uniqueId % 1000000000 // 9 цифр максимум
+			return uniqueId % 1000000000
 		}
 
 		const invId = generateInvoiceId()
 
 		const pythonData = {
 			action: 'generate_short_link',
-			out_sum: parseFloat(price), // Сумма (обязательно)
-			inv_id: invId, // ID заказа (обязательно)
+			out_sum: parseFloat(price),
+			inv_id: invId,
 			description: encodeURIComponent(`Watchface ${productName || productId}`),
-			email: customerEmail, // Email покупателя (обязательно для отправки чека)
-			shp_product_id: productId, // ID товара (важно для отслеживания)
-			Culture: 'ru', // или 'en'
+			email: customerEmail,
+			shp_product_id: productId,
+			Culture: 'ru',
 			IncCurr: '',
-			is_test: true, // Тестовый/продакшн режим
+			is_test: true,
 		}
 
 		console.log(`💰 ==== API: /api/robokassa/create-payment-link ====`)
@@ -254,7 +503,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			throw new Error(result.error || 'Ошибка создания ссылки оплаты')
 		}
 
-		// Сохраняем заказ
+		// СОЗДАЕМ ЗАКАЗ В FIREBASE
 		const orderData = {
 			orderId: invId,
 			productId,
@@ -263,20 +512,38 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			productName,
 			paymentUrl: result.payment_url,
 			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
 			status: 'pending',
+			isDaily: false,
+			robokassaData: {
+				is_test: result.is_test || true,
+				method: result.method || 'jwt_protected',
+			},
 		}
 
-		const orderFile = path.join(__dirname, 'orders', `order_${invId}.json`)
-		fs.writeFileSync(orderFile, JSON.stringify(orderData, null, 2))
+		// Генерируем receiving ID и сохраняем в Firebase
+		const receivingId = await saveOrderToFirebase(orderData)
+
+		if (!receivingId) {
+			// Fallback: сохраняем локально если Firebase не работает
+			console.log('⚠️  Firebase не работает, сохраняем локально')
+			const oldReceivingId = saveOrderWithReceivingId(orderData)
+			if (!oldReceivingId) {
+				throw new Error('Ошибка сохранения заказа')
+			}
+		}
 
 		console.log(`✅ Python успешно создал ссылку`)
 		console.log(`🔗 Ссылка оплаты: ${result.payment_url}`)
-		console.log(`💾 Заказ сохранен в: ${orderFile}`)
+		console.log(`🔑 Receiving ID: ${receivingId}`)
+		console.log(`🔗 Receiving URL: /purchase/receiving/${receivingId}`)
+		console.log(`💾 Заказ сохранен в Firebase: orders/${invId}`)
 
 		res.json({
 			success: true,
 			paymentUrl: result.payment_url,
 			orderId: invId,
+			receivingId: receivingId,
 			message: 'Ссылка для оплаты успешно создана',
 			test_mode: result.is_test || true,
 		})
@@ -292,12 +559,248 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 
 app.post('/api/robokassa/result', async (req, res) => {
 	try {
+		console.log('📨 ====== ROBOKASSA RESULT URL CALLBACK (POST) ======')
+		console.log('📅 Time:', new Date().toISOString())
+		console.log('🌐 IP:', req.ip)
+		console.log('📦 Content-Type:', req.headers['content-type'])
+
+		// Robokassa отправляет как application/x-www-form-urlencoded
 		const params = req.body
 
+		console.log('🔍 Raw parameters received:')
+		console.log('- OutSum:', params.OutSum)
+		console.log('- InvId:', params.InvId)
+		console.log('- SignatureValue:', params.SignatureValue)
+		console.log('- IsTest:', params.IsTest)
+		console.log('- Culture:', params.Culture)
+		console.log('- All params:', JSON.stringify(params, null, 2))
+
+		// Проверяем обязательные параметры
+		if (!params.OutSum || !params.InvId || !params.SignatureValue) {
+			console.error(
+				'❌ MISSING REQUIRED PARAMETERS FOR is_result_notification_valid()'
+			)
+			console.error('- Has OutSum:', !!params.OutSum)
+			console.error('- Has InvId:', !!params.InvId)
+			console.error('- Has SignatureValue:', !!params.SignatureValue)
+			return res.status(400).send('ERROR: Missing required parameters')
+		}
+
+		// Подготавливаем данные для Python метода is_result_notification_valid()
 		const pythonData = {
-			action: 'check_signature',
+			action: 'check_result_signature',
 			out_sum: parseFloat(params.OutSum),
 			inv_id: parseInt(params.InvId),
+			signature: params.SignatureValue,
+			IsTest: params.IsTest || '0',
+			Culture: params.Culture || 'ru',
+		}
+
+		// Добавляем ВСЕ shp_ параметры (важно для подписи!)
+		Object.keys(params).forEach(key => {
+			if (key.startsWith('shp_')) {
+				pythonData[key] = params[key]
+				console.log(`📋 Added to Python data: ${key} = ${params[key]}`)
+			}
+		})
+
+		console.log('🐍 CALLING Python is_result_notification_valid() with:')
+		console.log(JSON.stringify(pythonData, null, 2))
+
+		// Вызываем Python скрипт для проверки подписи
+		const result = await callPythonScript('robokassa_handler.py', pythonData)
+
+		console.log('✅ Python is_result_notification_valid() RETURNED:')
+		console.log('- Success:', result.success)
+		console.log('- Is Valid:', result.is_valid)
+		console.log(
+			'- Method Used:',
+			result.method_used || 'is_result_notification_valid'
+		)
+		console.log('- Error:', result.error || 'None')
+		console.log('- Full result:', JSON.stringify(result, null, 2))
+
+		// Проверяем результат
+		if (!result.success) {
+			console.error('❌ PYTHON SCRIPT ERROR:', result.error)
+			console.error('⚠️ Payment NOT confirmed - Python script failed')
+			return res.status(400).send('ERROR: Python script error')
+		}
+
+		if (!result.is_valid) {
+			console.error('❌ INVALID SIGNATURE from is_result_notification_valid()')
+			console.error('🔒 Payment NOT confirmed - signature verification FAILED')
+			console.error('⚠️ This could mean:')
+			console.error('   1. Wrong password1/password2 in robokassa_handler.py')
+			console.error('   2. Missing shp_ parameters in signature calculation')
+			console.error('   3. Parameters were tampered with')
+			return res.status(400).send('ERROR: Invalid signature')
+		}
+
+		const orderId = parseInt(params.InvId)
+
+		console.log('🎉 PAYMENT CONFIRMED by is_result_notification_valid()')
+		console.log(`📋 Order ID: ${orderId}`)
+		console.log(`💰 Amount: ${params.OutSum} RUB`)
+		console.log(`🧪 Test mode: ${params.IsTest === '1' ? 'YES' : 'NO'}`)
+		console.log(`🌍 Culture: ${params.Culture}`)
+
+		// Получаем текущий заказ из Firebase
+		let order = await getOrderByOrderIdFromFirebase(orderId)
+
+		if (!order) {
+			console.log(`⚠️ Order ${orderId} not found in Firebase`)
+			console.log('🆕 Creating new order from Result URL data...')
+
+			// Создаем новый заказ с данными из Result URL
+			order = {
+				orderId: orderId,
+				productId:
+					params.shp_product_id || params.shp_shp_product_id || 'unknown',
+				customerEmail: params.shp_email || 'unknown@example.com',
+				price: parseFloat(params.OutSum),
+				productName: `Циферблат ${
+					params.shp_product_id || params.shp_shp_product_id || 'Unknown'
+				}`,
+				status: 'paid',
+				paymentUrl: null,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				paidAt: new Date().toISOString(),
+				robokassaParams: params,
+				robokassaData: {
+					is_test: params.IsTest || '0',
+					method: 'robokassa',
+					signature_valid: true,
+					confirmed_via: 'result_url',
+					confirmed_at: new Date().toISOString(),
+				},
+				isDaily: false,
+				// Получаем receivingId из Firebase если есть, или генерируем новый
+				receivingId: null,
+				receivingUrl: null,
+			}
+
+			// Сохраняем новый заказ
+			await set(ref(database, `orders/${orderId}`), order)
+			console.log(`✅ Created new order ${orderId} from Result URL`)
+		} else {
+			console.log(`✅ Found existing order ${orderId}`)
+			console.log(`📊 Current status: ${order.status}`)
+			console.log(`📧 Customer email: ${order.customerEmail}`)
+			console.log(`🛒 Product: ${order.productId}`)
+
+			// Обновляем статус на paid
+			if (order.status !== 'paid') {
+				console.log(
+					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`
+				)
+
+				const updates = {
+					status: 'paid',
+					paidAt: new Date().toISOString(),
+					robokassaParams: params,
+					updatedAt: new Date().toISOString(),
+					robokassaData: {
+						...(order.robokassaData || {}),
+						is_test: params.IsTest || '0',
+						signature_valid: true,
+						confirmed_via: 'result_url',
+						confirmed_at: new Date().toISOString(),
+					},
+				}
+
+				await update(ref(database, `orders/${orderId}`), updates)
+				console.log(`✅ Order ${orderId} marked as PAID`)
+
+				// Обновляем локальный объект
+				order = { ...order, ...updates }
+			} else {
+				console.log(`✅ Order ${orderId} already marked as paid`)
+				console.log(`📅 Was paid at: ${order.paidAt}`)
+			}
+		}
+
+		// Генерируем receivingId если его нет
+		if (!order.receivingId) {
+			console.log(`🔑 Generating receivingId for paid order ${orderId}`)
+			const receivingId = generateReceivingId()
+
+			const receivingUpdates = {
+				receivingId: receivingId,
+				receivingUrl: `/purchase/receiving/${receivingId}`,
+				updatedAt: new Date().toISOString(),
+			}
+
+			// Обновляем заказ с receivingId
+			await update(ref(database, `orders/${orderId}`), receivingUpdates)
+
+			// Создаем индекс для быстрого поиска
+			await set(ref(database, `orderByReceivingId/${receivingId}`), {
+				orderId: orderId,
+				status: 'paid',
+				receivingId: receivingId,
+				productId: order.productId,
+				customerEmail: order.customerEmail,
+				createdAt: new Date().toISOString(),
+				paidAt: new Date().toISOString(),
+			})
+
+			console.log(`✅ Generated receivingId: ${receivingId}`)
+			console.log(`🔗 Receiving URL: /purchase/receiving/${receivingId}`)
+		} else {
+			console.log(
+				`✅ Order ${orderId} already has receivingId: ${order.receivingId}`
+			)
+			console.log(`🔗 Existing receiving URL: ${order.receivingUrl}`)
+		}
+
+		// ВАЖНО: Отправляем ответ Robokassa в правильном формате
+		console.log(`📤 Sending response to Robokassa: "OK${orderId}"`)
+		res.send('OK' + orderId)
+
+		console.log('🎯 RESULT URL PROCESSING COMPLETE')
+		console.log('='.repeat(50))
+	} catch (error) {
+		console.error('❌ CRITICAL ERROR in Result URL handler:')
+		console.error('Message:', error.message)
+		console.error('Stack:', error.stack)
+		console.error('Params at time of error:', JSON.stringify(req.body, null, 2))
+		res.status(500).send('ERROR: Server processing error')
+	}
+})
+
+// Эндпоинт для тестирования получения данных от Robokassa
+app.post('/api/debug/robokassa-data', (req, res) => {
+	console.log('🔍 ====== DEBUG ROBOKASSA DATA ======')
+	console.log('📅 Time:', new Date().toISOString())
+	console.log('📦 Headers:', req.headers)
+	console.log('📦 Raw body:', req.body)
+	console.log('📦 Query params:', req.query)
+	console.log('📦 Content-Type:', req.get('Content-Type'))
+
+	res.json({
+		success: true,
+		headers: req.headers,
+		body: req.body,
+		query: req.query,
+		receivedAt: new Date().toISOString(),
+	})
+})
+
+app.get('/api/robokassa/success', async (req, res) => {
+	try {
+		const params = req.query
+		const orderId = parseInt(params.InvId)
+
+		console.log('✅ === Robokassa Success URL redirect ===')
+		console.log('Params:', params)
+
+		// Проверяем подпись redirect (не для подтверждения оплаты, только для безопасности)
+		const pythonData = {
+			action: 'check_redirect_signature', // Проверяем redirect подпись
+			out_sum: parseFloat(params.OutSum),
+			inv_id: orderId,
 			signature: params.SignatureValue,
 		}
 
@@ -307,38 +810,128 @@ app.post('/api/robokassa/result', async (req, res) => {
 			}
 		})
 
-		const result = await callPythonScript('robokassa_handler.py', pythonData)
+		const signatureCheck = await callPythonScript(
+			'robokassa_handler.py',
+			pythonData
+		)
 
-		if (!result.success || !result.is_valid) {
-			throw new Error('Неверная подпись платежа')
+		if (!signatureCheck.success || !signatureCheck.is_valid) {
+			console.error('❌ Invalid redirect signature')
+			return res.redirect('/payment-error?reason=invalid_signature')
 		}
 
-		// Обновляем статус заказа
-		const orderId = parseInt(params.InvId)
-		const orderFile = path.join(__dirname, 'orders', `order_${orderId}.json`)
+		// Получаем заказ
+		const order = await getOrderByOrderIdFromFirebase(orderId)
 
-		if (fs.existsSync(orderFile)) {
-			const orderData = JSON.parse(fs.readFileSync(orderFile, 'utf8'))
-			orderData.status = 'paid'
-			orderData.paidAt = new Date().toISOString()
-			orderData.robokassaParams = params
-			fs.writeFileSync(orderFile, JSON.stringify(orderData, null, 2))
+		if (!order) {
+			console.error(`Заказ ${orderId} не найден`)
+			return res.redirect('/payment-error?reason=order_not_found')
 		}
 
-		res.send('OK')
-	} catch (error) {
-		res.status(500).send('ERROR')
-	}
-})
+		// Проверяем что заказ оплачен
+		if (order.status !== 'paid') {
+			console.log(
+				`⚠️ Order ${orderId} is not paid yet, status: ${order.status}`
+			)
 
-app.get('/api/robokassa/success', async (req, res) => {
-	try {
-		const params = req.query
-		const orderId = parseInt(params.InvId)
+			// Если статус еще не обновлен, проверяем через 3 секунды
+			// (Result URL мог прийти позже)
+			setTimeout(async () => {
+				const updatedOrder = await getOrderByOrderIdFromFirebase(orderId)
+				if (
+					updatedOrder &&
+					updatedOrder.status === 'paid' &&
+					updatedOrder.receivingId
+				) {
+					console.log(`✅ Order ${orderId} now paid, redirecting...`)
+					// Здесь можно было бы сделать редирект, но пользователь уже на странице
+				}
+			}, 3000)
 
-		// Перенаправляем на страницу успешной оплаты
-		res.redirect(`/payment-success?orderId=${orderId}`)
+			// Показываем страницу ожидания
+			return res.send(`
+                <!DOCTYPE html>
+                <html lang="ru">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Обработка платежа</title>
+                    <style>
+                        .waiting-container {
+                            max-width: 600px;
+                            margin: 100px auto;
+                            padding: 40px;
+                            background: white;
+                            border-radius: 20px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                            text-align: center;
+                        }
+                        .waiting-icon {
+                            font-size: 4rem;
+                            color: #FF9800;
+                            margin-bottom: 20px;
+                        }
+                        .spinner {
+                            width: 50px;
+                            height: 50px;
+                            border: 5px solid #f3f3f3;
+                            border-top: 5px solid #8b7355;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                            margin: 20px auto;
+                        }
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="waiting-container">
+                        <div class="waiting-icon">⏳</div>
+                        <h1>Обрабатываем ваш платеж</h1>
+                        <p>Пожалуйста, подождите несколько секунд...</p>
+                        <div class="spinner"></div>
+                        <p style="margin-top: 20px; color: #666;">
+                            Номер заказа: <strong>${orderId}</strong>
+                        </p>
+                        <script>
+                            // Пробуем перезагрузить через 5 секунд
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 5000);
+                        </script>
+                    </div>
+                </body>
+                </html>
+            `)
+		}
+
+		// Проверяем что есть receivingId
+		if (!order.receivingId) {
+			console.error(`No receivingId for paid order ${orderId}`)
+
+			// Пытаемся сгенерировать
+			const receivingId = await generateReceivingForPaidOrder(orderId)
+			if (!receivingId) {
+				return res.redirect('/payment-error?reason=receiving_generation_failed')
+			}
+
+			// Обновляем order для редиректа
+			order.receivingId = receivingId
+			order.receivingUrl = `/purchase/receiving/${receivingId}`
+		}
+
+		if (order.status !== 'paid') {
+			// Перенаправляем на страницу ожидания
+			return res.redirect(`/waiting-payment?orderId=${orderId}`)
+		}
+
+		// Перенаправляем на страницу получения заказа
+		console.log(`✅ Redirecting to: ${order.receivingUrl}`)
+		res.redirect(order.receivingUrl)
 	} catch (error) {
+		console.error('Ошибка обработки успешной оплаты:', error)
 		res.redirect('/payment-error')
 	}
 })
@@ -348,13 +941,23 @@ app.get('/api/robokassa/fail', async (req, res) => {
 		const params = req.query
 		const orderId = parseInt(params.InvId)
 
-		// Обновляем статус заказа
-		const orderFile = path.join(__dirname, 'orders', `order_${orderId}.json`)
-		if (fs.existsSync(orderFile)) {
-			const orderData = JSON.parse(fs.readFileSync(orderFile, 'utf8'))
-			orderData.status = 'failed'
-			orderData.failedAt = new Date().toISOString()
-			fs.writeFileSync(orderFile, JSON.stringify(orderData, null, 2))
+		// Обновляем статус заказа в Firebase
+		const order = await getOrderByOrderIdFromFirebase(orderId)
+		if (order) {
+			await updateOrderStatusInFirebase(orderId, {
+				status: 'failed',
+				failedAt: new Date().toISOString(),
+				robokassaFailParams: params,
+			})
+		} else {
+			// Обновляем локально
+			const orderFile = path.join(__dirname, 'orders', `order_${orderId}.json`)
+			if (fs.existsSync(orderFile)) {
+				const orderData = JSON.parse(fs.readFileSync(orderFile, 'utf8'))
+				orderData.status = 'failed'
+				orderData.failedAt = new Date().toISOString()
+				fs.writeFileSync(orderFile, JSON.stringify(orderData, null, 2))
+			}
 		}
 
 		res.redirect(`/payment-failed?orderId=${orderId}`)
@@ -398,6 +1001,7 @@ app.post('/api/payment/create', async (req, res) => {
 			success: true,
 			paymentUrl: result.paymentUrl,
 			orderId: result.orderId,
+			receivingId: result.receivingId,
 			message: 'Платеж создан успешно',
 			test_mode: true,
 		})
@@ -407,6 +1011,337 @@ app.post('/api/payment/create', async (req, res) => {
 			error: error.message,
 			message: 'Не удалось создать платеж',
 		})
+	}
+})
+
+// ==================== НОВЫЙ API ДЛЯ СКАЧИВАНИЯ ФАЙЛА ====================
+
+app.get('/api/download/watchface/:receivingId', async (req, res) => {
+	try {
+		const { receivingId } = req.params
+
+		// Пробуем получить заказ из Firebase
+		let order = await getOrderByReceivingIdFromFirebase(receivingId)
+
+		if (!order) {
+			// Пробуем получить локально
+			order = getOrderByReceivingId(receivingId)
+		}
+
+		if (!order) {
+			return res.status(404).json({ error: 'Заказ не найден' })
+		}
+
+		if (order.status !== 'paid') {
+			return res.status(403).json({ error: 'Заказ не оплачен' })
+		}
+
+		// Находим файл циферблата
+		const watchPath = path.join(__dirname, 'public', 'watch')
+		const productFolder = path.join(watchPath, order.productId)
+
+		if (!fs.existsSync(productFolder)) {
+			return res.status(404).json({ error: 'Файл циферблата не найден' })
+		}
+
+		// Ищем файл .apk в папке
+		const files = fs.readdirSync(productFolder)
+		const apkFile = files.find(file => file.toLowerCase().endsWith('.apk'))
+
+		if (!apkFile) {
+			return res.status(404).json({ error: 'Файл .apk не найден' })
+		}
+
+		const filePath = path.join(productFolder, apkFile)
+		const fileName = `${order.productId}_${apkFile}`
+
+		// Логируем скачивание
+		console.log(
+			`📥 Скачивание: ${receivingId}, файл: ${apkFile}, email: ${order.customerEmail}`
+		)
+
+		// Отправляем файл
+		res.download(filePath, fileName, err => {
+			if (err) {
+				console.error('Ошибка отправки файла:', err)
+			}
+		})
+	} catch (error) {
+		console.error('Ошибка загрузки файла:', error)
+		res.status(500).json({ error: 'Ошибка сервера' })
+	}
+})
+
+// ==================== СТРАНИЦА ПОЛУЧЕНИЯ ЗАКАЗА ====================
+
+app.get('/purchase/receiving/:receivingId', (req, res) => {
+	try {
+		const { receivingId } = req.params
+
+		// Проверяем существование HTML файла страницы
+		const receivingPage = path.join(
+			__dirname,
+			'public',
+			'html',
+			'receiving.html'
+		)
+
+		if (!fs.existsSync(receivingPage)) {
+			// Если файла нет, создаем простую страницу на лету
+			// Сначала пробуем Firebase
+			getOrderByReceivingIdFromFirebase(receivingId)
+				.then(order => {
+					if (!order) {
+						// Пробуем локально
+						order = getOrderByReceivingId(receivingId)
+						if (!order) {
+							return res.status(404).send('Заказ не найден')
+						}
+					}
+
+					return res.send(createReceivingPage(order))
+				})
+				.catch(error => {
+					console.error('Ошибка загрузки заказа:', error)
+					return res.status(500).send('Ошибка сервера')
+				})
+		} else {
+			// Если файл существует, отправляем его
+			res.sendFile(receivingPage)
+		}
+	} catch (error) {
+		console.error('Ошибка загрузки страницы получения:', error)
+		res.status(500).send('Ошибка сервера')
+	}
+})
+
+// Функция создания HTML страницы получения
+function createReceivingPage(order) {
+	return `
+        <!DOCTYPE html>
+        <html lang="ru">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Получение заказа - KF WATCH FACE</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: 'Comfortaa', cursive; background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%); min-height: 100vh; }
+                .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+                .header { background: white; padding: 20px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+                .logo { display: flex; align-items: center; gap: 15px; color: #8b7355; text-decoration: none; font-weight: 700; font-size: 1.5rem; }
+                .content { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+                .success-icon { text-align: center; font-size: 4rem; color: #4CAF50; margin-bottom: 20px; }
+                h1 { text-align: center; margin-bottom: 30px; color: #1a1a1a; }
+                .order-info { background: #f9f9f9; padding: 25px; border-radius: 10px; margin-bottom: 30px; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+                .info-row:last-child { border-bottom: none; margin-bottom: 0; }
+                .label { color: #666; font-weight: 500; }
+                .value { color: #1a1a1a; font-weight: 600; }
+                .download-section { text-align: center; margin-top: 30px; }
+                .btn-download { background: linear-gradient(135deg, #8b7355 0%, #a89176 100%); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: transform 0.3s; text-decoration: none; display: inline-block; }
+                .btn-download:hover { transform: translateY(-2px); }
+                .instructions { margin-top: 40px; padding: 20px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid #2196F3; }
+                .instructions h3 { color: #2196F3; margin-bottom: 15px; }
+                .warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin-top: 20px; }
+                .support { margin-top: 30px; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <a href="/" class="logo">
+                        <i class="fas fa-clock"></i>
+                        <span>KF WATCH FACE</span>
+                    </a>
+                </div>
+                
+                <div class="content">
+                    <div class="success-icon">✓</div>
+                    <h1>Оплата успешно завершена!</h1>
+                    
+                    <div class="order-info">
+                        <div class="info-row">
+                            <span class="label">Номер заказа:</span>
+                            <span class="value">${order.orderId}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Циферблат:</span>
+                            <span class="value">${
+															order.productName || order.productId
+														}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Email:</span>
+                            <span class="value">${order.customerEmail}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Сумма:</span>
+                            <span class="value">${order.price} ₽</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Статус:</span>
+                            <span class="value" style="color: #4CAF50;">Оплачено ✓</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Дата оплаты:</span>
+                            <span class="value">${new Date(
+															order.paidAt || order.createdAt
+														).toLocaleString('ru-RU')}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="download-section">
+                        <h2>Скачайте файл циферблата</h2>
+                        <a href="/api/download/watchface/${
+													order.receivingId
+												}" class="btn-download">
+                            <i class="fas fa-download"></i> Скачать файл (*.apk)
+                        </a>
+                        <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                            Файл будет скачан в формате APK для установки на часы
+                        </p>
+                    </div>
+                    
+                    <div class="instructions">
+                        <h3><i class="fas fa-info-circle"></i> Как установить циферблат:</h3>
+                        <ol style="margin-left: 20px; margin-top: 15px;">
+                            <li>Скачайте файл выше на ваш телефон</li>
+                            <li>Установите приложение WearLoad, ADB App Control или Bugjaeger</li>
+                            <li>Подключите часы к телефону по Bluetooth</li>
+                            <li>Загрузите файл .apk через приложение на часы</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Важно:</strong> Для установки необходимы умные часы с Wear OS и подключение к телефону.
+                    </div>
+                    
+                    <div class="support">
+                        <p>Нужна помощь с установкой?</p>
+                        <a href="https://t.me/krek_free" target="_blank" style="color: #0088cc; text-decoration: none;">
+                            <i class="fab fa-telegram"></i> Написать в Telegram
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+        </body>
+        </html>
+    `
+}
+
+// API для проверки статуса заказа
+app.get('/api/order/status/:orderId', async (req, res) => {
+	try {
+		const orderId = parseInt(req.params.orderId)
+		const order = await getOrderByOrderIdFromFirebase(orderId)
+
+		if (!order) {
+			return res.status(404).json({
+				status: 'not_found',
+				message: 'Заказ не найден',
+			})
+		}
+
+		res.json({
+			status: order.status,
+			orderId: order.orderId,
+			receivingUrl: order.receivingUrl,
+			paidAt: order.paidAt,
+		})
+	} catch (error) {
+		res.status(500).json({
+			status: 'error',
+			message: 'Ошибка сервера',
+		})
+	}
+})
+
+// ==================== API ДЛЯ ПОЛУЧЕНИЯ ИНФОРМАЦИИ О ЗАКАЗЕ ====================
+
+app.get('/api/order/receiving/:receivingId', async (req, res) => {
+	try {
+		const { receivingId } = req.params
+
+		// Пробуем получить из Firebase
+		let order = await getOrderByReceivingIdFromFirebase(receivingId)
+
+		// Если нет в Firebase, проверяем локальные файлы (для обратной совместимости)
+		if (!order) {
+			order = getOrderByReceivingId(receivingId)
+		}
+
+		if (!order) {
+			return res.status(404).json({ error: 'Заказ не найден' })
+		}
+
+		// Скрываем чувствительные данные
+		const safeOrder = {
+			orderId: order.orderId,
+			productId: order.productId,
+			productName: order.productName,
+			customerEmail: order.customerEmail,
+			price: order.price,
+			status: order.status,
+			paidAt: order.paidAt,
+			createdAt: order.createdAt,
+			isDaily: order.isDaily || false,
+			receivingId: order.receivingId,
+		}
+
+		res.json(safeOrder)
+	} catch (error) {
+		console.error('Ошибка получения заказа:', error)
+		res.status(500).json({ error: 'Ошибка сервера' })
+	}
+})
+
+// ==================== ПРОВЕРКА ДОСТУПНОСТИ ССЫЛКИ ====================
+
+app.get('/api/order/validate/:receivingId', async (req, res) => {
+	try {
+		const { receivingId } = req.params
+
+		// Пробуем получить из Firebase
+		let order = await getOrderByReceivingIdFromFirebase(receivingId)
+
+		// Если нет в Firebase, проверяем локальные файлы
+		if (!order) {
+			order = getOrderByReceivingId(receivingId)
+		}
+
+		if (!order) {
+			return res.json({ valid: false, reason: 'not_found' })
+		}
+
+		if (order.status !== 'paid') {
+			return res.json({ valid: false, reason: 'not_paid' })
+		}
+
+		// Проверяем не истекла ли ссылка (например, 30 дней)
+		const orderDate = new Date(order.paidAt || order.createdAt)
+		const now = new Date()
+		const daysDiff = (now - orderDate) / (1000 * 60 * 60 * 24)
+
+		if (daysDiff > 30) {
+			return res.json({
+				valid: false,
+				reason: 'expired',
+				expiredDays: Math.floor(daysDiff),
+			})
+		}
+
+		return res.json({
+			valid: true,
+			orderId: order.orderId,
+			productName: order.productName,
+		})
+	} catch (error) {
+		console.error('Ошибка валидации заказа:', error)
+		res.json({ valid: false, reason: 'server_error' })
 	}
 })
 
@@ -804,7 +1739,7 @@ app.post('/api/rename-folder', (req, res) => {
 		const { oldName, newName } = req.body
 
 		if (!oldName || !newName) {
-			return res.status(400).json({ error: 'Не указаны имена папок' })
+			return res.status(400).json({ error: 'Не указаны имена папки' })
 		}
 
 		if (!/^[a-zA-Z0-9_\-]+$/.test(newName)) {
@@ -1017,6 +1952,7 @@ app.get('/success', (req, res) => {
 app.get('/fail', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'fail.html'))
 })
+
 // ==================== МАРШРУТЫ ДЛЯ ГАЙДОВ ====================
 
 app.get('/api/guides/check', (req, res) => {
@@ -1209,7 +2145,7 @@ app.get('/payment-success', (req, res) => {
                 <p>Номер вашего заказа: <strong>${
 									orderId || 'неизвестен'
 								}</strong></p>
-                <p>Ссылка на скачивание будет отправлена на ваш email.</p>
+                <p>Переходите на страницу получения заказа для скачивания файла.</p>
                 <a href="/" class="btn-return">Вернуться в магазин</a>
             </div>
         </body>
@@ -1284,6 +2220,8 @@ app.listen(PORT, async () => {
 	console.log(`📁 Админ панель: http://localhost:${PORT}/admin`)
 	console.log(`🛒 Магазин: http://localhost:${PORT}/`)
 	console.log(`💰 Интеграция с Robokassa: активирована`)
+	console.log(`🔥 Firebase интеграция: включена (версия 10+)`)
+	console.log(`🔗 Система получения заказов: включена`)
 	console.log(`⚡ Сжатие GZIP: включено`)
 
 	// Тестируем Python
@@ -1304,7 +2242,30 @@ app.listen(PORT, async () => {
 		console.error(`❌ Ошибка проверки Python: ${error.message}`)
 	}
 
+	// Тестируем Firebase
+	console.log(`\n🔍 Проверяем подключение к Firebase...`)
+	try {
+		// Простой тест соединения
+		const testRef = ref(database, '.info/connected')
+		console.log(`✅ Firebase подключен!`)
+		console.log(`📊 База данных: ${firebaseConfig.databaseURL}`)
+	} catch (error) {
+		console.error(`❌ Ошибка подключения к Firebase: ${error.message}`)
+		console.log(`⚠️  Заказы будут сохраняться локально`)
+	}
+
+	// Проверяем папку orders (для обратной совместимости)
+	const ordersPath = path.join(__dirname, 'orders')
+	if (!fs.existsSync(ordersPath)) {
+		fs.mkdirSync(ordersPath, { recursive: true })
+		console.log(
+			`📁 Создана папка для локальных заказов (backup): ${ordersPath}`
+		)
+	}
+
 	console.log(
 		`\n📊 Готов к работе! Время запуска: ${new Date().toLocaleString()}`
 	)
+	console.log(`🔗 Пример URL получения: /purchase/receiving/ABC123XYZ`)
+	console.log(`💾 Хранение заказов: Firebase + локальный backup`)
 })

@@ -84,14 +84,76 @@ class RobokassaHandler:
             # Если JWT не сработал, возвращаемся к классическому методу
             return await self.generate_open_payment_link(out_sum, inv_id, description, email, **kwargs)
 
-    # ... остальные методы оставляем без изменений, но УБИРАЕМ ВСЕ print() из них ...
+    def check_result_signature(self, out_sum, inv_id, signature, **kwargs):
+        """
+        Проверка подписи для Result URL (уведомление от Robokassa)
+        """
+        try:
+            # Собираем параметры для проверки
+            params = {
+                'OutSum': str(out_sum),
+                'InvId': str(inv_id),
+            }
+            
+            # Добавляем дополнительные параметры
+            for key, value in kwargs.items():
+                params[key] = value
+            
+            # Проверяем подпись Result URL
+            is_valid = self.robokassa.is_result_notification_valid(
+                signature=signature,
+                out_sum=out_sum,
+                inv_id=inv_id,
+                **kwargs
+            )
+            
+            return {
+                'success': True,
+                'is_valid': is_valid,
+                'inv_id': inv_id,
+                'out_sum': out_sum
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'is_valid': False,
+                'error': str(e)
+            }
+
+    def check_redirect_signature(self, out_sum, inv_id, signature, **kwargs):
+        """
+        Проверка подписи для Success/Fail URL (редирект пользователя)
+        """
+        try:
+            # Проверяем подпись Redirect URL
+            is_valid = self.robokassa.is_redirect_valid(
+                signature=signature,
+                out_sum=out_sum,
+                inv_id=inv_id,
+                **kwargs
+            )
+            
+            return {
+                'success': True,
+                'is_valid': is_valid,
+                'inv_id': inv_id,
+                'out_sum': out_sum
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'is_valid': False,
+                'error': str(e)
+            }
 
 async def main():
     try:
         # Читаем входные данные
         input_data = sys.stdin.read()
 
-                # ДОБАВЬТЕ декодирование:
+        # ДОБАВЬТЕ декодирование:
         if input_data.strip():
             # Убедимся, что это UTF-8
             try:

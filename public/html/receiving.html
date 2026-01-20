@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Получение заказа - KF WATCH FACE</title>
+		<link rel="icon" href="/guide/Logo.png" type="image/png" sizes="32x32" />
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			.receiving-container {
+				min-height: 100vh;
+				background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+				padding: 20px;
+			}
+
+			.receiving-content {
+				max-width: 800px;
+				margin: 0 auto;
+				background: white;
+				border-radius: 20px;
+				padding: 40px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+			}
+
+			.success-header {
+				text-align: center;
+				margin-bottom: 40px;
+			}
+
+			.success-icon {
+				font-size: 4rem;
+				color: #4caf50;
+				margin-bottom: 20px;
+			}
+
+			.order-details {
+				background: #f9f9f9;
+				border-radius: 15px;
+				padding: 30px;
+				margin-bottom: 40px;
+			}
+
+			.detail-item {
+				display: flex;
+				justify-content: space-between;
+				padding: 15px 0;
+				border-bottom: 1px solid #eee;
+			}
+
+			.detail-item:last-child {
+				border-bottom: none;
+			}
+
+			.detail-label {
+				color: #666;
+				font-weight: 500;
+			}
+
+			.detail-value {
+				color: #1a1a1a;
+				font-weight: 600;
+			}
+
+			.download-section {
+				text-align: center;
+				margin: 40px 0;
+				padding: 30px;
+				background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+				border-radius: 15px;
+				border: 2px dashed #2196f3;
+			}
+
+			.btn-download {
+				background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+				color: white;
+				border: none;
+				padding: 18px 50px;
+				border-radius: 30px;
+				font-size: 1.2rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.3s ease;
+				display: inline-flex;
+				align-items: center;
+				gap: 10px;
+				text-decoration: none;
+			}
+
+			.btn-download:hover {
+				transform: translateY(-3px);
+				box-shadow: 0 10px 20px rgba(139, 115, 85, 0.3);
+			}
+
+			.instructions {
+				margin: 40px 0;
+				padding: 25px;
+				background: #fff8e1;
+				border-radius: 15px;
+				border-left: 4px solid #ff9800;
+			}
+
+			.instructions h3 {
+				color: #ff9800;
+				margin-bottom: 15px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+
+			.warning {
+				background: #ffebee;
+				border: 1px solid #ffcdd2;
+				color: #c62828;
+				padding: 20px;
+				border-radius: 10px;
+				margin: 30px 0;
+				display: flex;
+				align-items: center;
+				gap: 15px;
+			}
+
+			.support-box {
+				text-align: center;
+				padding: 25px;
+				background: #e8f5e9;
+				border-radius: 15px;
+				margin-top: 30px;
+			}
+
+			.btn-support {
+				display: inline-flex;
+				align-items: center;
+				gap: 10px;
+				background: #0088cc;
+				color: white;
+				padding: 12px 25px;
+				border-radius: 25px;
+				text-decoration: none;
+				font-weight: 600;
+				margin-top: 15px;
+			}
+
+			.status-badge {
+				display: inline-block;
+				padding: 8px 15px;
+				border-radius: 20px;
+				font-weight: 600;
+				font-size: 0.9rem;
+			}
+
+			.status-paid {
+				background: #4caf50;
+				color: white;
+			}
+
+			.expiry-notice {
+				background: #fff3cd;
+				border: 1px solid #ffc107;
+				color: #856404;
+				padding: 15px;
+				border-radius: 10px;
+				margin-top: 20px;
+				font-size: 0.9rem;
+			}
+
+			@media (max-width: 768px) {
+				.receiving-content {
+					padding: 20px;
+				}
+
+				.detail-item {
+					flex-direction: column;
+					gap: 5px;
+				}
+
+				.btn-download {
+					width: 100%;
+					justify-content: center;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="receiving-container">
+			<!-- Хедер -->
+			<header class="header purchase-header" style="margin-bottom: 30px">
+				<div class="container">
+					<a href="/" class="logo">
+						<i class="fas fa-clock"></i>
+						<span>KF WATCH FACE</span>
+					</a>
+				</div>
+			</header>
+
+			<!-- Основной контент -->
+			<div class="container">
+				<div class="receiving-content">
+					<div class="success-header">
+						<div class="success-icon">
+							<i class="fas fa-check-circle"></i>
+						</div>
+						<h1>Оплата успешно завершена!</h1>
+						<p>Спасибо за покупку. Ваш заказ готов к получению.</p>
+					</div>
+
+					<!-- Детали заказа -->
+					<div class="order-details">
+						<h2><i class="fas fa-receipt"></i> Детали заказа</h2>
+						<div id="orderDetails">
+							<!-- Данные будут загружены через JavaScript -->
+							<div class="loading" style="text-align: center; padding: 40px">
+								<div
+									class="spinner"
+									style="
+										width: 50px;
+										height: 50px;
+										border: 5px solid #f3f3f3;
+										border-top: 5px solid #8b7355;
+										border-radius: 50%;
+										animation: spin 1s linear infinite;
+										margin: 0 auto 20px;
+									"
+								></div>
+								<p>Загрузка информации о заказе...</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Секция скачивания -->
+					<div class="download-section">
+						<h2><i class="fas fa-download"></i> Скачайте файл циферблата</h2>
+						<p style="margin-bottom: 25px; color: #555">
+							Файл циферблата в формате APK готов к скачиванию
+						</p>
+						<button id="downloadBtn" class="btn-download" disabled>
+							<i class="fas fa-spinner fa-spin"></i> Загрузка...
+						</button>
+						<p style="margin-top: 15px; color: #666; font-size: 0.9rem">
+							Размер файла: <span id="fileSize">...</span> | Формат: APK
+						</p>
+					</div>
+
+					<!-- Инструкции по установке -->
+					<div class="instructions">
+						<h3><i class="fas fa-info-circle"></i> Инструкция по установке</h3>
+						<ol style="margin-left: 20px; line-height: 1.8">
+							<li><strong>Скачайте файл</strong> выше на свой телефон</li>
+							<li>
+								<strong>Установите одно из приложений:</strong>
+								<ul style="margin-left: 20px; margin-top: 10px">
+									<li>WearLoad (рекомендуется для Amazfit)</li>
+									<li>ADB App Control (универсальное)</li>
+									<li>Bugjaeger (альтернативный вариант)</li>
+								</ul>
+							</li>
+							<li><strong>Подключите часы к телефону</strong> по Bluetooth</li>
+							<li>
+								<strong>Загрузите APK файл</strong> через приложение на ваши
+								часы
+							</li>
+							<li>
+								<strong>Выберите установленный циферблат</strong> в настройках
+								часов
+							</li>
+						</ol>
+					</div>
+
+					<!-- Важное предупреждение -->
+					<div class="warning">
+						<i class="fas fa-exclamation-triangle"></i>
+						<div>
+							<strong>Важно:</strong> Циферблат работает только на умных часах с
+							Wear OS 4.0 и выше. Для установки необходимо подключение часов к
+							телефону.
+						</div>
+					</div>
+
+					<!-- Поддержка -->
+					<div class="support-box">
+						<h3><i class="fas fa-headset"></i> Нужна помощь с установкой?</h3>
+						<p>Наша техническая поддержка поможет вам установить циферблат</p>
+						<a
+							href="https://t.me/krek_free"
+							target="_blank"
+							class="btn-support"
+						>
+							<i class="fab fa-telegram"></i> Написать в Telegram
+						</a>
+						<p style="margin-top: 15px; font-size: 0.9rem; color: #666">
+							Обычно отвечаем в течение 15 минут
+						</p>
+					</div>
+
+					<!-- Ссылка вернуться в магазин -->
+					<div
+						style="
+							text-align: center;
+							margin-top: 40px;
+							padding-top: 30px;
+							border-top: 1px solid #eee;
+						"
+					>
+						<a href="/" class="btn-buy" style="text-decoration: none">
+							<i class="fas fa-store"></i> Вернуться в магазин
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- JavaScript -->
+		<script>
+			// Получаем receivingId из URL
+			function getReceivingIdFromURL() {
+				const path = window.location.pathname
+				const match = path.match(/\/purchase\/receiving\/([a-zA-Z0-9]+)/)
+				return match ? match[1] : null
+			}
+
+			// Загрузка данных заказа
+			async function loadOrderData() {
+				const receivingId = getReceivingIdFromURL()
+
+				if (!receivingId) {
+					showError('Неверная ссылка получения')
+					return
+				}
+
+				try {
+					const response = await fetch(`/api/order/receiving/${receivingId}`)
+
+					if (!response.ok) {
+						throw new Error('Заказ не найден')
+					}
+
+					const order = await response.json()
+					displayOrderDetails(order)
+					setupDownloadButton(receivingId)
+				} catch (error) {
+					console.error('Ошибка загрузки заказа:', error)
+					showError('Не удалось загрузить информацию о заказе')
+				}
+			}
+
+			// Отображение деталей заказа
+			function displayOrderDetails(order) {
+				const container = document.getElementById('orderDetails')
+
+				const html = `
+                <div class="detail-item">
+                    <span class="detail-label">Номер заказа:</span>
+                    <span class="detail-value">#${order.orderId}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Циферблат:</span>
+                    <span class="detail-value">${
+											order.productName || order.productId
+										}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email покупателя:</span>
+                    <span class="detail-value">${order.customerEmail}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Сумма оплаты:</span>
+                    <span class="detail-value">${order.price} ₽</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Статус:</span>
+                    <span class="detail-value">
+                        <span class="status-badge status-paid">Оплачено ✓</span>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Дата оплаты:</span>
+                    <span class="detail-value">${new Date(
+											order.paidAt
+										).toLocaleString('ru-RU')}</span>
+                </div>
+                ${
+									order.isDaily
+										? `
+                <div class="detail-item">
+                    <span class="detail-label">Специальное предложение:</span>
+                    <span class="detail-value" style="color: #ff6b6b;">
+                        <i class="fas fa-fire"></i> Daily циферблат со скидкой 20%
+                    </span>
+                </div>
+                `
+										: ''
+								}
+            `
+
+				container.innerHTML = html
+			}
+
+			// Настройка кнопки скачивания
+			function setupDownloadButton(receivingId) {
+				const downloadBtn = document.getElementById('downloadBtn')
+
+				downloadBtn.innerHTML =
+					'<i class="fas fa-download"></i> Скачать файл (*.apk)'
+				downloadBtn.disabled = false
+				downloadBtn.onclick = () => {
+					window.location.href = `/api/download/watchface/${receivingId}`
+
+					// Отслеживание скачивания
+					trackDownload(receivingId)
+				}
+			}
+
+			// Отслеживание скачивания (можно интегрировать с аналитикой)
+			function trackDownload(receivingId) {
+				console.log(`Скачивание начато: ${receivingId}`)
+
+				// Здесь можно добавить отправку в Google Analytics
+				if (typeof gtag !== 'undefined') {
+					gtag('event', 'download_started', {
+						event_category: 'Order',
+						event_label: receivingId,
+					})
+				}
+			}
+
+			// Показать ошибку
+			function showError(message) {
+				const container = document.getElementById('orderDetails')
+				container.innerHTML = `
+                <div class="error-message" style="text-align: center; padding: 40px; color: #ff6b6b;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <h3>Ошибка</h3>
+                    <p>${message}</p>
+                    <p style="margin-top: 20px;">
+                        <a href="/" style="color: #8b7355; text-decoration: underline;">Вернуться в магазин</a>
+                    </p>
+                </div>
+            `
+
+				const downloadBtn = document.getElementById('downloadBtn')
+				downloadBtn.style.display = 'none'
+			}
+
+			// Инициализация при загрузке страницы
+			document.addEventListener('DOMContentLoaded', () => {
+				loadOrderData()
+
+				// Добавляем CSS анимацию
+				const style = document.createElement('style')
+				style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `
+				document.head.appendChild(style)
+			})
+		</script>
+	</body>
+</html>

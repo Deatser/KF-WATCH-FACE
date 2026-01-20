@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Обработка платежа - KF WATCH FACE</title>
+		<style>
+			.waiting-container {
+				max-width: 600px;
+				margin: 100px auto;
+				padding: 40px;
+				background: white;
+				border-radius: 20px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+				text-align: center;
+			}
+			.waiting-icon {
+				font-size: 4rem;
+				color: #ff9800;
+				margin-bottom: 20px;
+			}
+			.spinner {
+				width: 50px;
+				height: 50px;
+				border: 5px solid #f3f3f3;
+				border-top: 5px solid #8b7355;
+				border-radius: 50%;
+				animation: spin 1s linear infinite;
+				margin: 20px auto;
+			}
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+			.btn-check {
+				background: #8b7355;
+				color: white;
+				border: none;
+				padding: 12px 30px;
+				border-radius: 25px;
+				font-weight: 600;
+				cursor: pointer;
+				margin-top: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="waiting-container">
+			<div class="waiting-icon">⏳</div>
+			<h1>Обрабатываем ваш платеж</h1>
+			<p>Обычно это занимает 1-2 минуты...</p>
+			<div class="spinner"></div>
+			<p style="margin-top: 20px; color: #666">
+				Номер заказа: <strong id="orderId">...</strong>
+			</p>
+			<button id="checkBtn" class="btn-check">Проверить статус</button>
+			<p style="margin-top: 30px; font-size: 0.9rem; color: #999">
+				Если страница не обновилась автоматически, нажмите кнопку выше
+			</p>
+		</div>
+
+		<script>
+			// Получаем orderId из URL
+			const urlParams = new URLSearchParams(window.location.search)
+			const orderId = urlParams.get('orderId')
+
+			if (orderId) {
+				document.getElementById('orderId').textContent = orderId
+
+				// Функция проверки статуса
+				async function checkPaymentStatus() {
+					try {
+						const response = await fetch(`/api/order/status/${orderId}`)
+						const data = await response.json()
+
+						if (data.status === 'paid' && data.receivingUrl) {
+							// Перенаправляем на страницу получения
+							window.location.href = data.receivingUrl
+						} else if (data.status === 'failed') {
+							window.location.href = `/payment-failed?orderId=${orderId}`
+						}
+						// Если still pending, продолжаем ждать
+					} catch (error) {
+						console.error('Error checking status:', error)
+					}
+				}
+
+				// Проверяем каждые 3 секунды
+				setInterval(checkPaymentStatus, 3000)
+
+				// Первая проверка через 2 секунды
+				setTimeout(checkPaymentStatus, 2000)
+
+				// Кнопка ручной проверки
+				document
+					.getElementById('checkBtn')
+					.addEventListener('click', checkPaymentStatus)
+			}
+		</script>
+	</body>
+</html>
