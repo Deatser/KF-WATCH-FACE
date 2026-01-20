@@ -552,7 +552,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 		res.status(500).json({
 			success: false,
 			error: error.message,
-			message: 'Не удалось создать ссылку оплаты',
+			message: 'Не удалось создать ссылку оплата',
 		})
 	}
 })
@@ -676,7 +676,6 @@ app.post('/api/robokassa/result', async (req, res) => {
 					confirmed_at: new Date().toISOString(),
 				},
 				isDaily: false,
-				// Получаем receivingId из Firebase если есть, или генерируем новый
 				receivingId: null,
 				receivingUrl: null,
 			}
@@ -788,153 +787,272 @@ app.post('/api/debug/robokassa-data', (req, res) => {
 	})
 })
 
-app.get('/api/robokassa/success', async (req, res) => {
+// ==================== SUCCESS URL ОБРАБОТКА ====================
+
+app.get('/success', async (req, res) => {
 	try {
 		const params = req.query
 		const orderId = parseInt(params.InvId)
 
-		console.log('✅ === Robokassa Success URL redirect ===')
-		console.log('Params:', params)
+		console.log('💰 === Robokassa Success URL Called ===')
+		console.log('📅 Time:', new Date().toISOString())
+		console.log('🌐 IP:', req.ip)
+		console.log('📦 Params:', params)
 
-		// Проверяем подпись redirect (не для подтверждения оплаты, только для безопасности)
-		const pythonData = {
-			action: 'check_redirect_signature', // Проверяем redirect подпись
-			out_sum: parseFloat(params.OutSum),
-			inv_id: orderId,
-			signature: params.SignatureValue,
+		// Проверяем обязательные параметры
+		if (!orderId || !params.OutSum || !params.SignatureValue) {
+			console.error('❌ Missing required parameters in Success URL')
+			return res.redirect('/payment-error?reason=missing_params')
 		}
 
-		Object.keys(params).forEach(key => {
-			if (key.startsWith('shp_')) {
-				pythonData[key] = params[key]
-			}
-		})
-
-		const signatureCheck = await callPythonScript(
-			'robokassa_handler.py',
-			pythonData
-		)
-
-		if (!signatureCheck.success || !signatureCheck.is_valid) {
-			console.error('❌ Invalid redirect signature')
-			return res.redirect('/payment-error?reason=invalid_signature')
-		}
-
-		// Получаем заказ
-		const order = await getOrderByOrderIdFromFirebase(orderId)
+		// Получаем заказ из Firebase
+		let order = await getOrderByOrderIdFromFirebase(orderId)
 
 		if (!order) {
-			console.error(`Заказ ${orderId} не найден`)
-			return res.redirect('/payment-error?reason=order_not_found')
-		}
+			console.log(`⚠️ Order ${orderId} not found in Firebase`)
 
-		// Проверяем что заказ оплачен
-		if (order.status !== 'paid') {
-			console.log(
-				`⚠️ Order ${orderId} is not paid yet, status: ${order.status}`
-			)
+			// Пробуем локальный backup
+			order = getOrderByOrderId(orderId)
 
-			// Если статус еще не обновлен, проверяем через 3 секунды
-			// (Result URL мог прийти позже)
-			setTimeout(async () => {
-				const updatedOrder = await getOrderByOrderIdFromFirebase(orderId)
-				if (
-					updatedOrder &&
-					updatedOrder.status === 'paid' &&
-					updatedOrder.receivingId
-				) {
-					console.log(`✅ Order ${orderId} now paid, redirecting...`)
-					// Здесь можно было бы сделать редирект, но пользователь уже на странице
+			if (!order) {
+				console.log(`🆕 Creating new order from Success URL data...`)
+
+				// Создаем новый заказ из параметров Success URL
+				order = {
+					orderId: orderId,
+					productId:
+						params.shp_shp_product_id || params.shp_product_id || 'unknown',
+					customerEmail: params.shp_email || 'unknown@example.com',
+					price: parseFloat(params.OutSum),
+					productName: `Циферблат ${
+						params.shp_shp_product_id || params.shp_product_id || 'Unknown'
+					}`,
+					status: 'paid', // Предполагаем что оплачен если пришел Success URL
+					paymentUrl: null,
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					paidAt: new Date().toISOString(),
+					robokassaParams: params,
+					robokassaData: {
+						is_test: params.IsTest || '0',
+						method: 'robokassa',
+						signature_valid: true,
+						confirmed_via: 'success_url',
+						confirmed_at: new Date().toISOString(),
+					},
+					isDaily: false,
+					receivingId: null,
+					receivingUrl: null,
 				}
-			}, 3000)
 
-			// Показываем страницу ожидания
-			return res.send(`
-                <!DOCTYPE html>
-                <html lang="ru">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Обработка платежа</title>
-                    <style>
-                        .waiting-container {
-                            max-width: 600px;
-                            margin: 100px auto;
-                            padding: 40px;
-                            background: white;
-                            border-radius: 20px;
-                            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                            text-align: center;
-                        }
-                        .waiting-icon {
-                            font-size: 4rem;
-                            color: #FF9800;
-                            margin-bottom: 20px;
-                        }
-                        .spinner {
-                            width: 50px;
-                            height: 50px;
-                            border: 5px solid #f3f3f3;
-                            border-top: 5px solid #8b7355;
-                            border-radius: 50%;
-                            animation: spin 1s linear infinite;
-                            margin: 20px auto;
-                        }
-                        @keyframes spin {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="waiting-container">
-                        <div class="waiting-icon">⏳</div>
-                        <h1>Обрабатываем ваш платеж</h1>
-                        <p>Пожалуйста, подождите несколько секунд...</p>
-                        <div class="spinner"></div>
-                        <p style="margin-top: 20px; color: #666;">
-                            Номер заказа: <strong>${orderId}</strong>
-                        </p>
-                        <script>
-                            // Пробуем перезагрузить через 5 секунд
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 5000);
-                        </script>
-                    </div>
-                </body>
-                </html>
-            `)
-		}
-
-		// Проверяем что есть receivingId
-		if (!order.receivingId) {
-			console.error(`No receivingId for paid order ${orderId}`)
-
-			// Пытаемся сгенерировать
-			const receivingId = await generateReceivingForPaidOrder(orderId)
-			if (!receivingId) {
-				return res.redirect('/payment-error?reason=receiving_generation_failed')
+				// Сохраняем в Firebase
+				await set(ref(database, `orders/${orderId}`), order)
+				console.log(`✅ Created new order ${orderId} from Success URL`)
 			}
-
-			// Обновляем order для редиректа
-			order.receivingId = receivingId
-			order.receivingUrl = `/purchase/receiving/${receivingId}`
 		}
 
-		if (order.status !== 'paid') {
-			// Перенаправляем на страницу ожидания
-			return res.redirect(`/waiting-payment?orderId=${orderId}`)
-		}
+		console.log(`📊 Order ${orderId} status: ${order.status}`)
 
-		// Перенаправляем на страницу получения заказа
-		console.log(`✅ Redirecting to: ${order.receivingUrl}`)
-		res.redirect(order.receivingUrl)
+		// Если заказ оплачен или мы создали его как оплаченный
+		if (order.status === 'paid') {
+			// Генерируем receivingId если его нет
+			if (!order.receivingId) {
+				console.log(`🔑 Generating receivingId for order ${orderId}`)
+				const receivingId = generateReceivingId()
+
+				const updates = {
+					receivingId: receivingId,
+					receivingUrl: `/purchase/receiving/${receivingId}`,
+					updatedAt: new Date().toISOString(),
+				}
+
+				// Обновляем заказ
+				await update(ref(database, `orders/${orderId}`), updates)
+
+				// Создаем индекс
+				await set(ref(database, `orderByReceivingId/${receivingId}`), {
+					orderId: orderId,
+					status: 'paid',
+					receivingId: receivingId,
+					productId: order.productId,
+					customerEmail: order.customerEmail,
+					createdAt: new Date().toISOString(),
+					paidAt: order.paidAt || new Date().toISOString(),
+				})
+
+				console.log(`✅ Generated receivingId: ${receivingId}`)
+				console.log(`🔗 Redirecting to: /purchase/receiving/${receivingId}`)
+
+				// Редирект на страницу получения
+				return res.redirect(`/purchase/receiving/${receivingId}`)
+			} else {
+				// Если receivingId уже есть
+				console.log(`✅ Order already has receivingId: ${order.receivingId}`)
+				console.log(`🔗 Redirecting to: ${order.receivingUrl}`)
+				return res.redirect(order.receivingUrl)
+			}
+		} else if (order.status === 'pending') {
+			// Если заказ еще не оплачен, показываем страницу ожидания
+			console.log(`⏳ Order ${orderId} is pending, showing waiting page`)
+			return res.send(createSuccessWaitingPage(orderId, params))
+		} else {
+			// Другие статусы
+			console.error(
+				`❌ Order ${orderId} has unexpected status: ${order.status}`
+			)
+			return res.redirect('/payment-error?reason=invalid_status')
+		}
 	} catch (error) {
-		console.error('Ошибка обработки успешной оплаты:', error)
-		res.redirect('/payment-error')
+		console.error('❌ Error in Success URL handler:', error)
+		return res.redirect('/payment-error?reason=server_error')
 	}
 })
+
+// Функция для создания страницы ожидания в /success
+function createSuccessWaitingPage(orderId, params) {
+	return `
+	<!DOCTYPE html>
+	<html lang="ru">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Подтверждение платежа - KF WATCH FACE</title>
+		<style>
+			body {
+				font-family: 'Comfortaa', cursive;
+				background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+				min-height: 100vh;
+				margin: 0;
+				padding: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.success-container {
+				max-width: 700px;
+				width: 100%;
+				background: white;
+				border-radius: 20px;
+				padding: 40px;
+				box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+				text-align: center;
+			}
+			.success-icon {
+				font-size: 4rem;
+				color: #FF9800;
+				margin-bottom: 20px;
+			}
+			.spinner {
+				width: 60px;
+				height: 60px;
+				border: 5px solid #f3f3f3;
+				border-top: 5px solid #8b7355;
+				border-radius: 50%;
+				animation: spin 1s linear infinite;
+				margin: 30px auto;
+			}
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			}
+			.payment-info {
+				background: #f9f9f9;
+				padding: 20px;
+				border-radius: 10px;
+				margin: 20px 0;
+				text-align: left;
+			}
+			.info-row {
+				display: flex;
+				justify-content: space-between;
+				margin-bottom: 8px;
+				padding-bottom: 8px;
+				border-bottom: 1px solid #eee;
+			}
+			.info-label {
+				color: #666;
+				font-weight: 500;
+			}
+			.info-value {
+				color: #1a1a1a;
+				font-weight: 600;
+			}
+			.btn-check {
+				background: #8b7355;
+				color: white;
+				border: none;
+				padding: 12px 30px;
+				border-radius: 25px;
+				font-family: 'Comfortaa', cursive;
+				font-weight: 600;
+				cursor: pointer;
+				margin: 20px 10px;
+				transition: background 0.3s;
+			}
+			.btn-check:hover {
+				background: #a89176;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="success-container">
+			<div class="success-icon">⏳</div>
+			<h1>Подтверждаем ваш платеж</h1>
+			<p>Пожалуйста, подождите несколько секунд...</p>
+			<div class="spinner"></div>
+			
+			<div class="payment-info">
+				<h3 style="margin-top: 0; color: #8b7355;">Детали платежа:</h3>
+				<div class="info-row">
+					<span class="info-label">Номер заказа:</span>
+					<span class="info-value">#${orderId}</span>
+				</div>
+				<div class="info-row">
+					<span class="info-label">Сумма:</span>
+					<span class="info-value">${params.OutSum} ₽</span>
+				</div>
+				<div class="info-row">
+					<span class="info-label">Товар:</span>
+					<span class="info-value">${
+						params.shp_shp_product_id || params.shp_product_id || 'Неизвестно'
+					}</span>
+				</div>
+				<div class="info-row">
+					<span class="info-label">Режим:</span>
+					<span class="info-value">${params.IsTest === '1' ? 'Тестовый' : 'Боевой'}</span>
+				</div>
+			</div>
+			
+			<p style="color: #666; margin-top: 20px;">
+				Мы подтверждаем ваш платеж. Обычно это занимает 5-10 секунд.
+				<br>После подтверждения вы будете автоматически перенаправлены на страницу скачивания.
+			</p>
+			
+			<div>
+				<button class="btn-check" onclick="window.location.reload()">
+					<i class="fas fa-sync-alt"></i> Проверить статус
+				</button>
+				<button class="btn-check" onclick="window.location.href='/'">
+					<i class="fas fa-home"></i> На главную
+				</button>
+			</div>
+			
+			<p style="color: #888; font-size: 0.9rem; margin-top: 30px;">
+				Если перенаправление не произошло в течение 60 секунд, 
+				<br>пожалуйста, свяжитесь с поддержкой в Telegram.
+			</p>
+			
+			<script>
+				// Автоматическая проверка статуса через 5 секунд
+				setTimeout(() => {
+					window.location.reload();
+				}, 5000);
+			</script>
+		</div>
+	</body>
+	</html>
+	`
+}
 
 app.get('/api/robokassa/fail', async (req, res) => {
 	try {
@@ -1118,119 +1236,115 @@ app.get('/purchase/receiving/:receivingId', (req, res) => {
 // Функция создания HTML страницы получения
 function createReceivingPage(order) {
 	return `
-        <!DOCTYPE html>
-        <html lang="ru">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Получение заказа - KF WATCH FACE</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: 'Comfortaa', cursive; background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%); min-height: 100vh; }
-                .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-                .header { background: white; padding: 20px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-                .logo { display: flex; align-items: center; gap: 15px; color: #8b7355; text-decoration: none; font-weight: 700; font-size: 1.5rem; }
-                .content { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-                .success-icon { text-align: center; font-size: 4rem; color: #4CAF50; margin-bottom: 20px; }
-                h1 { text-align: center; margin-bottom: 30px; color: #1a1a1a; }
-                .order-info { background: #f9f9f9; padding: 25px; border-radius: 10px; margin-bottom: 30px; }
-                .info-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-                .info-row:last-child { border-bottom: none; margin-bottom: 0; }
-                .label { color: #666; font-weight: 500; }
-                .value { color: #1a1a1a; font-weight: 600; }
-                .download-section { text-align: center; margin-top: 30px; }
-                .btn-download { background: linear-gradient(135deg, #8b7355 0%, #a89176 100%); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: transform 0.3s; text-decoration: none; display: inline-block; }
-                .btn-download:hover { transform: translateY(-2px); }
-                .instructions { margin-top: 40px; padding: 20px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid #2196F3; }
-                .instructions h3 { color: #2196F3; margin-bottom: 15px; }
-                .warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin-top: 20px; }
-                .support { margin-top: 30px; text-align: center; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <a href="/" class="logo">
-                        <i class="fas fa-clock"></i>
-                        <span>KF WATCH FACE</span>
-                    </a>
-                </div>
-                
-                <div class="content">
-                    <div class="success-icon">✓</div>
-                    <h1>Оплата успешно завершена!</h1>
-                    
-                    <div class="order-info">
-                        <div class="info-row">
-                            <span class="label">Номер заказа:</span>
-                            <span class="value">${order.orderId}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Циферблат:</span>
-                            <span class="value">${
-															order.productName || order.productId
-														}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Email:</span>
-                            <span class="value">${order.customerEmail}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Сумма:</span>
-                            <span class="value">${order.price} ₽</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Статус:</span>
-                            <span class="value" style="color: #4CAF50;">Оплачено ✓</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Дата оплаты:</span>
-                            <span class="value">${new Date(
-															order.paidAt || order.createdAt
-														).toLocaleString('ru-RU')}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="download-section">
-                        <h2>Скачайте файл циферблата</h2>
-                        <a href="/api/download/watchface/${
-													order.receivingId
-												}" class="btn-download">
-                            <i class="fas fa-download"></i> Скачать файл (*.apk)
-                        </a>
-                        <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
-                            Файл будет скачан в формате APK для установки на часы
-                        </p>
-                    </div>
-                    
-                    <div class="instructions">
-                        <h3><i class="fas fa-info-circle"></i> Как установить циферблат:</h3>
-                        <ol style="margin-left: 20px; margin-top: 15px;">
-                            <li>Скачайте файл выше на ваш телефон</li>
-                            <li>Установите приложение WearLoad, ADB App Control или Bugjaeger</li>
-                            <li>Подключите часы к телефону по Bluetooth</li>
-                            <li>Загрузите файл .apk через приложение на часы</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Важно:</strong> Для установки необходимы умные часы с Wear OS и подключение к телефону.
-                    </div>
-                    
-                    <div class="support">
-                        <p>Нужна помощь с установкой?</p>
-                        <a href="https://t.me/krek_free" target="_blank" style="color: #0088cc; text-decoration: none;">
-                            <i class="fab fa-telegram"></i> Написать в Telegram
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-        </body>
-        </html>
-    `
+		<!DOCTYPE html>
+		<html lang="ru">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Получение заказа - KF WATCH FACE</title>
+			<style>
+				* { margin: 0; padding: 0; box-sizing: border-box; }
+				body { font-family: 'Comfortaa', cursive; background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%); min-height: 100vh; }
+				.container { max-width: 800px; margin: 0 auto; padding: 20px; }
+				.header { background: white; padding: 20px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+				.logo { display: flex; align-items: center; gap: 15px; color: #8b7355; text-decoration: none; font-weight: 700; font-size: 1.5rem; }
+				.content { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+				.success-icon { text-align: center; font-size: 4rem; color: #4CAF50; margin-bottom: 20px; }
+				h1 { text-align: center; margin-bottom: 30px; color: #1a1a1a; }
+				.order-info { background: #f9f9f9; padding: 25px; border-radius: 10px; margin-bottom: 30px; }
+				.info-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+				.info-row:last-child { border-bottom: none; margin-bottom: 0; }
+				.label { color: #666; font-weight: 500; }
+				.value { color: #1a1a1a; font-weight: 600; }
+				.download-section { text-align: center; margin-top: 30px; }
+				.btn-download { background: linear-gradient(135deg, #8b7355 0%, #a89176 100%); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: transform 0.3s; text-decoration: none; display: inline-block; }
+				.btn-download:hover { transform: translateY(-2px); }
+				.instructions { margin-top: 40px; padding: 20px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid #2196F3; }
+				.instructions h3 { color: #2196F3; margin-bottom: 15px; }
+				.warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin-top: 20px; }
+				.support { margin-top: 30px; text-align: center; }
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<div class="header">
+					<a href="/" class="logo">
+						<i class="fas fa-clock"></i>
+						<span>KF WATCH FACE</span>
+					</a>
+				</div>
+				
+				<div class="content">
+					<div class="success-icon">✓</div>
+					<h1>Оплата успешно завершена!</h1>
+					
+					<div class="order-info">
+						<div class="info-row">
+							<span class="label">Номер заказа:</span>
+							<span class="value">${order.orderId}</span>
+						</div>
+						<div class="info-row">
+							<span class="label">Циферблат:</span>
+							<span class="value">${order.productName || order.productId}</span>
+						</div>
+						<div class="info-row">
+							<span class="label">Email:</span>
+							<span class="value">${order.customerEmail}</span>
+						</div>
+						<div class="info-row">
+							<span class="label">Сумма:</span>
+							<span class="value">${order.price} ₽</span>
+						</div>
+						<div class="info-row">
+							<span class="label">Статус:</span>
+							<span class="value" style="color: #4CAF50;">Оплачено ✓</span>
+						</div>
+						<div class="info-row">
+							<span class="label">Дата оплаты:</span>
+							<span class="value">${new Date(order.paidAt || order.createdAt).toLocaleString(
+								'ru-RU'
+							)}</span>
+						</div>
+					</div>
+					
+					<div class="download-section">
+						<h2>Скачайте файл циферблата</h2>
+						<a href="/api/download/watchface/${order.receivingId}" class="btn-download">
+							<i class="fas fa-download"></i> Скачать файл (*.apk)
+						</a>
+						<p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+							Файл будет скачан в формате APK для установки на часы
+						</p>
+					</div>
+					
+					<div class="instructions">
+						<h3><i class="fas fa-info-circle"></i> Как установить циферблат:</h3>
+						<ol style="margin-left: 20px; margin-top: 15px;">
+							<li>Скачайте файл выше на ваш телефон</li>
+							<li>Установите приложение WearLoad, ADB App Control или Bugjaeger</li>
+							<li>Подключите часы к телефону по Bluetooth</li>
+							<li>Загрузите файл .apk через приложение на часы</li>
+						</ol>
+					</div>
+					
+					<div class="warning">
+						<i class="fas fa-exclamation-triangle"></i>
+						<strong>Важно:</strong> Для установки необходимы умные часы с Wear OS и подключение к телефону.
+					</div>
+					
+					<div class="support">
+						<p>Нужна помощь с установкой?</p>
+						<a href="https://t.me/krek_free" target="_blank" style="color: #0088cc; text-decoration: none;">
+							<i class="fab fa-telegram"></i> Написать в Telegram
+						</a>
+					</div>
+				</div>
+			</div>
+			
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+		</body>
+		</html>
+	`
 }
 
 // API для проверки статуса заказа
@@ -1945,9 +2059,10 @@ app.get('/purchase.html', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'purchase.html'))
 })
 
-app.get('/success', (req, res) => {
-	res.sendFile(path.join(__dirname, 'public', 'html', 'success.html'))
-})
+// УДАЛИТЕ старый /success endpoint (заменен на обработчик выше)
+// app.get('/success', (req, res) => {
+// 	res.sendFile(path.join(__dirname, 'public', 'html', 'success.html'))
+// })
 
 app.get('/fail', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'html', 'fail.html'))
@@ -2101,107 +2216,174 @@ app.use((err, req, res, next) => {
 	res.status(500).send('Внутренняя ошибка сервера')
 })
 
-// Страница успешной оплаты
+// Страница успешной оплаты (упрощенная версия для ручного перехода)
 app.get('/payment-success', (req, res) => {
 	const orderId = req.query.orderId
 	res.send(`
-        <!DOCTYPE html>
-        <html lang="ru">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Оплата успешна</title>
-            <style>
-                .success-container {
-                    max-width: 600px;
-                    margin: 100px auto;
-                    padding: 40px;
-                    background: white;
-                    border-radius: 20px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                    text-align: center;
-                }
-                .success-icon {
-                    font-size: 4rem;
-                    color: #4CAF50;
-                    margin-bottom: 20px;
-                }
-                .btn-return {
-                    display: inline-block;
-                    margin-top: 20px;
-                    padding: 12px 30px;
-                    background: #8b7355;
-                    color: white;
-                    border-radius: 25px;
-                    text-decoration: none;
-                    font-weight: 600;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="success-container">
-                <div class="success-icon">✓</div>
-                <h1>Оплата успешно завершена!</h1>
-                <p>Номер вашего заказа: <strong>${
-									orderId || 'неизвестен'
-								}</strong></p>
-                <p>Переходите на страницу получения заказа для скачивания файла.</p>
-                <a href="/" class="btn-return">Вернуться в магазин</a>
-            </div>
-        </body>
-        </html>
-    `)
+		<!DOCTYPE html>
+		<html lang="ru">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Оплата успешна</title>
+			<style>
+				.success-container {
+					max-width: 600px;
+					margin: 100px auto;
+					padding: 40px;
+					background: white;
+					border-radius: 20px;
+					box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+					text-align: center;
+				}
+				.success-icon {
+					font-size: 4rem;
+					color: #4CAF50;
+					margin-bottom: 20px;
+				}
+				.btn-return {
+					display: inline-block;
+					margin-top: 20px;
+					padding: 12px 30px;
+					background: #8b7355;
+					color: white;
+					border-radius: 25px;
+					text-decoration: none;
+					font-weight: 600;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="success-container">
+				<div class="success-icon">✓</div>
+				<h1>Оплата успешно завершена!</h1>
+				<p>Номер вашего заказа: <strong>${orderId || 'неизвестен'}</strong></p>
+				<p>Переходите на страницу получения заказа для скачивания файла.</p>
+				<a href="/" class="btn-return">Вернуться в магазин</a>
+			</div>
+		</body>
+		</html>
+	`)
 })
 
 app.get('/payment-failed', (req, res) => {
 	const orderId = req.query.orderId
 	res.send(`
-        <!DOCTYPE html>
-        <html lang="ru">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Оплата не прошла</title>
-            <style>
-                .error-container {
-                    max-width: 600px;
-                    margin: 100px auto;
-                    padding: 40px;
-                    background: white;
-                    border-radius: 20px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                    text-align: center;
-                }
-                .error-icon {
-                    font-size: 4rem;
-                    color: #ff6b6b;
-                    margin-bottom: 20px;
-                }
-                .btn-return {
-                    display: inline-block;
-                    margin-top: 20px;
-                    padding: 12px 30px;
-                    background: #8b7355;
-                    color: white;
-                    border-radius: 25px;
-                    text-decoration: none;
-                    font-weight: 600;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="error-container">
-                <div class="error-icon">✗</div>
-                <h1>Оплата не завершена</h1>
-                <p>Номер вашего заказа: <strong>${
-									orderId || 'неизвестен'
-								}</strong></p>
-                <p>Пожалуйста, попробуйте еще раз.</p>
-                <a href="/" class="btn-return">Вернуться в магазин</a>
-            </div>
-        </body>
-        </html>
-    `)
+		<!DOCTYPE html>
+		<html lang="ru">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Оплата не прошла</title>
+			<style>
+				.error-container {
+					max-width: 600px;
+					margin: 100px auto;
+					padding: 40px;
+					background: white;
+					border-radius: 20px;
+					box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+					text-align: center;
+				}
+				.error-icon {
+					font-size: 4rem;
+					color: #ff6b6b;
+					margin-bottom: 20px;
+				}
+				.btn-return {
+					display: inline-block;
+					margin-top: 20px;
+					padding: 12px 30px;
+					background: #8b7355;
+					color: white;
+					border-radius: 25px;
+					text-decoration: none;
+					font-weight: 600;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="error-container">
+				<div class="error-icon">✗</div>
+				<h1>Оплата не завершена</h1>
+				<p>Номер вашего заказа: <strong>${orderId || 'неизвестен'}</strong></p>
+				<p>Пожалуйста, попробуйте еще раз.</p>
+				<a href="/" class="btn-return">Вернуться в магазин</a>
+			</div>
+		</body>
+		</html>
+	`)
+})
+
+app.get('/payment-error', (req, res) => {
+	const reason = req.query.reason
+	const reasonTexts = {
+		missing_params: 'Отсутствуют обязательные параметры оплаты',
+		order_not_found: 'Заказ не найден',
+		server_error: 'Ошибка сервера',
+		invalid_status: 'Неверный статус заказа',
+	}
+
+	res.send(`
+		<!DOCTYPE html>
+		<html lang="ru">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Ошибка оплаты</title>
+			<style>
+				.error-container {
+					max-width: 600px;
+					margin: 100px auto;
+					padding: 40px;
+					background: white;
+					border-radius: 20px;
+					box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+					text-align: center;
+				}
+				.error-icon {
+					font-size: 4rem;
+					color: #ff6b6b;
+					margin-bottom: 20px;
+				}
+				.btn-return {
+					display: inline-block;
+					margin-top: 20px;
+					padding: 12px 30px;
+					background: #8b7355;
+					color: white;
+					border-radius: 25px;
+					text-decoration: none;
+					font-weight: 600;
+				}
+				.btn-support {
+					display: inline-block;
+					margin-top: 10px;
+					padding: 10px 25px;
+					background: #0088cc;
+					color: white;
+					border-radius: 25px;
+					text-decoration: none;
+					font-weight: 600;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="error-container">
+				<div class="error-icon">⚠️</div>
+				<h1>Произошла ошибка при обработке оплаты</h1>
+				<p>${reasonTexts[reason] || 'Неизвестная ошибка'}</p>
+				<p>Номер ошибки: <code>${reason || 'неизвестно'}</code></p>
+				<p>Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.</p>
+				<a href="/" class="btn-return">Вернуться в магазин</a>
+				<br>
+				<a href="https://t.me/krek_free" target="_blank" class="btn-support">
+					<i class="fab fa-telegram"></i> Связаться с поддержкой
+				</a>
+			</div>
+		</body>
+		</html>
+	`)
 })
 
 // Запуск сервера
@@ -2214,12 +2396,13 @@ app.listen(PORT, async () => {
 ██║  ██║██╔══╝  ██╔══██║   ██║   ╚════██║██╔══╝  ██╔══██╗
 ██████╔╝███████╗██║  ██║   ██║   ███████║███████╗██║  ██║
 ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝
-    `)
+	`)
 
 	console.log(`🚀 Сервер запущен на порту: ${PORT}`)
 	console.log(`📁 Админ панель: http://localhost:${PORT}/admin`)
 	console.log(`🛒 Магазин: http://localhost:${PORT}/`)
 	console.log(`💰 Интеграция с Robokassa: активирована`)
+	console.log(`✅ Success URL: https://kf-watch-face.onrender.com/success`)
 	console.log(`🔥 Firebase интеграция: включена (версия 10+)`)
 	console.log(`🔗 Система получения заказов: включена`)
 	console.log(`⚡ Сжатие GZIP: включено`)
