@@ -143,6 +143,236 @@ function trackDownload(receivingId) {
 	}
 }
 
+// Инициализация аккордеона FAQ
+function initFaqAccordion() {
+	const faqQuestions = document.querySelectorAll('#faqModal .faq-question')
+
+	faqQuestions.forEach(question => {
+		// Удаляем старые обработчики
+		question.removeEventListener('click', handleFaqClick)
+		// Добавляем новый обработчик
+		question.addEventListener('click', handleFaqClick)
+	})
+}
+
+function handleFaqClick() {
+	const answer = this.nextElementSibling
+	const toggleIcon = this.querySelector('.faq-toggle i')
+
+	// Переключаем класс active
+	answer.classList.toggle('active')
+
+	// Меняем иконку
+	if (answer.classList.contains('active')) {
+		toggleIcon.className = 'fas fa-chevron-up'
+	} else {
+		toggleIcon.className = 'fas fa-chevron-down'
+	}
+}
+
+// Инициализация кнопок выбора метода установки
+function initInstallMethodButtons() {
+	const methodButtons = document.querySelectorAll(
+		'#installMethodModal .install-method-btn'
+	)
+
+	methodButtons.forEach(button => {
+		// Удаляем старые обработчики
+		button.removeEventListener('click', handleMethodButtonClick)
+		// Добавляем новый обработчик
+		button.addEventListener('click', handleMethodButtonClick)
+	})
+}
+
+function handleMethodButtonClick() {
+	const method = this.dataset.method
+
+	// Закрываем текущее окно
+	const installModal = document.getElementById('installMethodModal')
+	if (installModal) {
+		installModal.classList.remove('show')
+		document.body.style.overflow = 'auto'
+	}
+
+	// Открываем соответствующее руководство БЕЗ задержки
+	if (method === 'wearload') {
+		const wearloadModal = document.getElementById('wearloadGuideModal')
+		if (wearloadModal) {
+			wearloadModal.classList.add('show')
+			document.body.style.overflow = 'hidden'
+		}
+	} else if (method === 'adb') {
+		const adbModal = document.getElementById('adbGuideModal')
+		if (adbModal) {
+			adbModal.classList.add('show')
+			document.body.style.overflow = 'hidden'
+		}
+	} else if (method === 'bugjaeger') {
+		const bugjaegerModal = document.getElementById('bugjaegerGuideModal')
+		if (bugjaegerModal) {
+			bugjaegerModal.classList.add('show')
+			document.body.style.overflow = 'hidden'
+		}
+	}
+}
+
+// Функция для открытия модального окна с дополнительной инициализацией
+function openModalWithInit(modalId) {
+	const modal = document.getElementById(modalId)
+	if (modal) {
+		modal.classList.add('show')
+		document.body.style.overflow = 'hidden'
+
+		// Инициализируем контент в зависимости от типа модального окна
+		if (modalId === 'faqModal') {
+			// Инициализируем аккордеон FAQ
+			initFaqAccordion()
+		} else if (modalId === 'installMethodModal') {
+			// Инициализируем кнопки выбора метода установки
+			initInstallMethodButtons()
+		}
+	}
+}
+
+// Инициализация всех модальных окон
+function initAllModals() {
+	// Инициализируем кнопки инструкций на странице
+	const wearloadBtn = document.getElementById('wearloadBtn')
+	const adbBtn = document.getElementById('adbBtn')
+	const bugjaegerBtn = document.getElementById('bugjaegerBtn')
+
+	if (wearloadBtn) {
+		wearloadBtn.addEventListener('click', function (e) {
+			e.preventDefault()
+			// Открываем модальное окно WearLoad
+			const modal = document.getElementById('wearloadGuideModal')
+			if (modal) {
+				modal.classList.add('show')
+				document.body.style.overflow = 'hidden'
+			}
+		})
+	}
+
+	if (adbBtn) {
+		adbBtn.addEventListener('click', function (e) {
+			e.preventDefault()
+			// Открываем модальное окно ADB
+			const modal = document.getElementById('adbGuideModal')
+			if (modal) {
+				modal.classList.add('show')
+				document.body.style.overflow = 'hidden'
+			}
+		})
+	}
+
+	if (bugjaegerBtn) {
+		bugjaegerBtn.addEventListener('click', function (e) {
+			e.preventDefault()
+			// Открываем модальное окно Bugjaeger
+			const modal = document.getElementById('bugjaegerGuideModal')
+			if (modal) {
+				modal.classList.add('show')
+				document.body.style.overflow = 'hidden'
+			}
+		})
+	}
+
+	// Инициализация модальных окон для ссылок в хедере и футере
+	// Контакты
+	document
+		.querySelectorAll('#contactsLink, #burgerContactsLink, #contactsLinkFooter')
+		.forEach(link => {
+			link.addEventListener('click', function (e) {
+				e.preventDefault()
+				openModalWithInit('contactsModal')
+			})
+		})
+
+	// FAQ
+	document
+		.querySelectorAll('#faqLink, #burgerFaqLink, #faqLinkFooter')
+		.forEach(link => {
+			link.addEventListener('click', function (e) {
+				e.preventDefault()
+				openModalWithInit('faqModal')
+			})
+		})
+
+	// О нас
+	document
+		.querySelectorAll('#aboutLink, #burgerAboutLink, #aboutLinkFooter')
+		.forEach(link => {
+			link.addEventListener('click', function (e) {
+				e.preventDefault()
+				openModalWithInit('aboutModal')
+			})
+		})
+
+	// Инструкция по установке
+	document
+		.querySelectorAll(
+			'#installGuideLink, #burgerInstallGuideLink, #installGuideLinkFooter'
+		)
+		.forEach(link => {
+			link.addEventListener('click', function (e) {
+				e.preventDefault()
+				openModalWithInit('installMethodModal')
+			})
+		})
+
+	// Добавляем обработчики закрытия для всех модальных окон
+	document.querySelectorAll('.about-modal-close').forEach(closeBtn => {
+		closeBtn.addEventListener('click', function () {
+			const modal = this.closest('.about-modal')
+			if (modal) {
+				modal.classList.remove('show')
+				document.body.style.overflow = 'auto'
+			}
+		})
+	})
+
+	// Закрытие по клику вне окна
+	document.querySelectorAll('.about-modal').forEach(modal => {
+		modal.addEventListener('click', function (e) {
+			if (e.target === this) {
+				this.classList.remove('show')
+				document.body.style.overflow = 'auto'
+			}
+		})
+	})
+
+	// Обработка клавиши Escape
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape') {
+			document.querySelectorAll('.about-modal.show').forEach(modal => {
+				modal.classList.remove('show')
+				document.body.style.overflow = 'auto'
+			})
+		}
+	})
+
+	// Бургер-меню
+	const burgerMenuBtn = document.getElementById('burgerMenuBtn')
+	const burgerDropdown = document.getElementById('burgerDropdown')
+
+	if (burgerMenuBtn && burgerDropdown) {
+		burgerMenuBtn.addEventListener('click', function (e) {
+			e.stopPropagation()
+			burgerDropdown.classList.toggle('show')
+		})
+
+		// Закрытие при клике вне меню
+		document.addEventListener('click', function (e) {
+			if (
+				!burgerDropdown.contains(e.target) &&
+				!burgerMenuBtn.contains(e.target)
+			) {
+				burgerDropdown.classList.remove('show')
+			}
+		})
+	}
+}
+
 // Основная функция инициализации
 async function initReceivingPage() {
 	console.log('🚀 Инициализация страницы получения заказа...')
@@ -156,15 +386,30 @@ async function initReceivingPage() {
 		// Показываем размер файла если есть
 		const fileSizeElement = document.getElementById('fileSize')
 		if (fileSizeElement && order.productId) {
-			// Здесь можно получить реальный размер файла через API
 			fileSizeElement.textContent = '~5-10 MB'
 		}
 	}
+
+	// Инициализируем все модальные окна
+	initAllModals()
+
+	// Проверяем доступность модальных окон
+	setTimeout(() => {
+		const modal = document.getElementById('contactsModal')
+		console.log(
+			'Модальные окна на странице получения:',
+			modal ? '✅ Загружены' : '❌ Не загружены'
+		)
+
+		// Также проверяем наличие кнопок в модальном окне
+		const methodButtons = document.querySelectorAll('.install-method-btn')
+		console.log('Кнопки методов установки найдены:', methodButtons.length)
+	}, 100)
 }
 
 // Запуск при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-	// Добавляем CSS анимацию
+	// Добавляем CSS анимации
 	const style = document.createElement('style')
 	style.textContent = `
         @keyframes spin {

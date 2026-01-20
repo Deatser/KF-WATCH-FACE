@@ -1,0 +1,420 @@
+/* receiving.css - Стили для страницы получения заказа */
+
+/* Основные стили для контейнера */
+.receiving-container {
+	background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+	padding: 0;
+	min-height: calc(100vh - 80px);
+	display: flex;
+	align-items: center;
+}
+
+.receiving-content {
+	max-width: 800px;
+	margin: 40px auto;
+	background: white;
+	border-radius: 20px;
+	padding: 40px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+	animation: fadeIn 0.6s ease;
+}
+
+/* Заголовок успеха с анимацией */
+.success-header {
+	text-align: center;
+	margin-bottom: 40px;
+}
+
+.success-icon {
+	font-size: 5rem;
+	color: #4caf50;
+	margin-bottom: 20px;
+	animation: pulseCheck 1s ease-in-out;
+}
+
+@keyframes pulseCheck {
+	0% {
+		transform: scale(1);
+		opacity: 0.7;
+	}
+	50% {
+		transform: scale(1.2);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.success-header h1 {
+	color: #1a1a1a;
+	font-size: 2.5rem;
+	margin-bottom: 15px;
+	font-weight: 700;
+}
+
+.success-header p {
+	color: #666;
+	font-size: 1.2rem;
+	font-weight: 300;
+}
+
+/* Детали заказа */
+.order-details {
+	background: #f9f9f9;
+	border-radius: 15px;
+	padding: 30px;
+	margin-bottom: 40px;
+	border: 1px solid #f0f0f0;
+}
+
+.order-details h2 {
+	color: #1a1a1a;
+	font-size: 1.5rem;
+	margin-bottom: 25px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.detail-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 15px 0;
+	border-bottom: 1px solid #eee;
+}
+
+.detail-item:last-child {
+	border-bottom: none;
+}
+
+.detail-label {
+	color: #666;
+	font-weight: 500;
+	flex: 1;
+	font-size: 0.95rem;
+}
+
+.detail-value {
+	color: #1a1a1a;
+	font-weight: 600;
+	flex: 1;
+	text-align: right;
+	font-size: 0.95rem;
+}
+
+/* Секция скачивания */
+.download-section {
+	text-align: center;
+	margin: 40px 0;
+	padding: 40px;
+	background: linear-gradient(135deg, #f9f5f0 0%, #f0e6d6 100%);
+	border-radius: 15px;
+	border: 2px solid #e8dfd0;
+}
+
+.download-section h2 {
+	color: #1a1a1a;
+	font-size: 1.8rem;
+	margin-bottom: 15px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+}
+
+.btn-download {
+	background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+	color: white;
+	border: none;
+	padding: 18px 50px;
+	border-radius: 30px;
+	font-size: 1.2rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	font-family: 'Comfortaa', cursive;
+	box-shadow: 0 8px 20px rgba(139, 115, 85, 0.25);
+}
+
+.btn-download:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 12px 25px rgba(139, 115, 85, 0.35);
+}
+
+.btn-download:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
+}
+
+.btn-download:disabled:hover {
+	transform: none;
+	box-shadow: 0 8px 20px rgba(139, 115, 85, 0.25);
+}
+
+/* Блок напоминания */
+.reminder-box {
+	background: linear-gradient(
+		135deg,
+		rgba(139, 115, 85, 0.05) 0%,
+		rgba(168, 145, 118, 0.05) 100%
+	);
+	border-radius: 15px;
+	padding: 25px;
+	margin: 30px 0;
+	border-left: 4px solid #8b7355;
+}
+
+.reminder-box h3 {
+	color: #1a1a1a;
+	font-size: 1.3rem;
+	margin-bottom: 15px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.reminder-box p {
+	color: #555;
+	line-height: 1.6;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 1rem;
+}
+
+.reminder-box i {
+	color: #8b7355;
+}
+
+/* Инструкции по установке */
+.instructions {
+	margin: 40px 0;
+	padding: 30px;
+	background: rgba(255, 255, 255, 0.9);
+	border-radius: 15px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+	border: 1px solid #f0f0f0;
+}
+
+.instructions h3 {
+	color: #1a1a1a;
+	font-size: 1.5rem;
+	margin-bottom: 20px;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+}
+
+.install-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+	max-width: 600px;
+	margin: 0 auto;
+}
+
+.install-btn {
+	background: white;
+	border: 2px solid #8b7355;
+	border-radius: 12px;
+	padding: 20px;
+	font-family: 'Comfortaa', cursive;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #1a1a1a;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-align: center;
+	display: block;
+	width: 100%;
+}
+
+.install-btn:hover {
+	background: #8b7355;
+	color: white;
+	transform: translateY(-2px);
+	box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
+}
+
+.install-btn i {
+	margin-right: 10px;
+	color: #8b7355;
+	transition: color 0.3s ease;
+}
+
+.install-btn:hover i {
+	color: white;
+}
+
+.install-btn span {
+	display: block;
+	font-size: 0.9rem;
+	font-weight: 400;
+	color: #666;
+	margin-top: 5px;
+	font-style: italic;
+}
+
+.install-btn:hover span {
+	color: rgba(255, 255, 255, 0.9);
+}
+
+/* Кнопка возврата в магазин */
+.back-to-shop {
+	text-align: center;
+	margin-top: 40px;
+	padding-top: 30px;
+	border-top: 1px solid #eee;
+}
+
+.back-to-shop .btn-buy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 14px 35px;
+	background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-size: 1rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-decoration: none;
+	font-family: 'Comfortaa', cursive;
+	letter-spacing: 0.5px;
+}
+
+.back-to-shop .btn-buy:hover {
+	background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 6px 15px rgba(139, 115, 85, 0.3);
+}
+
+/* Бейдж статуса */
+.status-badge {
+	display: inline-block;
+	padding: 8px 15px;
+	border-radius: 20px;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.status-paid {
+	background: #4caf50;
+	color: white;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 768px) {
+	.receiving-content {
+		padding: 25px;
+		margin: 20px auto;
+	}
+
+	.success-icon {
+		font-size: 4rem;
+	}
+
+	.success-header h1 {
+		font-size: 2rem;
+	}
+
+	.success-header p {
+		font-size: 1.1rem;
+	}
+
+	.detail-item {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 5px;
+	}
+
+	.detail-value {
+		text-align: left;
+	}
+
+	.download-section {
+		padding: 25px;
+	}
+
+	.btn-download {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.install-buttons {
+		gap: 10px;
+	}
+
+	.install-btn {
+		padding: 15px;
+		font-size: 1rem;
+	}
+}
+
+@media (max-width: 576px) {
+	.receiving-content {
+		padding: 20px;
+		margin: 15px auto;
+		border-radius: 15px;
+	}
+
+	.success-icon {
+		font-size: 3.5rem;
+	}
+
+	.success-header h1 {
+		font-size: 1.8rem;
+	}
+
+	.order-details {
+		padding: 20px;
+	}
+
+	.download-section {
+		padding: 20px;
+	}
+
+	.download-section h2 {
+		font-size: 1.5rem;
+	}
+
+	.instructions {
+		padding: 20px;
+	}
+
+	.instructions h3 {
+		font-size: 1.3rem;
+	}
+
+	.reminder-box {
+		padding: 20px;
+	}
+}
+
+/* Исправление белой полосы снизу */
+.footer {
+	margin-top: 0;
+	background: #1a1a1a;
+}
