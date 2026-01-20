@@ -789,6 +789,10 @@ app.post('/api/debug/robokassa-data', (req, res) => {
 
 // ==================== SUCCESS URL ОБРАБОТКА ====================
 
+// ==================== SUCCESS URL С ПРОВЕРКОЙ ПОДПИСИ ====================
+
+// ==================== SUCCESS URL С ПРОВЕРКОЙ ПОДПИСИ ====================
+
 app.get('/success', async (req, res) => {
 	try {
 		const params = req.query
@@ -805,105 +809,168 @@ app.get('/success', async (req, res) => {
 			return res.redirect('/payment-error?reason=missing_params')
 		}
 
-		// Получаем заказ из Firebase
+		// ========== ПРОВЕРКА ПОДПИСИ В SUCCESS URL ==========
+		console.log('🔐 Checking signature in Success URL...')
+
+		// Собираем данные для проверки подписи Python
+		const pythonData = {
+			action: 'check_redirect_signature',
+			out_sum: parseFloat(params.OutSum),
+			inv_id: orderId,
+			signature: params.SignatureValue,
+			IsTest: params.IsTest || '0',
+			Culture: params.Culture || 'ru',
+			shp_shp_product_id:
+				params.shp_shp_product_id || params.shp_product_id || 'unknown',
+		}
+
+		// Добавляем ВСЕ shp_ параметры
+		Object.keys(params).forEach(key => {
+			if (key.startsWith('shp_')) {
+				pythonData[key] = params[key]
+			}
+		})
+
+		console.log(
+			'🐍 Calling Python for signature verification with data:',
+			pythonData
+		)
+
+		// Вызываем Python скрипт для проверки подписи
+		const signatureCheck = await callPythonScript(
+			'robokassa_handler.py',
+			pythonData
+		)
+
+		console.log('✅ Python signature check returned:', signatureCheck)
+
+		if (!signatureCheck.success) {
+			console.error('❌ Python script error:', signatureCheck.error)
+			return res.redirect('/payment-error?reason=python_error')
+		}
+
+		if (!signatureCheck.is_valid) {
+			console.error('❌ INVALID SIGNATURE in Success URL')
+			console.error('Signature validation failed. Details:', signatureCheck)
+			return res.redirect('/payment-error?reason=invalid_signature')
+		}
+
+		console.log('🎉 Signature VALID! Payment confirmed via Success URL')
+		console.log('📋 Method used:', signatureCheck.method || 'unknown')
+
+		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
 		let order = await getOrderByOrderIdFromFirebase(orderId)
 
 		if (!order) {
-			console.log(`⚠️ Order ${orderId} not found in Firebase`)
+			console.log(`🆕 Creating new order from Success URL data...`)
 
-			// Пробуем локальный backup
-			order = getOrderByOrderId(orderId)
+			// Создаем новый заказ из параметров Success URL
+			order = {
+				orderId: orderId,
+				productId:
+					params.shp_shp_product_id || params.shp_product_id || 'unknown',
+				customerEmail: params.shp_email || 'unknown@example.com',
+				price: parseFloat(params.OutSum),
+				productName: `Циферблат ${
+					params.shp_shp_product_id || params.shp_product_id || 'Unknown'
+				}`,
+				status: 'paid', // Подпись валидна = оплачен
+				paymentUrl: null,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				paidAt: new Date().toISOString(),
+				robokassaParams: params,
+				robokassaData: {
+					is_test: params.IsTest || '0',
+					method: 'robokassa',
+					signature_valid: true,
+					confirmed_via: 'success_url',
+					confirmed_at: new Date().toISOString(),
+					signature_check: signatureCheck,
+				},
+				isDaily: false,
+				receivingId: null,
+				receivingUrl: null,
+			}
 
-			if (!order) {
-				console.log(`🆕 Creating new order from Success URL data...`)
+			// Сохраняем в Firebase
+			await set(ref(database, `orders/${orderId}`), order)
+			console.log(`✅ Created new order ${orderId} from Success URL`)
+		} else {
+			console.log(`✅ Found existing order ${orderId}`)
+			console.log(`📊 Current status: ${order.status}`)
 
-				// Создаем новый заказ из параметров Success URL
-				order = {
-					orderId: orderId,
-					productId:
-						params.shp_shp_product_id || params.shp_product_id || 'unknown',
-					customerEmail: params.shp_email || 'unknown@example.com',
-					price: parseFloat(params.OutSum),
-					productName: `Циферблат ${
-						params.shp_shp_product_id || params.shp_product_id || 'Unknown'
-					}`,
-					status: 'paid', // Предполагаем что оплачен если пришел Success URL
-					paymentUrl: null,
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
+			// ОБНОВЛЯЕМ СТАТУС НА PAID (если еще не оплачен)
+			if (order.status !== 'paid') {
+				console.log(
+					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`
+				)
+
+				const updates = {
+					status: 'paid',
 					paidAt: new Date().toISOString(),
-					robokassaParams: params,
+					robokassaSuccessParams: params,
+					updatedAt: new Date().toISOString(),
 					robokassaData: {
+						...(order.robokassaData || {}),
 						is_test: params.IsTest || '0',
-						method: 'robokassa',
 						signature_valid: true,
 						confirmed_via: 'success_url',
 						confirmed_at: new Date().toISOString(),
+						signature_check: signatureCheck,
 					},
-					isDaily: false,
-					receivingId: null,
-					receivingUrl: null,
 				}
 
-				// Сохраняем в Firebase
-				await set(ref(database, `orders/${orderId}`), order)
-				console.log(`✅ Created new order ${orderId} from Success URL`)
+				await update(ref(database, `orders/${orderId}`), updates)
+				console.log(`✅ Order ${orderId} marked as PAID via Success URL`)
+
+				// Обновляем локальный объект
+				order = { ...order, ...updates }
+			} else {
+				console.log(`✅ Order ${orderId} already marked as paid`)
+				console.log(`📅 Was paid at: ${order.paidAt}`)
 			}
 		}
 
-		console.log(`📊 Order ${orderId} status: ${order.status}`)
+		// ========== ГЕНЕРИРУЕМ RECEIVING ID ==========
+		if (!order.receivingId) {
+			console.log(`🔑 Generating receivingId for order ${orderId}`)
+			const receivingId = generateReceivingId()
 
-		// Если заказ оплачен или мы создали его как оплаченный
-		if (order.status === 'paid') {
-			// Генерируем receivingId если его нет
-			if (!order.receivingId) {
-				console.log(`🔑 Generating receivingId for order ${orderId}`)
-				const receivingId = generateReceivingId()
-
-				const updates = {
-					receivingId: receivingId,
-					receivingUrl: `/purchase/receiving/${receivingId}`,
-					updatedAt: new Date().toISOString(),
-				}
-
-				// Обновляем заказ
-				await update(ref(database, `orders/${orderId}`), updates)
-
-				// Создаем индекс
-				await set(ref(database, `orderByReceivingId/${receivingId}`), {
-					orderId: orderId,
-					status: 'paid',
-					receivingId: receivingId,
-					productId: order.productId,
-					customerEmail: order.customerEmail,
-					createdAt: new Date().toISOString(),
-					paidAt: order.paidAt || new Date().toISOString(),
-				})
-
-				console.log(`✅ Generated receivingId: ${receivingId}`)
-				console.log(`🔗 Redirecting to: /purchase/receiving/${receivingId}`)
-
-				// Редирект на страницу получения
-				return res.redirect(`/purchase/receiving/${receivingId}`)
-			} else {
-				// Если receivingId уже есть
-				console.log(`✅ Order already has receivingId: ${order.receivingId}`)
-				console.log(`🔗 Redirecting to: ${order.receivingUrl}`)
-				return res.redirect(order.receivingUrl)
+			const updates = {
+				receivingId: receivingId,
+				receivingUrl: `/purchase/receiving/${receivingId}`,
+				updatedAt: new Date().toISOString(),
 			}
-		} else if (order.status === 'pending') {
-			// Если заказ еще не оплачен, показываем страницу ожидания
-			console.log(`⏳ Order ${orderId} is pending, showing waiting page`)
-			return res.send(createSuccessWaitingPage(orderId, params))
+
+			// Обновляем заказ
+			await update(ref(database, `orders/${orderId}`), updates)
+
+			// Создаем индекс
+			await set(ref(database, `orderByReceivingId/${receivingId}`), {
+				orderId: orderId,
+				status: 'paid',
+				receivingId: receivingId,
+				productId: order.productId,
+				customerEmail: order.customerEmail,
+				createdAt: new Date().toISOString(),
+				paidAt: order.paidAt || new Date().toISOString(),
+			})
+
+			console.log(`✅ Generated receivingId: ${receivingId}`)
+			console.log(`🔗 Redirecting to: /purchase/receiving/${receivingId}`)
+
+			// Редирект на страницу получения
+			return res.redirect(`/purchase/receiving/${receivingId}`)
 		} else {
-			// Другие статусы
-			console.error(
-				`❌ Order ${orderId} has unexpected status: ${order.status}`
-			)
-			return res.redirect('/payment-error?reason=invalid_status')
+			// Если receivingId уже есть
+			console.log(`✅ Order already has receivingId: ${order.receivingId}`)
+			console.log(`🔗 Redirecting to: ${order.receivingUrl}`)
+			return res.redirect(order.receivingUrl)
 		}
 	} catch (error) {
 		console.error('❌ Error in Success URL handler:', error)
+		console.error('Error stack:', error.stack)
 		return res.redirect('/payment-error?reason=server_error')
 	}
 })

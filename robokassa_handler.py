@@ -111,7 +111,8 @@ class RobokassaHandler:
                 'success': True,
                 'is_valid': is_valid,
                 'inv_id': inv_id,
-                'out_sum': out_sum
+                'out_sum': out_sum,
+                'params_checked': params
             }
             
         except Exception as e:
@@ -126,22 +127,93 @@ class RobokassaHandler:
         Проверка подписи для Success/Fail URL (редирект пользователя)
         """
         try:
+            # ВАЖНО: Для redirect проверки нужно передать ВСЕ параметры
+            # Собираем все параметры которые пришли
+            redirect_params = {
+                'OutSum': out_sum,
+                'InvId': inv_id,
+                'SignatureValue': signature,
+            }
+            
+            # Добавляем все дополнительные параметры (включая IsTest, Culture)
+            for key, value in kwargs.items():
+                if key not in ['action', 'out_sum', 'inv_id', 'signature']:  # Исключаем служебные
+                    redirect_params[key] = value
+            
+            print(f"🔍 Проверяем подпись с параметрами: {redirect_params}")
+            
             # Проверяем подпись Redirect URL
+            # ВАЖНО: метод is_redirect_valid ожидает именованные параметры
             is_valid = self.robokassa.is_redirect_valid(
                 signature=signature,
                 out_sum=out_sum,
                 inv_id=inv_id,
-                **kwargs
+                **{k: v for k, v in kwargs.items() if k.startswith('shp_') or k in ['IsTest', 'Culture']}
             )
             
             return {
                 'success': True,
                 'is_valid': is_valid,
                 'inv_id': inv_id,
-                'out_sum': out_sum
+                'out_sum': out_sum,
+                'method': 'is_redirect_valid',
+                'params_used': redirect_params
             }
             
         except Exception as e:
+            print(f"❌ Ошибка проверки подписи: {str(e)}")
+            return {
+                'success': False,
+                'is_valid': False,
+                'error': str(e)
+            }
+
+    def check_redirect_signature_manual(self, out_sum, inv_id, signature, **kwargs):
+        """
+        Ручная проверка подписи для Success/Fail URL (альтернативный метод)
+        Используется если стандартный не работает
+        """
+        try:
+            # Собираем строку для хэширования в правильном порядке
+            params_str = f"{out_sum}:{inv_id}:{self.password1}"
+            
+            # Добавляем shp_ параметры в алфавитном порядке
+            shp_params = {}
+            for key, value in kwargs.items():
+                if key.startswith('shp_'):
+                    shp_params[key] = value
+            
+            # Сортируем shp_ параметры по алфавиту
+            if shp_params:
+                sorted_shp_keys = sorted(shp_params.keys())
+                for key in sorted_shp_keys:
+                    params_str += f":{shp_params[key]}"
+            
+            print(f"🔍 Формируем строку для хэша: {params_str}")
+            
+            # Вычисляем MD5
+            import hashlib
+            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest().lower()
+            received_signature = signature.lower()
+            
+            print(f"🔍 Рассчитанная подпись: {calculated_signature}")
+            print(f"🔍 Полученная подпись: {received_signature}")
+            
+            is_valid = calculated_signature == received_signature
+            
+            return {
+                'success': True,
+                'is_valid': is_valid,
+                'calculated_signature': calculated_signature,
+                'received_signature': received_signature,
+                'inv_id': inv_id,
+                'out_sum': out_sum,
+                'method': 'manual_md5',
+                'match': is_valid
+            }
+            
+        except Exception as e:
+            print(f"❌ Ошибка ручной проверки подписи: {str(e)}")
             return {
                 'success': False,
                 'is_valid': False,
@@ -153,9 +225,8 @@ async def main():
         # Читаем входные данные
         input_data = sys.stdin.read()
 
-        # ДОБАВЬТЕ декодирование:
+        # Декодирование для корректной работы с кириллицей
         if input_data.strip():
-            # Убедимся, что это UTF-8
             try:
                 input_data = input_data.encode('latin-1').decode('utf-8')
             except:
@@ -165,11 +236,7 @@ async def main():
         else:
             data = {'action': 'test'}
 
-            
-        if not input_data.strip():
-            data = {'action': 'test'}
-        else:
-            data = json.loads(input_data)
+        print(f"📦 Получены данные: {json.dumps(data, ensure_ascii=False)}", file=sys.stderr)
         
         action = data.get('action', 'test')
         is_test = data.get('is_test', True)
@@ -214,20 +281,6 @@ async def main():
                 **kwargs
             )
             
-        elif action == 'deactivate_invoice':
-            inv_id = data.get('inv_id')
-            invoice_id = data.get('invoice_id')
-            
-            result = await handler.deactivate_invoice(
-                inv_id=inv_id,
-                invoice_id=invoice_id
-            )
-            
-        elif action == 'get_payment_details':
-            inv_id = int(data.get('inv_id', 0))
-            
-            result = await handler.get_payment_details(inv_id=inv_id)
-            
         elif action == 'check_result_signature':
             out_sum = float(data.get('out_sum', 0))
             inv_id = int(data.get('inv_id', 0))
@@ -235,8 +288,11 @@ async def main():
             
             kwargs = {}
             for key, value in data.items():
-                if key.startswith('shp_'):
+                if key.startswith('shp_') or key in ['IsTest', 'Culture']:
                     kwargs[key] = value
+            
+            print(f"🔍 Проверка Result подписи: out_sum={out_sum}, inv_id={inv_id}, signature={signature}", file=sys.stderr)
+            print(f"🔍 Доп. параметры: {kwargs}", file=sys.stderr)
             
             result = handler.check_result_signature(
                 out_sum=out_sum,
@@ -252,15 +308,80 @@ async def main():
             
             kwargs = {}
             for key, value in data.items():
-                if key.startswith('shp_'):
+                # Собираем ВСЕ параметры для проверки подписи
+                if key.startswith('shp_') or key in ['IsTest', 'Culture', 'IncCurr']:
                     kwargs[key] = value
             
+            print(f"🔍 Проверка Redirect подписи: out_sum={out_sum}, inv_id={inv_id}, signature={signature}", file=sys.stderr)
+            print(f"🔍 Доп. параметры: {kwargs}", file=sys.stderr)
+            
+            # Сначала пробуем стандартный метод
             result = handler.check_redirect_signature(
                 out_sum=out_sum,
                 inv_id=inv_id,
                 signature=signature,
                 **kwargs
             )
+            
+            # Если стандартный метод не сработал, пробуем ручной
+            if not result.get('success') or not result.get('is_valid'):
+                print("⚠️  Стандартная проверка не удалась, пробуем ручную...", file=sys.stderr)
+                manual_result = handler.check_redirect_signature_manual(
+                    out_sum=out_sum,
+                    inv_id=inv_id,
+                    signature=signature,
+                    **kwargs
+                )
+                
+                # Используем ручной результат если он успешен
+                if manual_result.get('success'):
+                    result = manual_result
+            
+        elif action == 'test_redirect_signature':
+            # Тестовый endpoint для проверки подписи
+            out_sum = float(data.get('out_sum', 150))
+            inv_id = int(data.get('inv_id', 257099702))
+            signature = data.get('signature', 'c0b86a37c1fc9daecfaa97fc86a21296')
+            
+            kwargs = {
+                'shp_shp_product_id': data.get('shp_shp_product_id', 'KF188'),
+                'IsTest': data.get('IsTest', '1'),
+                'Culture': data.get('Culture', 'ru')
+            }
+            
+            print(f"🧪 ТЕСТ ПРОВЕРКИ ПОДПИСИ:", file=sys.stderr)
+            print(f"  OutSum: {out_sum}", file=sys.stderr)
+            print(f"  InvId: {inv_id}", file=sys.stderr)
+            print(f"  Signature: {signature}", file=sys.stderr)
+            print(f"  Params: {kwargs}", file=sys.stderr)
+            
+            # Пробуем оба метода
+            result1 = handler.check_redirect_signature(
+                out_sum=out_sum,
+                inv_id=inv_id,
+                signature=signature,
+                **kwargs
+            )
+            
+            result2 = handler.check_redirect_signature_manual(
+                out_sum=out_sum,
+                inv_id=inv_id,
+                signature=signature,
+                **kwargs
+            )
+            
+            result = {
+                'success': True,
+                'standard_method': result1,
+                'manual_method': result2,
+                'test_data': {
+                    'out_sum': out_sum,
+                    'inv_id': inv_id,
+                    'signature': signature,
+                    'params': kwargs,
+                    'password1': handler.password1
+                }
+            }
             
         elif action == 'test':
             result = {
@@ -273,10 +394,9 @@ async def main():
                 'methods_available': [
                     'generate_short_link',
                     'generate_long_link',
-                    'deactivate_invoice',
-                    'get_payment_details',
                     'check_result_signature',
-                    'check_redirect_signature'
+                    'check_redirect_signature',
+                    'test_redirect_signature'
                 ]
             }
         
@@ -291,6 +411,7 @@ async def main():
         error_result = {
             'success': False, 
             'error': str(e),
+            'traceback': str(sys.exc_info())
         }
         print(json.dumps(error_result, ensure_ascii=False))
         sys.exit(1)
