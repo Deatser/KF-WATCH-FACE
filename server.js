@@ -6,6 +6,7 @@ const compression = require('compression')
 const { spawn, exec } = require('child_process')
 const crypto = require('crypto')
 const archiver = require('archiver')
+const { sendOrderEmail } = require('./mailer.js')
 
 // Firebase версия 10+ импорт
 const { initializeApp } = require('firebase/app')
@@ -1142,6 +1143,27 @@ app.post('/api/robokassa/result', async (req, res) => {
 			console.log(`🔗 Existing receiving URL: ${order.receivingUrl}`)
 		}
 
+		// Отправляем письмо
+		try {
+			const emailResult = await sendOrderEmail({
+				orderId: orderId,
+				productId: order.productId,
+				productName: order.productName || `Циферблат ${order.productId}`,
+				customerEmail: order.customerEmail,
+				price: parseFloat(params.OutSum),
+				paidAt: order.paidAt || new Date().toISOString(),
+				receivingId: receivingId,
+			})
+
+			if (emailResult.success) {
+				console.log(`✅ Email sent to ${order.customerEmail}`)
+			} else {
+				console.log(`⚠️ Email failed: ${emailResult.error}`)
+			}
+		} catch (emailErr) {
+			console.log(`⚠️ Email error: ${emailErr.message}`)
+		}
+
 		// ВАЖНО: Отправляем ответ Robokassa в правильном формате
 		console.log(`📤 Sending response to Robokassa: "OK${orderId}"`)
 		res.send('OK' + orderId)
@@ -1383,6 +1405,23 @@ app.post('/api/debug/robokassa-data', (req, res) => {
 		query: req.query,
 		receivedAt: new Date().toISOString(),
 	})
+})
+
+app.get('/api/test-email', async (req, res) => {
+	try {
+		const result = await sendOrderEmail({
+			orderId: 999999,
+			productId: 'KF159',
+			productName: 'Циферблат KF159',
+			customerEmail: 'koranitplay@gmail.com', // твоя почта для теста
+			price: 150,
+			paidAt: new Date().toISOString(),
+			receivingId: 'test-123',
+		})
+		res.json(result)
+	} catch (error) {
+		res.status(500).json({ error: error.message })
+	}
 })
 
 // Дебаг-эндпоинт для проверки подписи
