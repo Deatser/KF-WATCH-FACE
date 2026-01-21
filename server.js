@@ -864,7 +864,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			inv_id: invId,
 			description: encodeURIComponent(`Watchface ${productName || productId}`),
 			email: customerEmail,
-			shp_product_id: productId, // ИЗМЕНЕНО: было shp_shp_product_id
+			product_id: productId, // ← БЕЗ shp_!
 			Culture: 'ru',
 			IncCurr: '',
 			is_test: true,
@@ -987,13 +987,15 @@ app.post('/api/robokassa/result', async (req, res) => {
 		}
 
 		// Добавляем ВСЕ shp_ параметры (важно для подписи!)
+		// Robokassa добавляет shp_ ко всему, поэтому убираем их префикс
+		// Robokassa добавляет shp_ ко всему, убираем их префикс
 		Object.keys(params).forEach(key => {
 			if (key.startsWith('shp_')) {
-				pythonData[key] = params[key]
-				console.log(`📋 Added to Python data: ${key} = ${params[key]}`)
+				const originalKey = key.replace(/^shp_/, '')
+				pythonData[originalKey] = params[key]
+				console.log(`🔄 Result URL param: ${key} → ${originalKey}`)
 			}
 		})
-
 		console.log('🐍 CALLING Python is_result_notification_valid() with:')
 		console.log(JSON.stringify(pythonData, null, 2))
 
@@ -1273,6 +1275,7 @@ app.get('/success', async (req, res) => {
 		console.log('🔐 Checking signature in Success URL...')
 
 		// Собираем данные для проверки подписи Python
+		// Собираем данные для проверки подписи Python
 		const pythonData = {
 			action: 'check_redirect_signature',
 			out_sum: parseFloat(params.OutSum),
@@ -1282,10 +1285,16 @@ app.get('/success', async (req, res) => {
 			Culture: params.Culture || 'ru',
 		}
 
-		// Добавляем ВСЕ параметры из запроса
+		// КОРРЕКТНО обрабатываем shp_ параметры
+		// Robokassa добавляет shp_ ко всем пользовательским параметрам
+		// Убираем их префикс для корректной проверки подписи
 		Object.keys(params).forEach(key => {
-			// ВАЖНО: передаем все параметры как есть
-			if (
+			if (key.startsWith('shp_')) {
+				// Убираем shp_ префикс от Robokassa
+				const originalKey = key.replace(/^shp_/, '')
+				pythonData[originalKey] = params[key]
+				console.log(`🔄 Success URL: ${key} → ${originalKey} = ${params[key]}`)
+			} else if (
 				key !== 'action' &&
 				key !== 'out_sum' &&
 				key !== 'inv_id' &&
