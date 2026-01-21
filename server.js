@@ -6,7 +6,8 @@ const compression = require('compression')
 const { spawn, exec } = require('child_process')
 const crypto = require('crypto')
 const archiver = require('archiver')
-const { sendOrderEmail } = require('./mailer.js')
+//const { sendOrderEmail } = require('./mailer.js')
+const { sendOrderEmail } = require('./resend-mailer.js')
 
 // Firebase версия 10+ импорт
 const { initializeApp } = require('firebase/app')
@@ -1215,6 +1216,24 @@ app.post('/api/robokassa/result', async (req, res) => {
 		console.error('Stack:', error.stack)
 		console.error('Params at time of error:', JSON.stringify(req.body, null, 2))
 		res.status(500).send('ERROR: Server processing error')
+	}
+})
+
+// Тестовый эндпоинт для Resend
+app.get('/api/test-resend-email', async (req, res) => {
+	try {
+		const result = await sendOrderEmail({
+			orderId: 999999,
+			productId: 'KF159',
+			productName: 'Циферблат KF159',
+			customerEmail: 'koranitplay@gmail.com',
+			price: 150,
+			paidAt: new Date().toISOString(),
+			receivingId: 'test-123',
+		})
+		res.json(result)
+	} catch (error) {
+		res.status(500).json({ error: error.message })
 	}
 })
 
