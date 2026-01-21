@@ -92,7 +92,7 @@ async function sendOrderEmail(order) {
 		const { data, error } = await resend.emails.send({
 			from: 'KF WatchFace <support@kf-watchface.ru>',
 			to: order.customerEmail,
-			subject: `✅ Заказ #${order.orderId} оплачен - KF WATCH FACE`,
+			subject: ` Заказ #${order.orderId} оплачен - KF WATCH FACE`,
 			text: generatePlainTextEmail(order, downloadUrl),
 			html: generateHtmlEmail(order, downloadUrl),
 		})
@@ -135,7 +135,7 @@ function generatePlainTextEmail(order, downloadUrl) {
 	const productDisplayName = order.productName || order.productId
 
 	return `
-✅ Заказ #${order.orderId} оплачен
+ Заказ #${order.orderId} оплачен
 
 📋 ДЕТАЛИ ЗАКАЗА:
 ━━━━━━━━━━━━━━━━━━━━━━━━
