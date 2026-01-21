@@ -38,7 +38,6 @@ async function sendOrderEmail(order) {
 		console.log(`🔗 Download URL: ${downloadUrl}`)
 
 		// Отправляем через Resend API
-		console.log(`📧 Sending via Resend API...`)
 
 		const { data, error } = await resend.emails.send({
 			from: 'KF WatchFace <support@kf-watchface.ru>',
@@ -57,9 +56,7 @@ async function sendOrderEmail(order) {
 			}
 		}
 
-		console.log(`✅ RESEND EMAIL SENT SUCCESSFULLY!`)
-		console.log(`📧 Email ID: ${data.id}`)
-		console.log(`📧 ====== EMAIL SENT ======`)
+		console.log(`✅ ====== EMAIL SENT ======`)
 
 		return {
 			success: true,

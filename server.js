@@ -736,32 +736,45 @@ function callPythonScript(scriptName, data) {
 
 		pythonProcess.stderr.on('data', data => {
 			stderr += data.toString('utf8')
-			// Убираем все логи из stderr
 		})
 
 		pythonProcess.on('close', code => {
+			// Убираем логи выхода Python
 			if (code === 0) {
 				try {
-					// Очищаем stdout от возможных не-JSON сообщений
+					// Ищем JSON в stdout
 					const cleanStdout = stdout.trim()
-					const lastBraceIndex = cleanStdout.lastIndexOf('}')
-					const firstBraceIndex = cleanStdout.indexOf('{')
 
-					if (lastBraceIndex > firstBraceIndex && firstBraceIndex >= 0) {
-						const jsonStr = cleanStdout.substring(
-							firstBraceIndex,
-							lastBraceIndex + 1
-						)
-						const result = JSON.parse(jsonStr)
-						resolve(result)
-					} else {
-						reject(new Error('Python script did not return valid JSON'))
+					// Если stdout пустой, проверяем stderr
+					let jsonStr = cleanStdout
+					if (!jsonStr && stderr) {
+						// Ищем JSON в stderr
+						const stderrMatch = stderr.match(/\{.*\}/s)
+						if (stderrMatch) {
+							jsonStr = stderrMatch[0]
+						}
 					}
+
+					if (!jsonStr) {
+						reject(new Error('Python скрипт вернул пустой ответ'))
+						return
+					}
+
+					// Парсим JSON
+					const result = JSON.parse(jsonStr)
+					resolve(result)
 				} catch (parseError) {
+					console.error('❌ Ошибка парсинга JSON от Python:')
+					console.error('Stdout:', stdout)
+					console.error('Stderr:', stderr)
 					reject(new Error(`Ошибка парсинга JSON: ${parseError.message}`))
 				}
 			} else {
-				reject(new Error(`Python ошибка: ${stderr || 'Неизвестная ошибка'}`))
+				reject(
+					new Error(
+						`Python ошибка (код ${code}): ${stderr || 'Неизвестная ошибка'}`
+					)
+				)
 			}
 		})
 
@@ -769,7 +782,7 @@ function callPythonScript(scriptName, data) {
 			reject(new Error(`Ошибка запуска Python: ${error.message}`))
 		})
 
-		// И при записи данных (УБИРАЕМ ЛОГ):
+		// Отправляем данные в Python
 		const inputData = JSON.stringify(data, null, 2)
 		pythonProcess.stdin.write(inputData, 'utf8')
 		pythonProcess.stdin.end()
@@ -1152,10 +1165,6 @@ app.post('/api/robokassa/result', async (req, res) => {
 		}
 
 		// ========== ОТПРАВКА ПИСЬМА ==========
-		console.log(`📧 ====== ATTEMPTING TO SEND EMAIL ======`)
-		console.log(`📧 Order: ${orderId}`)
-		console.log(`📧 Customer: ${order.customerEmail}`)
-		console.log(`📧 ReceivingId: ${receivingId}`)
 
 		try {
 			const emailResult = await sendOrderEmail({
@@ -1399,7 +1408,6 @@ app.get('/success', async (req, res) => {
 
 			if (emailResult.success) {
 				console.log(`\n`)
-				console.log(`📧 ОТПРАВКА ПИСЬМА ПОКУПАТЕЛЮ`)
 
 				// Логируем в Firebase
 				await update(ref(database, `orders/${orderId}`), {
@@ -1427,9 +1435,8 @@ app.get('/success', async (req, res) => {
 			console.log(`❌ Stack:`, emailErr.stack)
 		}
 
-		console.log(`📧 ====== EMAIL PROCESSING COMPLETE ======`)
-
-		console.log(`🔗 Redirecting to: /purchase/receiving/${receivingId}`)
+		console.log(`🔗 Перенаправляем на: /purchase/receiving/${receivingId}`)
+		console.log(`\n\n\n`)
 		return res.redirect(`/purchase/receiving/${receivingId}`)
 	} catch (error) {
 		console.error('❌ Error in Success URL handler:', error)

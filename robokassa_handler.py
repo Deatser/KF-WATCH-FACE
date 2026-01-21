@@ -51,7 +51,6 @@ class RobokassaHandler:
             }
             
         except Exception as e:
-            
             return {
                 'success': False,
                 'error': str(e),
@@ -64,8 +63,6 @@ class RobokassaHandler:
         ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ!
         """
         try:
-
-            
             # Проверяем подпись Result URL с помощью библиотеки
             # БЕЗ shp_ параметров!
             is_valid = self.robokassa.is_result_notification_valid(
@@ -73,7 +70,6 @@ class RobokassaHandler:
                 out_sum=out_sum,
                 inv_id=inv_id
             )
-
             
             return {
                 'success': True,
@@ -84,7 +80,6 @@ class RobokassaHandler:
             }
             
         except Exception as e:
-
             return {
                 'success': False,
                 'is_valid': False,
@@ -97,8 +92,6 @@ class RobokassaHandler:
         ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ!
         """
         try:
-
-            
             # Проверяем подпись Redirect URL с помощью библиотеки
             # БЕЗ shp_ параметров!
             is_valid = self.robokassa.is_redirect_valid(
@@ -116,7 +109,6 @@ class RobokassaHandler:
             }
             
         except Exception as e:
-
             return {
                 'success': False,
                 'is_valid': False,
@@ -129,17 +121,11 @@ class RobokassaHandler:
         ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ
         """
         try:
-
-            
             # Формируем строку как Robokassa (ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ)
             params_str = f"{out_sum}:{inv_id}:{self.password1}"
             
-
-            
             # Вычисляем MD5
             calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
-            
-            
             
             return {
                 'success': True,
@@ -149,7 +135,6 @@ class RobokassaHandler:
             }
             
         except Exception as e:
-            
             return {
                 'success': False,
                 'error': str(e)
@@ -168,12 +153,10 @@ async def main():
                     'success': False,
                     'error': f'Invalid JSON input: {str(e)}'
                 }
-                
+                print(json.dumps(error_result, ensure_ascii=False))
                 sys.exit(1)
         else:
             data = {'action': 'test'}
-
-
         
         action = data.get('action', 'test')
         is_test = data.get('is_test', True)
@@ -199,8 +182,6 @@ async def main():
             inv_id = int(data.get('inv_id', 0))
             signature = data.get('signature', '')
             
-
-            
             result = handler.check_result_signature(
                 out_sum=out_sum,
                 inv_id=inv_id,
@@ -211,8 +192,6 @@ async def main():
             out_sum = float(data.get('out_sum', 0))
             inv_id = int(data.get('inv_id', 0))
             signature = data.get('signature', '')
-            
-
             
             result = handler.check_redirect_signature(
                 out_sum=out_sum,
@@ -250,19 +229,16 @@ async def main():
         else:
             result = {'success': False, 'error': f'Unknown action: {action}'}
         
-
+        # Выводим ТОЛЬКО JSON
+        print(json.dumps(result, ensure_ascii=False))
         
     except Exception as e:
-        
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        
         # В случае ошибки выводим только JSON
         error_result = {
             'success': False, 
             'error': str(e),
         }
-        
+        print(json.dumps(error_result, ensure_ascii=False))
         sys.exit(1)
 
 if __name__ == "__main__":
