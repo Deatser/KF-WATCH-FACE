@@ -6,10 +6,8 @@ const compression = require('compression')
 const { spawn, exec } = require('child_process')
 const crypto = require('crypto')
 const archiver = require('archiver')
-//const { sendOrderEmail } = require('./mailer.js')
-//const { sendOrderEmail } = require('./resend-mailer.js')
-//const { sendOrderEmail } = require('./mailersend-mailer.js')
-const { sendOrderEmail, sendTestEmail } = require('./emailjs-mailer.js')
+
+const { sendOrderEmail } = require('./resend-mailer.js')
 
 // Firebase версия 10+ импорт
 const { initializeApp } = require('firebase/app')
