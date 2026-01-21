@@ -1,7 +1,5 @@
 // resend-mailer.js - отправка почты через Resend API
 const { Resend } = require('resend')
-const fs = require('fs')
-const path = require('path')
 
 // Получаем API ключ из переменных окружения
 const RESEND_API_KEY = process.env.RESEND_API_KEY
@@ -24,41 +22,6 @@ if (!RESEND_API_KEY) {
 // Инициализируем Resend
 const resend = new Resend(RESEND_API_KEY)
 
-// Загружаем HTML шаблон
-function loadEmailTemplate() {
-	try {
-		const templatePath = path.join(__dirname, 'email-template.html')
-		if (fs.existsSync(templatePath)) {
-			return fs.readFileSync(templatePath, 'utf8')
-		} else {
-			console.warn('⚠️ Email template not found, using default')
-			return getDefaultTemplate()
-		}
-	} catch (error) {
-		console.error('❌ Error loading email template:', error)
-		return getDefaultTemplate()
-	}
-}
-
-// Резервный шаблон
-function getDefaultTemplate() {
-	return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заказ #{orderId} оплачен</title>
-</head>
-<body>
-    <h1>Заказ #{orderId} оплачен</h1>
-    <p>Циферблат: {productName}</p>
-    <p>Ссылка для скачивания: {downloadUrl}</p>
-</body>
-</html>
-    `
-}
-
 // Функция отправки письма
 async function sendOrderEmail(order) {
 	try {
@@ -67,12 +30,6 @@ async function sendOrderEmail(order) {
 		console.log(`📧 To: ${order.customerEmail}`)
 		console.log(`📧 Product: ${order.productName}`)
 		console.log(`📧 ReceivingId: ${order.receivingId}`)
-
-		// Проверяем наличие API ключа
-		if (!RESEND_API_KEY) {
-			console.error('❌ ERROR: RESEND_API_KEY not configured')
-			return { success: false, error: 'Resend API key not configured' }
-		}
 
 		// Проверяем наличие receivingId
 		if (!order.receivingId) {
@@ -84,7 +41,7 @@ async function sendOrderEmail(order) {
 		const cleanSiteUrl = SITE_URL.replace(/\/$/, '')
 		const downloadUrl = `${cleanSiteUrl}/purchase/receiving/${order.receivingId}`
 
-		console.log(`🔗 Clean Download URL: ${downloadUrl}`)
+		console.log(`🔗 Download URL: ${downloadUrl}`)
 
 		// Отправляем через Resend API
 		console.log(`📧 Sending via Resend API...`)
@@ -92,9 +49,8 @@ async function sendOrderEmail(order) {
 		const { data, error } = await resend.emails.send({
 			from: 'KF WatchFace <support@kf-watchface.ru>',
 			to: order.customerEmail,
-			subject: ` Заказ #${order.orderId} оплачен - KF WATCH FACE`,
+			subject: `Заказ #${order.orderId} оплачен - KF WATCH FACE`,
 			text: generatePlainTextEmail(order, downloadUrl),
-			html: generateHtmlEmail(order, downloadUrl),
 		})
 
 		if (error) {
@@ -135,9 +91,13 @@ function generatePlainTextEmail(order, downloadUrl) {
 	const productDisplayName = order.productName || order.productId
 
 	return `
- Заказ #${order.orderId} оплачен
+Заказ #${order.orderId} оплачен
+Спасибо за покупку! Ваш циферблат готов к скачиванию
 
-📋 ДЕТАЛИ ЗАКАЗА:
+Скачайте его по следующей ссылке - ${downloadUrl}
+
+
+ДЕТАЛИ ЗАКАЗА:
 ━━━━━━━━━━━━━━━━━━━━━━━━
 • Номер заказа: #${order.orderId}
 • Циферблат: ${productDisplayName}
@@ -146,67 +106,9 @@ function generatePlainTextEmail(order, downloadUrl) {
 • Статус: Оплачено ✓
 • Дата оплаты: ${formattedDate}
 
-📥 ВАШ ЦИФЕРБЛАТ ГОТОВ:
-━━━━━━━━━━━━━━━━━━━━━━━━
-Ссылка для скачивания:
-${downloadUrl}
 
-Формат: APK
-Размер: ~5-10 MB
-Доступен: 30 дней
-
-🛠️ КАК УСТАНОВИТЬ:
-━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 РЕКОМЕНДУЕМЫЙ СПОСОБ:
-1. WearLoad (через смартфон)
-   - Установите WearLoad на телефон
-   - Скачайте файл по ссылке выше
-   - Откройте файл через WearLoad
-   - Следуйте инструкциям в приложении
-
-🔧 АЛЬТЕРНАТИВНЫЕ СПОСОБЫ:
-2. ADB App Control (через ПК)
-   - Установите ADB App Control на ПК
-   - Включите отладку по USB на часах
-   - Подключите часы к ПК
-   - Загрузите файл через программу
-
-3. Bugjaeger (через смартфон)
-   - Установите Bugjaeger на телефон
-   - Включите отладку по Bluetooth на часах
-   - Подключите часы к телефону
-   - Загрузите файл через приложение
-
-⚠️ ВАЖНАЯ ИНФОРМАЦИЯ:
-━━━━━━━━━━━━━━━━━━━━━━━━
-• Ссылка активна 30 дней
-• Сохраните это письмо для доступа к файлу
-• Файл предназначен для часов Wear OS
-• Нужна помощь? Пишите в поддержку
-
-📞 ПОДДЕРЖКА:
-━━━━━━━━━━━━━━━━━━━━━━━━
-Telegram: https://t.me/krek_free
-
-© 2026 KF WATCH FACE. Все права защищены.
-━━━━━━━━━━━━━━━━━━━━━━━━
+Нужна помощь с установкой? Напишите в Telegram: https://t.me/krek_free
     `.trim()
-}
-
-// Генерация HTML версии письма
-function generateHtmlEmail(order, downloadUrl) {
-	const template = loadEmailTemplate()
-
-	// Заменяем плейсхолдеры
-	return template
-		.replace(/{orderId}/g, order.orderId)
-		.replace(/{productId}/g, order.productId || '')
-		.replace(/{productName}/g, order.productName || order.productId)
-		.replace(/{customerEmail}/g, order.customerEmail)
-		.replace(/{price}/g, order.price)
-		.replace(/{paidAt}/g, new Date(order.paidAt).toLocaleString('ru-RU'))
-		.replace(/{downloadUrl}/g, downloadUrl)
-		.replace(/{siteUrl}/g, SITE_URL.replace(/\/$/, ''))
 }
 
 // Тестовая функция
