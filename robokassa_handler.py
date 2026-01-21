@@ -11,10 +11,14 @@ from robokassa import HashAlgorithm, Robokassa
 class RobokassaHandler:
     def __init__(self, is_test=True):
         # ВАЖНО: Используйте те же данные что в рабочем скрипте
-        self.merchant_login = 'kfwatchface'  # Ваш реальный логин
-        self.password1 = "U85g8fxYMMyThLkr1W2n"  # Пароль1 из вашего рабочего скрипта
-        self.password2 = "qe9Np4lhWwJG3nKF96Ro"  # Пароль2 из вашего рабочего скрипта
+        self.merchant_login = os.environ.get('ROBOKASSA_LOGIN', '')
+        self.password1 = os.environ.get('ROBOKASSA_PASS1', '')
+        self.password2 = os.environ.get('ROBOKASSA_PASS2', '')
         self.is_test = is_test
+        
+        # Проверяем что пароли установлены
+        if not self.password1 or not self.password2:
+            raise ValueError("Robokassa пароли не установлены в переменных окружения. Установите ROBOKASSA_PASSWORD1 и ROBOKASSA_PASSWORD2")
         
         # Инициализируем Robokassa клиент (как в рабочем скрипте)
         self.robokassa = Robokassa(
