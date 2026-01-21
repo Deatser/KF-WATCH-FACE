@@ -1217,6 +1217,28 @@ app.post('/api/robokassa/result', async (req, res) => {
 		res.status(500).send('ERROR: Server processing error')
 	}
 })
+
+app.get('/api/debug/email-config', (req, res) => {
+	const config = {
+		MAIL_USER: process.env.MAIL_USER ? 'SET' : 'NOT SET',
+		MAIL_PASS: process.env.MAIL_PASS ? 'SET (hidden)' : 'NOT SET',
+		SITE_URL: process.env.SITE_URL || 'NOT SET',
+		NODE_ENV: process.env.NODE_ENV || 'NOT SET',
+		allEnvVars: {},
+	}
+
+	// Безопасно показываем переменные окружения
+	Object.keys(process.env).forEach(key => {
+		if (key.includes('MAIL') || key.includes('EMAIL') || key.includes('SITE')) {
+			config.allEnvVars[key] = key.includes('PASS')
+				? '***HIDDEN***'
+				: process.env[key]
+		}
+	})
+
+	res.json(config)
+})
+
 // ==================== SUCCESS URL ОБРАБОТКА ====================
 
 app.get('/success', async (req, res) => {

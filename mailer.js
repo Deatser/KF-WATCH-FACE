@@ -7,15 +7,41 @@ const EMAIL_PASS = process.env.MAIL_PASS
 // Добавлена возможность задать через переменные окружения
 const SITE_URL = process.env.SITE_URL || 'http://localhost:3000'
 
+// Детальное логирование переменных окружения (без показа пароля)
+console.log('📧 ====== EMAIL CONFIGURATION ======')
+console.log(`📧 EMAIL_USER configured: ${EMAIL_USER ? 'YES' : 'NO'}`)
+console.log(`📧 EMAIL_USER value: ${EMAIL_USER}`)
+console.log(`📧 EMAIL_PASS configured: ${EMAIL_PASS ? 'YES (hidden)' : 'NO'}`)
+console.log(`📧 SITE_URL: ${SITE_URL}`)
+
+if (!EMAIL_USER || !EMAIL_PASS) {
+	console.error('❌ CRITICAL: Email credentials not configured!')
+	console.error(
+		'❌ Please set MAIL_USER and MAIL_PASS in Render.com Environment Variables'
+	)
+} else {
+	console.log('✅ Email credentials are configured')
+}
+
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
 		user: EMAIL_USER,
 		pass: EMAIL_PASS,
 	},
+	// Добавляем настройки для Render.com
+	host: 'smtp.gmail.com',
+	port: 587,
+	secure: false, // true для порта 465, false для 587
+	requireTLS: true,
+	connectionTimeout: 10000, // 10 секунд таймаут
+	greetingTimeout: 10000,
+	socketTimeout: 10000,
+	tls: {
+		rejectUnauthorized: false, // Важно для Render.com
+	},
 })
 
-// Функция отправки письма
 // Функция отправки письма
 async function sendOrderEmail(order) {
 	try {
@@ -24,15 +50,14 @@ async function sendOrderEmail(order) {
 		console.log(`📧 To: ${order.customerEmail}`)
 		console.log(`📧 Product: ${order.productName}`)
 		console.log(`📧 ReceivingId: ${order.receivingId}`)
-		console.log(`📧 SITE_URL: ${SITE_URL}`)
-		console.log(`📧 EMAIL_USER configured: ${!!EMAIL_USER}`)
 
+		// Проверяем наличие переменных окружения
 		if (!EMAIL_USER || !EMAIL_PASS) {
 			console.error(
 				'❌ ERROR: Email credentials not configured in environment variables'
 			)
-			console.error('❌ MAIL_USER:', EMAIL_USER ? 'SET' : 'NOT SET')
-			console.error('❌ MAIL_PASS:', EMAIL_PASS ? 'SET' : 'NOT SET')
+			console.error(`❌ EMAIL_USER: ${EMAIL_USER ? 'SET' : 'NOT SET'}`)
+			console.error(`❌ EMAIL_PASS: ${EMAIL_PASS ? 'SET (hidden)' : 'NOT SET'}`)
 			return { success: false, error: 'Email credentials not configured' }
 		}
 
@@ -115,9 +140,12 @@ KF WATCH FACE
             `,
 		}
 
-		console.log(`📧 Connecting to Gmail...`)
+		console.log(`📧 Connecting to Gmail SMTP...`)
+		console.log(`📧 Host: smtp.gmail.com:587`)
+		console.log(`📧 Using secure connection: TLS`)
 
 		// Проверяем подключение
+		console.log(`📧 Verifying SMTP connection...`)
 		await transporter.verify()
 		console.log(`✅ SMTP connection verified successfully`)
 
@@ -128,6 +156,8 @@ KF WATCH FACE
 		console.log(`✅ EMAIL SENT SUCCESSFULLY!`)
 		console.log(`📧 Message ID: ${info.messageId}`)
 		console.log(`📧 Response: ${info.response}`)
+		console.log(`📧 Accepted recipients: ${info.accepted}`)
+		console.log(`📧 Rejected recipients: ${info.rejected}`)
 		console.log(`📧 ====== EMAIL SENT ======`)
 
 		return {
@@ -140,12 +170,31 @@ KF WATCH FACE
 		console.error('❌ Error message:', error.message)
 		console.error('❌ Error code:', error.code)
 		console.error('❌ Error command:', error.command)
-		console.error('❌ Stack trace:', error.stack)
 
+		if (error.responseCode) {
+			console.error('❌ Response Code:', error.responseCode)
+		}
 		if (error.response) {
 			console.error('❌ SMTP Response:', error.response)
-			console.error('❌ SMTP Response Code:', error.responseCode)
 		}
+
+		// Проверяем типичные ошибки Gmail
+		if (error.code === 'EAUTH') {
+			console.error('❌ AUTHENTICATION ERROR: Invalid email credentials')
+			console.error(
+				'❌ Make sure you are using App Password, not regular password'
+			)
+			console.error('❌ Enable 2-Step Verification and create App Password:')
+			console.error('❌ https://myaccount.google.com/security')
+		} else if (error.code === 'ETIMEDOUT') {
+			console.error('❌ TIMEOUT ERROR: Connection to Gmail SMTP timed out')
+			console.error('❌ This might be due to Render.com network restrictions')
+		} else if (error.code === 'ECONNREFUSED') {
+			console.error('❌ CONNECTION REFUSED: Gmail SMTP not accessible')
+			console.error('❌ Render.com might be blocking port 587')
+		}
+
+		console.error('❌ Full error:', error)
 
 		return {
 			success: false,
@@ -153,25 +202,34 @@ KF WATCH FACE
 			details: {
 				code: error.code,
 				command: error.command,
-				response: error.response,
+				responseCode: error.responseCode,
 			},
 		}
 	}
 }
 
-// Тестовая функция
-// Тестовая функция
+// Тестовая функция с детальным логированием
 async function sendTestEmail() {
 	console.log('📧 ====== TESTING EMAIL FUNCTION ======')
 	console.log('📅 Time:', new Date().toISOString())
 	console.log(`📧 EMAIL_USER: ${EMAIL_USER}`)
 	console.log(`📧 SITE_URL: ${SITE_URL}`)
+	console.log(`📧 Current NODE_ENV: ${process.env.NODE_ENV || 'not set'}`)
+
+	// Проверяем все переменные окружения (для отладки)
+	console.log('📧 All environment variables starting with MAIL:')
+	Object.keys(process.env).forEach(key => {
+		if (key.includes('MAIL') || key.includes('EMAIL')) {
+			const value = key.includes('PASS') ? '***HIDDEN***' : process.env[key]
+			console.log(`   ${key}: ${value}`)
+		}
+	})
 
 	const testOrder = {
 		orderId: 999999,
 		productId: 'KF159',
 		productName: 'Циферблат KF159',
-		customerEmail: 'koranitplay@gmail.com', // твоя почта
+		customerEmail: 'koranitplay@gmail.com',
 		price: 150,
 		paidAt: new Date().toISOString(),
 		receivingId: 'test-123',
