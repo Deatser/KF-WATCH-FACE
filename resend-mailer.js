@@ -51,7 +51,7 @@ async function sendOrderEmail(order) {
 		console.log(`📧 Sending via Resend API...`)
 
 		const { data, error } = await resend.emails.send({
-			from: 'KF WATCH FACE <onboarding@resend.dev>', // Можно изменить после верификации домена
+			from: 'KF WatchFace <support@kf-watchface.ru>', // Можно изменить после верификации домена
 			to: order.customerEmail,
 			subject: `✅ Заказ #${order.orderId} оплачен - KF WATCH FACE`,
 			text: `
