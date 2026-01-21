@@ -7,7 +7,8 @@ const { spawn, exec } = require('child_process')
 const crypto = require('crypto')
 const archiver = require('archiver')
 //const { sendOrderEmail } = require('./mailer.js')
-const { sendOrderEmail } = require('./resend-mailer.js')
+//const { sendOrderEmail } = require('./resend-mailer.js')
+const { sendOrderEmail } = require('./mailersend-mailer.js')
 
 // Firebase версия 10+ импорт
 const { initializeApp } = require('firebase/app')
@@ -1226,7 +1227,7 @@ app.get('/api/test-resend-email', async (req, res) => {
 			orderId: 999999,
 			productId: 'KF159',
 			productName: 'Циферблат KF159',
-			customerEmail: 'koranitplay@gmail.com',
+			customerEmail: 'selezneff.sergej2011@yandex.ru',
 			price: 150,
 			paidAt: new Date().toISOString(),
 			receivingId: 'test-123',
@@ -1543,6 +1544,23 @@ app.get('/api/test-email', async (req, res) => {
 			productId: 'KF159',
 			productName: 'Циферблат KF159',
 			customerEmail: 'koranitplay@gmail.com', // твоя почта для теста
+			price: 150,
+			paidAt: new Date().toISOString(),
+			receivingId: 'test-123',
+		})
+		res.json(result)
+	} catch (error) {
+		res.status(500).json({ error: error.message })
+	}
+})
+
+app.get('/api/test-mailersend-email', async (req, res) => {
+	try {
+		const result = await sendOrderEmail({
+			orderId: 999999,
+			productId: 'KF159',
+			productName: 'Циферблат KF159',
+			customerEmail: 'koranitplay@gmail.com',
 			price: 150,
 			paidAt: new Date().toISOString(),
 			receivingId: 'test-123',
