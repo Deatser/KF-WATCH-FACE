@@ -1,391 +1,449 @@
 <!DOCTYPE html>
 <html lang="ru">
 	<head>
+		<!-- Google tag (gtag.js) -->
+		<script
+			async
+			src="https://www.googletagmanager.com/gtag/js?id=G-XRGPB3BKMK"
+		></script>
+		<script>
+			window.dataLayer = window.dataLayer || []
+			function gtag() {
+				dataLayer.push(arguments)
+			}
+			gtag('js', new Date())
+
+			gtag('config', 'G-XRGPB3BKMK')
+		</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Заказ #{orderId} оплачен - KF WATCH FACE</title>
-		<!-- Встраиваем шрифт напрямую в CSS -->
+		<title>Получение заказа - KF WATCH FACE</title>
+
+		<!-- Фавиконка -->
+		<link rel="icon" href="/guide/Logo.png" type="image/png" sizes="32x32" />
+
+		<!-- Стили -->
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/receiving.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<!-- Firebase SDK -->
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 		<style>
-			@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+			/* Стили для меню пользователя на странице получения */
+			.header .user-menu-container {
+				position: relative;
+			}
+
+			.header .user-menu-btn {
+				background: none;
+				border: none;
+				cursor: pointer;
+				font-size: 1.2rem;
+				color: #4a4a4a;
+				padding: 5px;
+				transition: color 0.3s ease;
+			}
+
+			.header .user-menu-btn:hover {
+				color: #8b7355;
+			}
+
+			.header .user-menu {
+				position: absolute;
+				top: 100%;
+				right: 0;
+				background: white;
+				border-radius: 12px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+				padding: 20px;
+				min-width: 280px;
+				z-index: 1000;
+				display: none;
+				margin-top: 10px;
+				animation: fadeIn 0.3s ease;
+			}
+
+			.header .user-menu.show {
+				display: block;
+			}
+
+			/* Адаптация для мобильных */
+			@media (max-width: 1100px) {
+				.nav {
+					display: flex;
+					align-items: center;
+					gap: 15px;
+				}
+
+				/* Скрываем обычные ссылки навигации */
+				.nav > a:not(.logo):not(.user-menu-btn) {
+					display: none;
+				}
+
+				/* Логотип слева */
+				.logo {
+					order: 1;
+					margin-right: auto;
+				}
+
+				/* Иконка пользователя - второй элемент */
+				.user-menu-container {
+					display: flex !important;
+					align-items: center;
+					margin-left: 0;
+					order: 2;
+				}
+
+				/* Бургер-кнопка - третий элемент (самый правый) */
+				.burger-menu-btn {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					order: 3;
+					margin-left: 10px;
+					margin-right: 0;
+				}
+
+				.header .container {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					gap: 10px;
+				}
+			}
 		</style>
 	</head>
-	<body
-		style="
-			font-family: 'Comfortaa', Arial, sans-serif;
-			line-height: 1.6;
-			color: #333;
-			background-color: #f5f0e8;
-			padding: 20px;
-			-webkit-font-smoothing: antialiased;
-			-moz-osx-font-smoothing: grayscale;
-			margin: 0;
-		"
-	>
-		<div
-			style="
-				max-width: 600px;
-				margin: 0 auto;
-				background: white;
-				border-radius: 20px;
-				overflow: hidden;
-				box-shadow: 0 10px 40px rgba(139, 115, 85, 0.15);
-				border: 1px solid #e8dfd0;
-			"
-		>
-			<!-- Шапка -->
-			<div
-				style="
-					background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
-					padding: 40px 30px;
-					text-align: center;
-					color: white;
-					position: relative;
-					overflow: hidden;
-				"
-			>
-				<div style="position: relative; z-index: 2">
-					<div
-						style="font-size: 60px; margin-bottom: 20px; display: inline-block"
-					></div>
-					<h1
-						style="
-							font-size: 28px;
-							font-weight: 700;
-							margin-bottom: 10px;
-							letter-spacing: 0.5px;
-						"
+
+	<body>
+		<!-- Хедер с навигацией (1 в 1 как в index.html) -->
+		<header class="header">
+			<div class="container">
+				<a href="/" class="logo">
+					<i class="fas fa-clock"></i>
+					<span>KF WATCH FACE</span>
+				</a>
+
+				<nav class="nav">
+					<!-- Ссылка для админов (скрыта по умолчанию) -->
+					<a
+						href="/admin"
+						class="nav-link admin-link"
+						id="adminPanelLink"
+						style="display: none"
 					>
-						Заказ #{orderId} оплачен
-					</h1>
-					<p style="font-size: 16px; opacity: 0.9; font-weight: 400">
-						Спасибо за покупку! Ваш циферблат готов к скачиванию
-					</p>
+						<i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
+					</a>
+					<!-- Новые ссылки: Контакты и FAQ -->
+					<a href="#" class="nav-link" id="contactsLink">Контакты</a>
+					<a href="#" class="nav-link" id="faqLink">FAQ</a>
+					<!-- Измененный порядок ссылок -->
+					<a href="#" class="nav-link" id="installGuideLink"
+						>Инструкция по установке</a
+					>
+					<a href="/#catalog" class="nav-link">Каталог</a>
+					<a href="#" class="nav-link" id="aboutLink">О нас</a>
+					<a href="https://t.me/krek_free" target="_blank" class="nav-link">
+						<i class="fab fa-telegram"></i>
+					</a>
+
+					<!-- Иконка рабочего кабинета -->
+					<div class="user-menu-container">
+						<button id="userMenuBtn" class="nav-link user-menu-btn">
+							<i class="fas fa-user-circle"></i>
+						</button>
+						<div id="userMenu" class="user-menu">
+							<!-- НАЧАЛО: Добавлен реальный контент формы входа -->
+							<div id="userInfo" style="display: none">
+								<p
+									id="userEmailDisplay"
+									style="margin-bottom: 10px; font-weight: 500"
+								></p>
+								<button id="logoutBtn" class="btn-logout">Выйти</button>
+							</div>
+							<div id="authForm">
+								<h3 style="margin-bottom: 15px; font-size: 1.1rem">
+									Вход / Регистрация
+								</h3>
+								<div id="authError" class="auth-error"></div>
+								<input
+									type="email"
+									id="authEmail"
+									placeholder="Email"
+									class="auth-input"
+								/>
+								<input
+									type="password"
+									id="authPassword"
+									placeholder="Пароль"
+									class="auth-input"
+								/>
+								<div class="auth-buttons">
+									<button id="loginBtn" class="auth-btn btn-login">
+										Войти
+									</button>
+									<button id="registerBtn" class="auth-btn btn-register">
+										Регистрация
+									</button>
+								</div>
+							</div>
+							<!-- КОНЕЦ: Добавлен реальный контент формы входа -->
+						</div>
+					</div>
+
+					<!-- Бургер-меню для мобильных -->
+					<button id="burgerMenuBtn" class="burger-menu-btn">
+						<i class="fas fa-bars"></i>
+					</button>
+				</nav>
+
+				<!-- Бургер-меню как выпадающее (сверху справа) -->
+				<div id="burgerDropdown" class="burger-dropdown">
+					<div class="burger-links">
+						<a href="#" class="burger-link" id="burgerContactsLink">
+							<i class="fas fa-address-book"></i>
+							Контакты
+						</a>
+						<a href="#" class="burger-link" id="burgerFaqLink">
+							<i class="fas fa-question-circle"></i>
+							FAQ
+						</a>
+						<a href="#" class="burger-link" id="burgerInstallGuideLink">
+							<i class="fas fa-download"></i>
+							Инструкция по установке
+						</a>
+						<a href="/#catalog" class="burger-link burger-catalog-link">
+							<i class="fas fa-th"></i>
+							Каталог
+						</a>
+						<a href="#" class="burger-link" id="burgerAboutLink">
+							<i class="fas fa-info-circle"></i>
+							О нас
+						</a>
+						<a
+							href="https://t.me/krek_free"
+							target="_blank"
+							class="burger-link"
+						>
+							<i class="fab fa-telegram"></i>
+							Telegram
+						</a>
+					</div>
 				</div>
 			</div>
+		</header>
 
-			<!-- Основной контент -->
-			<div style="padding: 40px 30px">
-				<!-- Детали заказа -->
-				<div
-					style="
-						background: linear-gradient(to right, #f9f9f9, #f5f5f5);
-						border-radius: 16px;
-						padding: 30px;
-						margin-bottom: 30px;
-						border: 2px solid #f0f0f0;
-						box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-					"
-				>
-					<h2
-						style="
-							font-size: 20px;
-							color: #8b7355;
-							margin-bottom: 25px;
-							font-weight: 600;
-							display: flex;
-							align-items: center;
-							gap: 12px;
-						"
-					>
-						Детали заказа
-					</h2>
-					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px">
-						<div style="display: flex; flex-direction: column; gap: 6px">
-							<div
-								style="
-									font-size: 14px;
-									color: #666;
-									font-weight: 500;
-									display: flex;
-									align-items: center;
-									gap: 8px;
-								"
-							>
-								<span style="color: #8b7355"></span> Номер заказа:
-							</div>
-							<div
-								style="
-									font-size: 16px;
-									color: #1a1a1a;
-									font-weight: 600;
-									padding: 10px 15px;
-									background: white;
-									border-radius: 10px;
-									border: 1px solid #e8e8e8;
-									box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-								"
-							>
-								#{orderId}
-							</div>
+		<!-- Основной контент -->
+		<div class="receiving-container">
+			<div class="container">
+				<div class="receiving-content">
+					<div class="success-header">
+						<div class="success-icon">
+							<i class="fas fa-check-circle"></i>
 						</div>
-						<div style="display: flex; flex-direction: column; gap: 6px">
-							<div
-								style="
-									font-size: 14px;
-									color: #666;
-									font-weight: 500;
-									display: flex;
-									align-items: center;
-									gap: 8px;
-								"
-							>
-								<span style="color: #8b7355"></span> Циферблат:
-							</div>
-							<div
-								style="
-									font-size: 16px;
-									color: #1a1a1a;
-									font-weight: 600;
-									padding: 10px 15px;
-									background: white;
-									border-radius: 10px;
-									border: 1px solid #e8e8e8;
-									box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-								"
-							>
-								{productName}
-							</div>
-						</div>
-						<div style="display: flex; flex-direction: column; gap: 6px">
-							<div
-								style="
-									font-size: 14px;
-									color: #666;
-									font-weight: 500;
-									display: flex;
-									align-items: center;
-									gap: 8px;
-								"
-							>
-								<span style="color: #8b7355"></span> Email покупателя:
-							</div>
-							<div
-								style="
-									font-size: 16px;
-									color: #1a1a1a;
-									font-weight: 600;
-									padding: 10px 15px;
-									background: white;
-									border-radius: 10px;
-									border: 1px solid #e8e8e8;
-									box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-								"
-							>
-								{customerEmail}
-							</div>
-						</div>
-						<div style="display: flex; flex-direction: column; gap: 6px">
-							<div
-								style="
-									font-size: 14px;
-									color: #666;
-									font-weight: 500;
-									display: flex;
-									align-items: center;
-									gap: 8px;
-								"
-							>
-								<span style="color: #8b7355"></span> Сумма оплаты:
-							</div>
-							<div
-								style="
-									font-size: 16px;
-									color: #1a1a1a;
-									font-weight: 600;
-									padding: 10px 15px;
-									background: white;
-									border-radius: 10px;
-									border: 1px solid #e8e8e8;
-									box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-								"
-							>
-								{price} ₽
-							</div>
-						</div>
-						<div style="display: flex; flex-direction: column; gap: 6px">
-							<div
-								style="
-									font-size: 14px;
-									color: #666;
-									font-weight: 500;
-									display: flex;
-									align-items: center;
-									gap: 8px;
-								"
-							>
-								<span style="color: #8b7355"></span> Статус:
-							</div>
-							<div
-								style="
-									font-size: 16px;
-									color: #1a1a1a;
-									font-weight: 600;
-									padding: 10px 15px;
-									background: white;
-									border-radius: 10px;
-									border: 1px solid #e8e8e8;
-									box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-								"
-							>
-								<span
+						<h1>Оплата успешно завершена!</h1>
+						<p>Спасибо за покупку. Ваш заказ готов к получению.</p>
+					</div>
+
+					<!-- Детали заказа -->
+					<div class="order-details">
+						<h2><i class="fas fa-receipt"></i> Детали заказа</h2>
+						<div id="orderDetails">
+							<div class="loading" style="text-align: center; padding: 40px">
+								<div
+									class="spinner"
 									style="
-										background: linear-gradient(
-											135deg,
-											#4caf50 0%,
-											#45a049 100%
-										);
-										color: white;
-										padding: 6px 16px;
-										border-radius: 20px;
-										font-size: 14px;
-										font-weight: 700;
-										display: inline-block;
-										box-shadow: 0 3px 8px rgba(76, 175, 80, 0.2);
+										width: 50px;
+										height: 50px;
+										border: 5px solid #f3f3f3;
+										border-top: 5px solid #8b7355;
+										border-radius: 50%;
+										animation: spin 1s linear infinite;
+										margin: 0 auto 20px;
 									"
-									>Оплачено ✓</span
-								>
-							</div>
-						</div>
-						<div style="display: flex; flex-direction: column; gap: 6px">
-							<div
-								style="
-									font-size: 14px;
-									color: #666;
-									font-weight: 500;
-									display: flex;
-									align-items: center;
-									gap: 8px;
-								"
-							>
-								<span style="color: #8b7355"></span> Дата оплаты:
-							</div>
-							<div
-								style="
-									font-size: 16px;
-									color: #1a1a1a;
-									font-weight: 600;
-									padding: 10px 15px;
-									background: white;
-									border-radius: 10px;
-									border: 1px solid #e8e8e8;
-									box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-								"
-							>
-								{paidAt}
+								></div>
+								<p>Загрузка информации о заказе...</p>
 							</div>
 						</div>
 					</div>
-				</div>
 
-				<!-- Секция скачивания -->
-				<div
-					style="
-						background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
-						border-radius: 18px;
-						padding: 40px 30px;
-						text-align: center;
-						margin-bottom: 40px;
-						border: 3px solid #d4c9b8;
-						position: relative;
-						overflow: hidden;
-					"
-				>
-					<h2
-						style="
-							font-size: 24px;
-							color: #1a1a1a;
-							margin-bottom: 15px;
-							font-weight: 700;
-							position: relative;
-							z-index: 2;
-						"
-					>
-						Ваш циферблат готов!
-					</h2>
-					<p
-						style="
-							color: #555;
-							font-size: 16px;
-							margin-bottom: 30px;
-							position: relative;
-							z-index: 2;
-							max-width: 80%;
-							margin-left: auto;
-							margin-right: auto;
-						"
-					>
-						Файл циферблата в формате APK для установки на часы Wear OS
-					</p>
+					<!-- Секция скачивания - ОДИН блок -->
+					<div class="download-section">
+						<h2><i class="fas fa-download"></i> Скачайте файл циферблата</h2>
+						<p style="margin-bottom: 25px; color: #555">
+							Файл циферблата в формате APK готов к скачиванию
+						</p>
+						<button id="downloadBtn" class="btn-download" disabled>
+							<i class="fas fa-spinner fa-spin"></i> Проверка доступа...
+						</button>
+						<p style="margin-top: 15px; color: #666; font-size: 0.9rem">
+							<i class="fas fa-info-circle"></i> Размер:
+							<span id="fileSize">~5-10 MB</span> | Формат: APK
+						</p>
+					</div>
 
-					<a
-						href="{downloadUrl}"
-						style="
-							display: inline-block;
-							background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
-							color: white;
-							text-decoration: none;
-							padding: 18px 50px;
-							border-radius: 30px;
-							font-weight: 700;
-							font-size: 18px;
-							border: none;
-							cursor: pointer;
-							transition: all 0.3s ease;
-							box-shadow: 0 8px 25px rgba(139, 115, 85, 0.4);
-							position: relative;
-							z-index: 2;
-							transform: translateY(0);
-						"
-					>
-						Скачать циферблат
-					</a>
-				</div>
-			</div>
+					<!-- Важное напоминание -->
+					<div class="reminder-box">
+						<h3><i class="fas fa-info-circle"></i> Внимание!</h3>
+						<p>
+							<i class="fas fa-save"></i> Сохраните эту ссылку, чтобы не
+							потерять доступ к файлу в будущем. Мы также отправили ссылку для
+							скачивания на указанную при заказе почту.
+						</p>
+					</div>
 
-			<!-- Подвал -->
-			<div
-				style="
-					background: #1a1a1a;
-					padding: 40px 30px;
-					text-align: center;
-					border-top: 1px solid #333;
-				"
-			>
-				<div style="margin-bottom: 20px">
-					<p style="color: #aaa; font-size: 15px; margin-bottom: 15px">
-						Нужна помощь с установкой?
-					</p>
-					<a
-						href="https://t.me/krek_free"
-						target="_blank"
-						style="
-							display: inline-block;
-							background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%);
-							color: white;
-							text-decoration: none;
-							padding: 14px 32px;
-							border-radius: 25px;
-							font-weight: 600;
-							font-size: 16px;
-							transition: all 0.3s ease;
-							box-shadow: 0 6px 20px rgba(0, 136, 204, 0.3);
-						"
-					>
-						Написать в поддержку
-					</a>
+					<!-- Инструкции по установке -->
+					<div class="instructions">
+						<h3><i class="fas fa-info-circle"></i> Инструкция по установке</h3>
+						<p style="margin-bottom: 25px; color: #555">
+							Выберите способ установки для ваших часов:
+						</p>
+						<div class="install-buttons">
+							<button class="install-btn" id="wearloadBtn">
+								<i class="fas fa-mobile-alt"></i> WearLoad
+							</button>
+							<button class="install-btn" id="adbBtn">
+								<i class="fas fa-cogs"></i> ADB App Control
+							</button>
+							<button class="install-btn" id="bugjaegerBtn">
+								<i class="fas fa-bug"></i> Bugjaeger
+							</button>
+						</div>
+
+						<div
+							class="install-description"
+							style="
+								margin-top: 25px;
+								padding: 20px;
+								background: rgba(139, 115, 85, 0.05);
+								border-radius: 12px;
+								border-left: 3px solid #8b7355;
+							"
+						>
+							<p style="margin-bottom: 15px">
+								<strong>WearLoad</strong> - Мы рекомендуем использовать именно
+								этот способ установки через смартфон как самый простой, быстрый
+								и автоматизированный.
+							</p>
+							<p style="margin-bottom: 15px">
+								<strong>ADB App Control</strong> - Если вы предпочитаете
+								устанавливать циферблаты через ПК, то выбирайте этот способ
+								установки.
+							</p>
+							<p style="margin-bottom: 0">
+								<strong>Bugjaeger</strong> - Если вы предпочитаете устанавливать
+								циферблаты через смартфон, то выбирайте этот способ установки.
+							</p>
+						</div>
+					</div>
+
+					<!-- Ссылка вернуться в магазин -->
+					<div class="back-to-shop">
+						<a href="/" class="btn-buy">
+							<i class="fas fa-store"></i> Вернуться в магазин
+						</a>
+					</div>
 				</div>
-				<p
-					style="
-						color: #888;
-						font-size: 13px;
-						margin-top: 20px;
-						padding-top: 20px;
-						border-top: 1px solid #333;
-					"
-				>
-					© 2026 KF WATCH FACE. Все права защищены.
-				</p>
 			</div>
 		</div>
+
+		<!-- Футер (1 в 1 как в index.html) -->
+		<footer class="footer">
+			<div class="container">
+				<div class="footer-content">
+					<div class="footer-section logo-section">
+						<div class="logo-container">
+							<img
+								src="/guide/Logo.png"
+								alt="KF WATCH FACE Logo"
+								class="footer-logo"
+								width="85"
+								height="110"
+							/>
+							<h3>KF WATCH FACE</h3>
+						</div>
+					</div>
+					<div class="footer-section">
+						<h4>Навигация</h4>
+						<div class="footer-links">
+							<a href="#" class="footer-link" id="installGuideLinkFooter"
+								>Инструкция по установке</a
+							>
+							<a href="/#catalog" class="footer-link">Каталог</a>
+							<a href="#" class="footer-link" id="aboutLinkFooter">О нас</a>
+							<a href="#" class="footer-link" id="faqLinkFooter">FAQ</a>
+							<a href="#" class="footer-link" id="contactsLinkFooter"
+								>Контакты</a
+							>
+						</div>
+					</div>
+					<div class="footer-section">
+						<h4>Связаться с продавцом</h4>
+						<div class="social-links">
+							<a
+								href="https://t.me/krek_free"
+								target="_blank"
+								class="social-link"
+								><i class="fab fa-telegram"></i
+							></a>
+							<!-- Для ПК (скрывается на мобильных) -->
+							<a
+								href="https://mail.google.com/mail/?view=cm&to=lavrov_dima@mail.ru"
+								class="social-link email-link email-desktop"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<i class="fas fa-envelope"></i>
+							</a>
+
+							<!-- Для мобильных (скрывается на ПК) -->
+							<a
+								href="mailto:lavrov_dima@mail.ru"
+								class="social-link email-link email-mobile"
+							>
+								<i class="fas fa-envelope"></i>
+							</a>
+						</div>
+					</div>
+				</div>
+				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
+			</div>
+		</footer>
+
+		<script>
+			console.log('Начало загрузки модальных окон...')
+
+			// Синхронная загрузка модальных окон (как в index.html)
+			const xhr = new XMLHttpRequest()
+			xhr.open('GET', '/html/modals.html', false) // false = синхронный запрос
+			xhr.send()
+
+			if (xhr.status === 200) {
+				const modalHTML = xhr.responseText
+				document.body.insertAdjacentHTML('beforeend', modalHTML)
+				console.log('Модальные окна вставлены в DOM')
+
+				// Проверяем что они есть
+				const modal = document.getElementById('contactsModal')
+				console.log('Проверка contactsModal:', modal ? 'НАЙДЕН' : 'НЕ НАЙДЕН')
+			} else {
+				console.error('Ошибка загрузки modals.html, статус:', xhr.status)
+			}
+		</script>
+
+		<!-- Подключаем JS файлы -->
+		<script src="/public/js/firebase-config.js"></script>
+		<script src="/public/js/auth.js"></script>
+		<script src="/public/js/receiving.js"></script>
 	</body>
 </html>
