@@ -1037,9 +1037,15 @@ app.post('/api/robokassa/result', async (req, res) => {
 		// Получаем текущий заказ из Firebase
 		let order = await getOrderByOrderIdFromFirebase(orderId)
 
+		// ВАЖНО: Объявляем receivingId здесь
+		let receivingId = null
+
 		if (!order) {
 			console.log(`⚠️ Order ${orderId} not found in Firebase`)
 			console.log('🆕 Creating new order from Result URL data...')
+
+			// Генерируем receivingId сразу
+			receivingId = generateReceivingId()
 
 			// Создаем новый заказ с данными из Result URL
 			order = {
@@ -1065,63 +1071,12 @@ app.post('/api/robokassa/result', async (req, res) => {
 					confirmed_at: new Date().toISOString(),
 				},
 				isDaily: false,
-				receivingId: null,
-				receivingUrl: null,
+				receivingId: receivingId,
+				receivingUrl: `/purchase/receiving/${receivingId}`,
 			}
 
 			// Сохраняем новый заказ
 			await set(ref(database, `orders/${orderId}`), order)
-			console.log(`✅ Created new order ${orderId} from Result URL`)
-		} else {
-			console.log(`✅ Found existing order ${orderId}`)
-			console.log(`📊 Current status: ${order.status}`)
-			console.log(`📧 Customer email: ${order.customerEmail}`)
-			console.log(`🛒 Product: ${order.productId}`)
-
-			// Обновляем статус на paid
-			if (order.status !== 'paid') {
-				console.log(
-					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`
-				)
-
-				const updates = {
-					status: 'paid',
-					paidAt: new Date().toISOString(),
-					robokassaParams: params,
-					updatedAt: new Date().toISOString(),
-					robokassaData: {
-						...(order.robokassaData || {}),
-						is_test: params.IsTest || '0',
-						signature_valid: true,
-						confirmed_via: 'result_url',
-						confirmed_at: new Date().toISOString(),
-					},
-				}
-
-				await update(ref(database, `orders/${orderId}`), updates)
-				console.log(`✅ Order ${orderId} marked as PAID`)
-
-				// Обновляем локальный объект
-				order = { ...order, ...updates }
-			} else {
-				console.log(`✅ Order ${orderId} already marked as paid`)
-				console.log(`📅 Was paid at: ${order.paidAt}`)
-			}
-		}
-
-		// Генерируем receivingId если его нет
-		if (!order.receivingId) {
-			console.log(`🔑 Generating receivingId for paid order ${orderId}`)
-			const receivingId = generateReceivingId()
-
-			const receivingUpdates = {
-				receivingId: receivingId,
-				receivingUrl: `/purchase/receiving/${receivingId}`,
-				updatedAt: new Date().toISOString(),
-			}
-
-			// Обновляем заказ с receivingId
-			await update(ref(database, `orders/${orderId}`), receivingUpdates)
 
 			// Создаем индекс для быстрого поиска
 			await set(ref(database, `orderByReceivingId/${receivingId}`), {
@@ -1134,16 +1089,76 @@ app.post('/api/robokassa/result', async (req, res) => {
 				paidAt: new Date().toISOString(),
 			})
 
-			console.log(`✅ Generated receivingId: ${receivingId}`)
-			console.log(`🔗 Receiving URL: /purchase/receiving/${receivingId}`)
+			console.log(`✅ Created new order ${orderId} from Result URL`)
+			console.log(`🔗 Generated receivingId: ${receivingId}`)
 		} else {
-			console.log(
-				`✅ Order ${orderId} already has receivingId: ${order.receivingId}`
-			)
-			console.log(`🔗 Existing receiving URL: ${order.receivingUrl}`)
+			console.log(`✅ Found existing order ${orderId}`)
+			console.log(`📊 Current status: ${order.status}`)
+			console.log(`📧 Customer email: ${order.customerEmail}`)
+			console.log(`🛒 Product: ${order.productId}`)
+
+			// Сохраняем существующий receivingId
+			receivingId = order.receivingId || null
+
+			// Обновляем статус на paid
+			if (order.status !== 'paid') {
+				console.log(
+					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`
+				)
+
+				// Если нет receivingId, генерируем его
+				if (!receivingId) {
+					receivingId = generateReceivingId()
+					console.log(`🔑 Generated new receivingId: ${receivingId}`)
+				}
+
+				const updates = {
+					status: 'paid',
+					paidAt: new Date().toISOString(),
+					receivingId: receivingId,
+					receivingUrl: `/purchase/receiving/${receivingId}`,
+					robokassaParams: params,
+					updatedAt: new Date().toISOString(),
+					robokassaData: {
+						...(order.robokassaData || {}),
+						is_test: params.IsTest || '0',
+						signature_valid: true,
+						confirmed_via: 'result_url',
+						confirmed_at: new Date().toISOString(),
+					},
+				}
+
+				await update(ref(database, `orders/${orderId}`), updates)
+
+				// Обновляем индекс
+				await set(ref(database, `orderByReceivingId/${receivingId}`), {
+					orderId: orderId,
+					status: 'paid',
+					receivingId: receivingId,
+					productId: order.productId,
+					customerEmail: order.customerEmail,
+					createdAt: new Date().toISOString(),
+					paidAt: new Date().toISOString(),
+				})
+
+				console.log(`✅ Order ${orderId} marked as PAID`)
+				console.log(`🔗 Receiving URL: /purchase/receiving/${receivingId}`)
+
+				// Обновляем локальный объект
+				order = { ...order, ...updates }
+			} else {
+				console.log(`✅ Order ${orderId} already marked as paid`)
+				console.log(`📅 Was paid at: ${order.paidAt}`)
+				console.log(`🔗 Existing receiving URL: ${order.receivingUrl}`)
+			}
 		}
 
-		// Отправляем письмо
+		// ========== ОТПРАВКА ПИСЬМА ==========
+		console.log(`📧 ====== ATTEMPTING TO SEND EMAIL ======`)
+		console.log(`📧 Order: ${orderId}`)
+		console.log(`📧 Customer: ${order.customerEmail}`)
+		console.log(`📧 ReceivingId: ${receivingId}`)
+
 		try {
 			const emailResult = await sendOrderEmail({
 				orderId: orderId,
@@ -1156,13 +1171,37 @@ app.post('/api/robokassa/result', async (req, res) => {
 			})
 
 			if (emailResult.success) {
-				console.log(`✅ Email sent to ${order.customerEmail}`)
+				console.log(`✅ EMAIL SENT SUCCESSFULLY to ${order.customerEmail}`)
+				console.log(`📧 Message ID: ${emailResult.messageId}`)
+				console.log(`📧 Response: ${emailResult.response}`)
+
+				// Логируем в Firebase
+				await update(ref(database, `orders/${orderId}`), {
+					emailSent: true,
+					emailSentAt: new Date().toISOString(),
+					emailMessageId: emailResult.messageId,
+					updatedAt: new Date().toISOString(),
+				})
 			} else {
-				console.log(`⚠️ Email failed: ${emailResult.error}`)
+				console.log(`❌ EMAIL FAILED for ${order.customerEmail}`)
+				console.log(`❌ Error: ${emailResult.error}`)
+				console.log(`❌ Details:`, emailResult.details)
+
+				// Логируем ошибку в Firebase
+				await update(ref(database, `orders/${orderId}`), {
+					emailSent: false,
+					emailError: emailResult.error,
+					emailErrorAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+				})
 			}
 		} catch (emailErr) {
-			console.log(`⚠️ Email error: ${emailErr.message}`)
+			console.log(`❌ CRITICAL EMAIL ERROR:`)
+			console.log(`❌ Message: ${emailErr.message}`)
+			console.log(`❌ Stack:`, emailErr.stack)
 		}
+
+		console.log(`📧 ====== EMAIL PROCESSING COMPLETE ======`)
 
 		// ВАЖНО: Отправляем ответ Robokassa в правильном формате
 		console.log(`📤 Sending response to Robokassa: "OK${orderId}"`)
@@ -1178,7 +1217,6 @@ app.post('/api/robokassa/result', async (req, res) => {
 		res.status(500).send('ERROR: Server processing error')
 	}
 })
-
 // ==================== SUCCESS URL ОБРАБОТКА ====================
 
 app.get('/success', async (req, res) => {
@@ -1347,9 +1385,13 @@ app.get('/success', async (req, res) => {
 		}
 
 		// ========== ГЕНЕРИРУЕМ RECEIVING ID ==========
-		if (!order.receivingId) {
+		// ========== ГЕНЕРИРУЕМ RECEIVING ID ==========
+		// Объявляем переменную receivingId здесь
+		let receivingId = order.receivingId || null
+
+		if (!receivingId) {
 			console.log(`🔑 Generating receivingId for order ${orderId}`)
-			const receivingId = generateReceivingId()
+			receivingId = generateReceivingId()
 
 			const updates = {
 				receivingId: receivingId,
@@ -1372,16 +1414,62 @@ app.get('/success', async (req, res) => {
 			})
 
 			console.log(`✅ Generated receivingId: ${receivingId}`)
-			console.log(`🔗 Redirecting to: /purchase/receiving/${receivingId}`)
-
-			// Редирект на страницу получения
-			return res.redirect(`/purchase/receiving/${receivingId}`)
 		} else {
-			// Если receivingId уже есть
-			console.log(`✅ Order already has receivingId: ${order.receivingId}`)
-			console.log(`🔗 Redirecting to: ${order.receivingUrl}`)
-			return res.redirect(order.receivingUrl)
+			console.log(`✅ Order already has receivingId: ${receivingId}`)
 		}
+
+		// ========== ОТПРАВКА ПИСЬМА ==========
+		console.log(`📧 ====== ATTEMPTING TO SEND EMAIL FROM SUCCESS URL ======`)
+		console.log(`📧 Order: ${orderId}`)
+		console.log(`📧 Customer: ${order.customerEmail}`)
+		console.log(`📧 ReceivingId: ${receivingId}`)
+
+		try {
+			const emailResult = await sendOrderEmail({
+				orderId: orderId,
+				productId: order.productId,
+				productName: order.productName || `Циферблат ${order.productId}`,
+				customerEmail: order.customerEmail,
+				price: parseFloat(params.OutSum),
+				paidAt: order.paidAt || new Date().toISOString(),
+				receivingId: receivingId,
+			})
+
+			if (emailResult.success) {
+				console.log(`✅ EMAIL SENT SUCCESSFULLY to ${order.customerEmail}`)
+				console.log(`📧 Message ID: ${emailResult.messageId}`)
+				console.log(`📧 Response: ${emailResult.response}`)
+
+				// Логируем в Firebase
+				await update(ref(database, `orders/${orderId}`), {
+					emailSent: true,
+					emailSentAt: new Date().toISOString(),
+					emailMessageId: emailResult.messageId,
+					updatedAt: new Date().toISOString(),
+				})
+			} else {
+				console.log(`❌ EMAIL FAILED for ${order.customerEmail}`)
+				console.log(`❌ Error: ${emailResult.error}`)
+				console.log(`❌ Details:`, emailResult.details)
+
+				// Логируем ошибку в Firebase
+				await update(ref(database, `orders/${orderId}`), {
+					emailSent: false,
+					emailError: emailResult.error,
+					emailErrorAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+				})
+			}
+		} catch (emailErr) {
+			console.log(`❌ CRITICAL EMAIL ERROR in Success URL:`)
+			console.log(`❌ Message: ${emailErr.message}`)
+			console.log(`❌ Stack:`, emailErr.stack)
+		}
+
+		console.log(`📧 ====== EMAIL PROCESSING COMPLETE ======`)
+
+		console.log(`🔗 Redirecting to: /purchase/receiving/${receivingId}`)
+		return res.redirect(`/purchase/receiving/${receivingId}`)
 	} catch (error) {
 		console.error('❌ Error in Success URL handler:', error)
 		console.error('Error stack:', error.stack)
