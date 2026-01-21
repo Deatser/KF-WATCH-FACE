@@ -78,7 +78,18 @@ async function sendOrderEmail(order) {
 
 // Генерация текстовой версии письма
 function generatePlainTextEmail(order, downloadUrl) {
-	const formattedDate = new Date(order.paidAt).toLocaleString('ru-RU')
+	// Используем часовой пояс Москвы (UTC+3)
+	const formattedDate = new Date(order.paidAt).toLocaleString('ru-RU', {
+		timeZone: 'Europe/Moscow',
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false,
+	})
+
 	const productDisplayName = order.productName || order.productId
 
 	return `
