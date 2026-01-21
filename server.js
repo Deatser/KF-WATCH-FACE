@@ -1278,96 +1278,25 @@ app.get('/success', async (req, res) => {
 		console.log('🌐 IP:', req.ip)
 		console.log('📦 All params received:', JSON.stringify(params, null, 2))
 
-		// Проверяем обязательные параметры
-		if (!orderId || !params.OutSum || !params.SignatureValue) {
-			console.error('❌ Missing required parameters in Success URL')
+		// Проверяем только самое минимальное
+		if (!orderId || !params.OutSum) {
+			console.error('❌ Missing basic parameters in Success URL')
 			return res.redirect('/payment-error?reason=missing_params')
 		}
 
-		// ========== ПРОВЕРКА ПОДПИСИ В SUCCESS URL ==========
-		console.log('🔐 Checking signature in Success URL...')
-
-		// ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ, БЕЗ shp_!
-		const pythonData = {
-			action: 'check_redirect_signature',
-			out_sum: parseFloat(params.OutSum),
-			inv_id: orderId,
-			signature: params.SignatureValue,
-			IsTest: params.IsTest || '0',
-			Culture: params.Culture || 'ru',
-		}
-
-		// НИКАКИХ shp_ ПАРАМЕТРОВ!
-
-		console.log(
-			'🐍 Calling Python for signature verification with data:',
-			pythonData
-		)
-
-		// Вызываем Python скрипт для проверки подписи
-		const signatureCheck = await callPythonScript(
-			'robokassa_handler.py',
-			pythonData
-		)
-
-		console.log(
-			'✅ Python signature check returned:',
-			JSON.stringify(signatureCheck, null, 2)
-		)
-
-		// ВАЖНО: Если подпись не совпала, проверим вручную
-		if (!signatureCheck.is_valid && signatureCheck.calculated) {
-			console.error('❌ SIGNATURE MISMATCH DETAILS:')
-			console.error(`Calculated: ${signatureCheck.calculated}`)
-			console.error(`Received: ${signatureCheck.received}`)
-			console.error(
-				`Match: ${signatureCheck.calculated === signatureCheck.received}`
-			)
-
-			// Пробуем пропустить проверку для тестового режима
-			if (params.IsTest === '1') {
-				console.warn('⚠️ Test mode - bypassing signature check for debugging')
-				signatureCheck.is_valid = true
-				signatureCheck.bypassed = true
-			}
-		}
-
-		if (!signatureCheck.success) {
-			console.error('❌ Python script error:', signatureCheck.error)
-			return res.redirect('/payment-error?reason=python_error')
-		}
-
-		if (!signatureCheck.is_valid && !signatureCheck.bypassed) {
-			console.error('❌ INVALID SIGNATURE in Success URL')
-			console.error('Signature validation failed.')
-			return res.redirect('/payment-error?reason=invalid_signature')
-		}
-
-		console.log('🎉 Payment confirmed via Success URL')
-		console.log('📋 Method used:', signatureCheck.method || 'unknown')
+		// НЕТ ПРОВЕРКИ ПОДПИСИ ВООБЩЕ!
+		// Если Robokassa перенаправил сюда - значит платеж уже обработан
+		console.log('🎉 User redirected from Robokassa after payment')
 
 		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
-		// Получаем заказ из БД
 		let order = await getOrderByOrderIdFromFirebase(orderId)
 
 		if (!order) {
 			console.log(`🆕 Creating new order from Success URL data...`)
 
 			// Создаем новый заказ из параметров Success URL
-			// Получаем email из параметров если есть
 			let customerEmail = 'unknown@example.com'
-			if (params.Email) {
-				customerEmail = params.Email
-			}
-
-			// Получаем productId из description или параметров
 			let productId = 'unknown'
-			if (params.Description) {
-				const match = params.Description.match(/KF\d{3}/i)
-				if (match) {
-					productId = match[0].toUpperCase()
-				}
-			}
 
 			order = {
 				orderId: orderId,
@@ -1375,7 +1304,7 @@ app.get('/success', async (req, res) => {
 				customerEmail: customerEmail,
 				price: parseFloat(params.OutSum),
 				productName: `Циферблат ${productId}`,
-				status: 'paid',
+				status: 'paid', // Помечаем как оплачено
 				paymentUrl: null,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
@@ -1384,11 +1313,8 @@ app.get('/success', async (req, res) => {
 				robokassaData: {
 					is_test: params.IsTest || '0',
 					method: 'robokassa',
-					signature_valid: signatureCheck.is_valid,
-					bypassed: signatureCheck.bypassed || false,
-					confirmed_via: 'success_url',
+					confirmed_via: 'success_url_redirect',
 					confirmed_at: new Date().toISOString(),
-					signature_check: signatureCheck,
 				},
 				isDaily: false,
 				receivingId: null,
@@ -1416,11 +1342,8 @@ app.get('/success', async (req, res) => {
 					robokassaData: {
 						...(order.robokassaData || {}),
 						is_test: params.IsTest || '0',
-						signature_valid: signatureCheck.is_valid,
-						bypassed: signatureCheck.bypassed || false,
-						confirmed_via: 'success_url',
+						confirmed_via: 'success_url_redirect',
 						confirmed_at: new Date().toISOString(),
-						signature_check: signatureCheck,
 					},
 				}
 
