@@ -2,7 +2,7 @@
 const { Resend } = require('resend')
 
 // Получаем API ключ из переменных окружения
-const RESEND_API_KEY = process.env.RESEND_API_KEY
+const RESEND_API_KEY = 're_PGrDARf7_TFS92VHBnbfX1jVTQQYp7apo'
 const SITE_URL = process.env.SITE_URL || 'https://www.kf-watchface.ru'
 
 console.log('📧 ====== RESEND CONFIGURATION ======')

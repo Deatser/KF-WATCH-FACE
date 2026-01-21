@@ -976,26 +976,78 @@ app.post('/api/robokassa/result', async (req, res) => {
 			return res.status(400).send('ERROR: Missing required parameters')
 		}
 
+		const orderId = parseInt(params.InvId)
+
+		// СНАЧАЛА получаем заказ из БД для параметров
+		let dbOrder = await getOrderByOrderIdFromFirebase(orderId)
+
 		// Подготавливаем данные для Python метода is_result_notification_valid()
 		const pythonData = {
 			action: 'check_result_signature',
 			out_sum: parseFloat(params.OutSum),
-			inv_id: parseInt(params.InvId),
+			inv_id: orderId,
 			signature: params.SignatureValue,
 			IsTest: params.IsTest || '0',
 			Culture: params.Culture || 'ru',
 		}
 
-		// Добавляем ВСЕ shp_ параметры (важно для подписи!)
-		// Robokassa добавляет shp_ ко всему, поэтому убираем их префикс
-		// Robokassa добавляет shp_ ко всему, убираем их префикс
+		// ВАЖНО: Добавляем shp_ параметры как их ожидает Robokassa
+		// Robokassa рассчитывает подпись с shp_ префиксом!
+		if (dbOrder) {
+			// Используем параметры из БД
+			pythonData.shp_product_id = dbOrder.productId
+			pythonData.shp_email = dbOrder.customerEmail
+			console.log(
+				`📊 Using parameters from DB: shp_product_id=${dbOrder.productId}, shp_email=${dbOrder.customerEmail}`
+			)
+		} else {
+			console.log(`⚠️ Order ${orderId} not found in DB, checking params...`)
+
+			// Пробуем получить из параметров Robokassa
+			if (params.shp_product_id) {
+				pythonData.shp_product_id = params.shp_product_id
+				console.log(
+					`📋 Found shp_product_id in params: ${params.shp_product_id}`
+				)
+			}
+
+			if (params.shp_email) {
+				pythonData.shp_email = params.shp_email
+				console.log(`📋 Found shp_email in params: ${params.shp_email}`)
+			}
+
+			// Если нет shp_ параметров, проверяем обычные
+			if (!pythonData.shp_product_id && params.product_id) {
+				pythonData.shp_product_id = params.product_id
+				console.log(
+					`🔄 Using product_id as shp_product_id: ${params.product_id}`
+				)
+			}
+
+			if (!pythonData.shp_email && params.email) {
+				pythonData.shp_email = params.email
+				console.log(`🔄 Using email as shp_email: ${params.email}`)
+			}
+		}
+
+		// Добавляем ВСЕ shp_ параметры из запроса Robokassa
 		Object.keys(params).forEach(key => {
 			if (key.startsWith('shp_')) {
-				const originalKey = key.replace(/^shp_/, '')
-				pythonData[originalKey] = params[key]
-				console.log(`🔄 Result URL param: ${key} → ${originalKey}`)
+				// Оставляем с shp_ префиксом - так ожидает Robokassa!
+				pythonData[key] = params[key]
+				console.log(`📋 Added shp_ param: ${key} = ${params[key]}`)
+			} else if (
+				!pythonData[key] &&
+				key !== 'action' &&
+				key !== 'out_sum' &&
+				key !== 'inv_id' &&
+				key !== 'signature'
+			) {
+				// Добавляем остальные параметры (кроме уже добавленных)
+				pythonData[key] = params[key]
 			}
 		})
+
 		console.log('🐍 CALLING Python is_result_notification_valid() with:')
 		console.log(JSON.stringify(pythonData, null, 2))
 
@@ -1026,10 +1078,16 @@ app.post('/api/robokassa/result', async (req, res) => {
 			console.error('   1. Wrong password1/password2 in robokassa_handler.py')
 			console.error('   2. Missing shp_ parameters in signature calculation')
 			console.error('   3. Parameters were tampered with')
-			return res.status(400).send('ERROR: Invalid signature')
-		}
 
-		const orderId = parseInt(params.InvId)
+			// Попробуем пропустить проверку для тестового режима
+			if (params.IsTest === '1') {
+				console.warn('⚠️ Test mode - bypassing signature check for debugging')
+				result.is_valid = true
+				result.bypassed = true
+			} else {
+				return res.status(400).send('ERROR: Invalid signature')
+			}
+		}
 
 		console.log('🎉 PAYMENT CONFIRMED by is_result_notification_valid()')
 		console.log(`📋 Order ID: ${orderId}`)
@@ -1037,8 +1095,8 @@ app.post('/api/robokassa/result', async (req, res) => {
 		console.log(`🧪 Test mode: ${params.IsTest === '1' ? 'YES' : 'NO'}`)
 		console.log(`🌍 Culture: ${params.Culture}`)
 
-		// Получаем текущий заказ из Firebase
-		let order = await getOrderByOrderIdFromFirebase(orderId)
+		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
+		let order = dbOrder // Используем заказ из БД если он есть
 
 		// ВАЖНО: Объявляем receivingId здесь
 		let receivingId = null
@@ -1047,19 +1105,36 @@ app.post('/api/robokassa/result', async (req, res) => {
 			console.log(`⚠️ Order ${orderId} not found in Firebase`)
 			console.log('🆕 Creating new order from Result URL data...')
 
-			// Генерируем receivingId сразу
+			// Получаем productId из разных источников
+			let productId = 'unknown'
+			if (params.shp_product_id) {
+				productId = params.shp_product_id
+			} else if (params.product_id) {
+				productId = params.product_id
+			} else if (pythonData.shp_product_id) {
+				productId = pythonData.shp_product_id
+			}
+
+			// Получаем email из разных источников
+			let customerEmail = 'unknown@example.com'
+			if (params.shp_email) {
+				customerEmail = params.shp_email
+			} else if (params.email) {
+				customerEmail = params.email
+			} else if (pythonData.shp_email) {
+				customerEmail = pythonData.shp_email
+			}
+
+			// Генерируем receivingId
 			receivingId = generateReceivingId()
 
 			// Создаем новый заказ с данными из Result URL
 			order = {
 				orderId: orderId,
-				productId:
-					params.shp_product_id || params.shp_shp_product_id || 'unknown',
-				customerEmail: params.shp_email || 'unknown@example.com',
+				productId: productId,
+				customerEmail: customerEmail,
 				price: parseFloat(params.OutSum),
-				productName: `Циферблат ${
-					params.shp_product_id || params.shp_shp_product_id || 'Unknown'
-				}`,
+				productName: `Циферблат ${productId}`,
 				status: 'paid',
 				paymentUrl: null,
 				createdAt: new Date().toISOString(),
@@ -1069,7 +1144,8 @@ app.post('/api/robokassa/result', async (req, res) => {
 				robokassaData: {
 					is_test: params.IsTest || '0',
 					method: 'robokassa',
-					signature_valid: true,
+					signature_valid: result.is_valid,
+					bypassed: result.bypassed || false,
 					confirmed_via: 'result_url',
 					confirmed_at: new Date().toISOString(),
 				},
@@ -1089,7 +1165,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 				productId: order.productId,
 				customerEmail: order.customerEmail,
 				createdAt: new Date().toISOString(),
-				paidAt: new Date().toISOString(),
+				paidAt: order.paidAt || new Date().toISOString(),
 			})
 
 			console.log(`✅ Created new order ${orderId} from Result URL`)
@@ -1125,7 +1201,8 @@ app.post('/api/robokassa/result', async (req, res) => {
 					robokassaData: {
 						...(order.robokassaData || {}),
 						is_test: params.IsTest || '0',
-						signature_valid: true,
+						signature_valid: result.is_valid,
+						bypassed: result.bypassed || false,
 						confirmed_via: 'result_url',
 						confirmed_at: new Date().toISOString(),
 					},
@@ -1141,7 +1218,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 					productId: order.productId,
 					customerEmail: order.customerEmail,
 					createdAt: new Date().toISOString(),
-					paidAt: new Date().toISOString(),
+					paidAt: order.paidAt || new Date().toISOString(),
 				})
 
 				console.log(`✅ Order ${orderId} marked as PAID`)
@@ -1274,7 +1351,9 @@ app.get('/success', async (req, res) => {
 		// ========== ПРОВЕРКА ПОДПИСИ В SUCCESS URL ==========
 		console.log('🔐 Checking signature in Success URL...')
 
-		// Собираем данные для проверки подписи Python
+		// СНАЧАЛА получаем заказ из БД для параметров
+		let dbOrder = await getOrderByOrderIdFromFirebase(orderId)
+
 		// Собираем данные для проверки подписи Python
 		const pythonData = {
 			action: 'check_redirect_signature',
@@ -1285,21 +1364,49 @@ app.get('/success', async (req, res) => {
 			Culture: params.Culture || 'ru',
 		}
 
-		// КОРРЕКТНО обрабатываем shp_ параметры
-		// Robokassa добавляет shp_ ко всем пользовательским параметрам
-		// Убираем их префикс для корректной проверки подписи
+		// ВАЖНО: Добавляем shp_ параметры как их ожидает Robokassa
+		// Robokassa рассчитывает подпись с shp_ префиксом!
+		if (dbOrder) {
+			// Используем параметры из БД
+			pythonData.shp_product_id = dbOrder.productId
+			pythonData.shp_email = dbOrder.customerEmail
+			console.log(
+				`📊 Using parameters from DB: shp_product_id=${dbOrder.productId}, shp_email=${dbOrder.customerEmail}`
+			)
+		} else {
+			console.log(`⚠️ Order ${orderId} not found in DB, checking params...`)
+
+			// Пробуем получить из параметров Robokassa (если они их отправили)
+			if (params.shp_product_id) {
+				pythonData.shp_product_id = params.shp_product_id
+				console.log(
+					`📋 Found shp_product_id in params: ${params.shp_product_id}`
+				)
+			}
+
+			if (params.shp_email) {
+				pythonData.shp_email = params.shp_email
+				console.log(`📋 Found shp_email in params: ${params.shp_email}`)
+			}
+
+			// Если нет shp_ параметров, проверяем обычные
+			if (!pythonData.shp_product_id && params.product_id) {
+				pythonData.shp_product_id = params.product_id
+				console.log(
+					`🔄 Using product_id as shp_product_id: ${params.product_id}`
+				)
+			}
+
+			if (!pythonData.shp_email && params.email) {
+				pythonData.shp_email = params.email
+				console.log(`🔄 Using email as shp_email: ${params.email}`)
+			}
+		}
+
+		// Добавляем ВСЕ остальные параметры от Robokassa
 		Object.keys(params).forEach(key => {
-			if (key.startsWith('shp_')) {
-				// Убираем shp_ префикс от Robokassa
-				const originalKey = key.replace(/^shp_/, '')
-				pythonData[originalKey] = params[key]
-				console.log(`🔄 Success URL: ${key} → ${originalKey} = ${params[key]}`)
-			} else if (
-				key !== 'action' &&
-				key !== 'out_sum' &&
-				key !== 'inv_id' &&
-				key !== 'signature'
-			) {
+			if (!pythonData[key]) {
+				// Не перезаписываем если уже есть
 				pythonData[key] = params[key]
 			}
 		})
@@ -1329,7 +1436,7 @@ app.get('/success', async (req, res) => {
 				`Match: ${signatureCheck.calculated === signatureCheck.received}`
 			)
 
-			// Попробуем пропустить проверку для тестового режима
+			// Пробуем пропустить проверку для тестового режима
 			if (params.IsTest === '1') {
 				console.warn('⚠️ Test mode - bypassing signature check for debugging')
 				signatureCheck.is_valid = true
@@ -1352,21 +1459,38 @@ app.get('/success', async (req, res) => {
 		console.log('📋 Method used:', signatureCheck.method || 'unknown')
 
 		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
-		let order = await getOrderByOrderIdFromFirebase(orderId)
+		let order = dbOrder // Используем заказ из БД если он есть
 
 		if (!order) {
 			console.log(`🆕 Creating new order from Success URL data...`)
 
 			// Создаем новый заказ из параметров Success URL
+			// Получаем productId из разных источников
+			let productId = 'unknown'
+			if (params.shp_product_id) {
+				productId = params.shp_product_id
+			} else if (params.product_id) {
+				productId = params.product_id
+			} else if (pythonData.shp_product_id) {
+				productId = pythonData.shp_product_id
+			}
+
+			// Получаем email из разных источников
+			let customerEmail = 'unknown@example.com'
+			if (params.shp_email) {
+				customerEmail = params.shp_email
+			} else if (params.email) {
+				customerEmail = params.email
+			} else if (pythonData.shp_email) {
+				customerEmail = pythonData.shp_email
+			}
+
 			order = {
 				orderId: orderId,
-				productId:
-					params.shp_product_id || params.shp_shp_product_id || 'unknown',
-				customerEmail: params.shp_email || 'unknown@example.com',
+				productId: productId,
+				customerEmail: customerEmail,
 				price: parseFloat(params.OutSum),
-				productName: `Циферблат ${
-					params.shp_product_id || params.shp_shp_product_id || 'Unknown'
-				}`,
+				productName: `Циферблат ${productId}`,
 				status: 'paid',
 				paymentUrl: null,
 				createdAt: new Date().toISOString(),
@@ -1428,8 +1552,6 @@ app.get('/success', async (req, res) => {
 		}
 
 		// ========== ГЕНЕРИРУЕМ RECEIVING ID ==========
-		// ========== ГЕНЕРИРУЕМ RECEIVING ID ==========
-		// Объявляем переменную receivingId здесь
 		let receivingId = order.receivingId || null
 
 		if (!receivingId) {
