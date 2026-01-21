@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Заказ #{orderId} оплачен - KF WATCH FACE</title>
+		<style>
+			@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: 'Comfortaa', sans-serif;
+				line-height: 1.6;
+				color: #333;
+				background-color: #f5f0e8;
+				padding: 20px;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+
+			.email-container {
+				max-width: 600px;
+				margin: 0 auto;
+				background: white;
+				border-radius: 20px;
+				overflow: hidden;
+				box-shadow: 0 10px 40px rgba(139, 115, 85, 0.15);
+				border: 1px solid #e8dfd0;
+			}
+
+			.header {
+				background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+				padding: 40px 30px;
+				text-align: center;
+				color: white;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.header::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+				background-size: cover;
+			}
+
+			.header-content {
+				position: relative;
+				z-index: 2;
+			}
+
+			.success-icon {
+				font-size: 60px;
+				margin-bottom: 20px;
+				display: inline-block;
+				animation: successPulse 0.6s ease;
+			}
+
+			@keyframes successPulse {
+				0% {
+					transform: scale(0.8);
+					opacity: 0;
+				}
+				70% {
+					transform: scale(1.1);
+				}
+				100% {
+					transform: scale(1);
+					opacity: 1;
+				}
+			}
+
+			.header h1 {
+				font-size: 28px;
+				font-weight: 700;
+				margin-bottom: 10px;
+				letter-spacing: 0.5px;
+			}
+
+			.header p {
+				font-size: 16px;
+				opacity: 0.9;
+				font-weight: 400;
+			}
+
+			.content {
+				padding: 40px 30px;
+			}
+
+			.order-details {
+				background: linear-gradient(to right, #f9f9f9, #f5f5f5);
+				border-radius: 16px;
+				padding: 30px;
+				margin-bottom: 30px;
+				border: 2px solid #f0f0f0;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+			}
+
+			.order-details h2 {
+				font-size: 20px;
+				color: #8b7355;
+				margin-bottom: 25px;
+				font-weight: 600;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+			}
+
+			.order-details h2 i {
+				font-size: 22px;
+			}
+
+			.detail-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 18px;
+			}
+
+			.detail-item {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+
+			.detail-label {
+				font-size: 14px;
+				color: #666;
+				font-weight: 500;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+
+			.detail-label i {
+				color: #8b7355;
+				font-size: 14px;
+			}
+
+			.detail-value {
+				font-size: 16px;
+				color: #1a1a1a;
+				font-weight: 600;
+				padding: 10px 15px;
+				background: white;
+				border-radius: 10px;
+				border: 1px solid #e8e8e8;
+				box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+			}
+
+			.status-badge {
+				background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+				color: white;
+				padding: 6px 16px;
+				border-radius: 20px;
+				font-size: 14px;
+				font-weight: 700;
+				display: inline-block;
+				box-shadow: 0 3px 8px rgba(76, 175, 80, 0.2);
+			}
+
+			.download-section {
+				background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 100%);
+				border-radius: 18px;
+				padding: 40px 30px;
+				text-align: center;
+				margin-bottom: 40px;
+				border: 3px solid #d4c9b8;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.download-section::before {
+				content: '';
+				position: absolute;
+				top: -50%;
+				right: -50%;
+				width: 200px;
+				height: 200px;
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 50%;
+			}
+
+			.download-section::after {
+				content: '';
+				position: absolute;
+				bottom: -30%;
+				left: -30%;
+				width: 150px;
+				height: 150px;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 50%;
+			}
+
+			.download-section h2 {
+				font-size: 24px;
+				color: #1a1a1a;
+				margin-bottom: 15px;
+				font-weight: 700;
+				position: relative;
+				z-index: 2;
+			}
+
+			.download-section p {
+				color: #555;
+				font-size: 16px;
+				margin-bottom: 30px;
+				position: relative;
+				z-index: 2;
+				max-width: 80%;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			.btn-download {
+				display: inline-block;
+				background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+				color: white;
+				text-decoration: none;
+				padding: 18px 50px;
+				border-radius: 30px;
+				font-weight: 700;
+				font-size: 18px;
+				border: none;
+				cursor: pointer;
+				transition: all 0.3s ease;
+				box-shadow: 0 8px 25px rgba(139, 115, 85, 0.4);
+				position: relative;
+				z-index: 2;
+				transform: translateY(0);
+			}
+
+			.btn-download:hover {
+				transform: translateY(-3px);
+				box-shadow: 0 12px 30px rgba(139, 115, 85, 0.5);
+			}
+
+			.btn-download:active {
+				transform: translateY(-1px);
+				box-shadow: 0 6px 20px rgba(139, 115, 85, 0.4);
+			}
+
+			.btn-download i {
+				margin-right: 10px;
+				font-size: 20px;
+			}
+
+			.footer {
+				background: #1a1a1a;
+				padding: 40px 30px;
+				text-align: center;
+				border-top: 1px solid #333;
+			}
+
+			.support-info {
+				margin-bottom: 20px;
+			}
+
+			.support-info p {
+				color: #aaa;
+				font-size: 15px;
+				margin-bottom: 15px;
+			}
+
+			.btn-support {
+				display: inline-block;
+				background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%);
+				color: white;
+				text-decoration: none;
+				padding: 14px 32px;
+				border-radius: 25px;
+				font-weight: 600;
+				font-size: 16px;
+				transition: all 0.3s ease;
+				box-shadow: 0 6px 20px rgba(0, 136, 204, 0.3);
+			}
+
+			.btn-support:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 8px 25px rgba(0, 136, 204, 0.4);
+			}
+
+			.btn-support i {
+				margin-right: 10px;
+			}
+
+			.copyright {
+				color: #888;
+				font-size: 13px;
+				margin-top: 20px;
+				padding-top: 20px;
+				border-top: 1px solid #333;
+			}
+
+			/* Адаптивность */
+			@media (max-width: 600px) {
+				body {
+					padding: 10px;
+				}
+
+				.email-container {
+					border-radius: 15px;
+				}
+
+				.header {
+					padding: 30px 20px;
+				}
+
+				.header h1 {
+					font-size: 24px;
+				}
+
+				.content {
+					padding: 30px 20px;
+				}
+
+				.detail-grid {
+					grid-template-columns: 1fr;
+					gap: 15px;
+				}
+
+				.order-details {
+					padding: 25px 20px;
+				}
+
+				.download-section {
+					padding: 30px 20px;
+					margin-bottom: 30px;
+				}
+
+				.download-section p {
+					max-width: 100%;
+				}
+
+				.btn-download {
+					padding: 16px 40px;
+					font-size: 16px;
+				}
+
+				.footer {
+					padding: 30px 20px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="email-container">
+			<!-- Шапка -->
+			<div class="header">
+				<div class="header-content">
+					<div class="success-icon">
+						<i class="fas fa-check-circle"></i>
+					</div>
+					<h1>✅ Заказ #{orderId} оплачен</h1>
+					<p>Спасибо за покупку! Ваш циферблат готов к скачиванию</p>
+				</div>
+			</div>
+
+			<!-- Основной контент -->
+			<div class="content">
+				<!-- Детали заказа -->
+				<div class="order-details">
+					<h2><i class="fas fa-receipt"></i> Детали заказа</h2>
+					<div class="detail-grid">
+						<div class="detail-item">
+							<div class="detail-label">
+								<i class="fas fa-hashtag"></i> Номер заказа:
+							</div>
+							<div class="detail-value">#{orderId}</div>
+						</div>
+						<div class="detail-item">
+							<div class="detail-label">
+								<i class="fas fa-clock"></i> Циферблат:
+							</div>
+							<div class="detail-value">{productName}</div>
+						</div>
+						<div class="detail-item">
+							<div class="detail-label">
+								<i class="fas fa-envelope"></i> Email покупателя:
+							</div>
+							<div class="detail-value">{customerEmail}</div>
+						</div>
+						<div class="detail-item">
+							<div class="detail-label">
+								<i class="fas fa-ruble-sign"></i> Сумма оплаты:
+							</div>
+							<div class="detail-value">{price} ₽</div>
+						</div>
+						<div class="detail-item">
+							<div class="detail-label">
+								<i class="fas fa-check-circle"></i> Статус:
+							</div>
+							<div class="detail-value">
+								<span class="status-badge">Оплачено ✓</span>
+							</div>
+						</div>
+						<div class="detail-item">
+							<div class="detail-label">
+								<i class="fas fa-calendar-alt"></i> Дата оплаты:
+							</div>
+							<div class="detail-value">{paidAt}</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Секция скачивания -->
+				<div class="download-section">
+					<h2>Ваш циферблат готов!</h2>
+					<p>Файл циферблата в формате APK для установки на часы Wear OS</p>
+
+					<a href="{downloadUrl}" class="btn-download">
+						<i class="fas fa-download"></i> Скачать циферблат
+					</a>
+				</div>
+			</div>
+
+			<!-- Подвал -->
+			<div class="footer">
+				<div class="support-info">
+					<p>Нужна помощь с установкой?</p>
+					<a href="https://t.me/krek_free" target="_blank" class="btn-support">
+						<i class="fab fa-telegram"></i> Написать в поддержку
+					</a>
+				</div>
+				<p class="copyright">© 2026 KF WATCH FACE. Все права защищены.</p>
+			</div>
+		</div>
+	</body>
+</html>
