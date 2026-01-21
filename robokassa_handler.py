@@ -25,51 +25,19 @@ class RobokassaHandler:
             algorithm=HashAlgorithm.md5,
         )
     
-    async def generate_open_payment_link(self, out_sum, inv_id, description=None, email=None, **kwargs):
-        """
-        Создание классической длинной ссылки
-        """
-        try:
-            # Создаем ссылку с помощью официальной библиотеки
-            response = self.robokassa.generate_open_payment_link(
-                out_sum=out_sum,
-                inv_id=inv_id,
-                description=description or f"Оплата заказа #{inv_id}",
-                email=email,
-                **kwargs
-            )
-            
-            return {
-                'success': True,
-                'payment_url': response.url,
-                'params': response.params.to_dict(),
-                'inv_id': inv_id,
-                'out_sum': out_sum,
-                'is_test': self.is_test,
-                'method': 'open_link'
-            }
-            
-        except Exception as e:
-            print(f"❌ Error in generate_open_payment_link: {str(e)}", file=sys.stderr)
-            return {
-                'success': False,
-                'error': str(e),
-                'method': 'open_link'
-            }
-    
     async def generate_protected_payment_link(self, out_sum, inv_id, description=None, email=None, **kwargs):
         """
         Создание короткой JWT ссылки
-        ВАЖНО: используем тот же метод что и в рабочем скрипте
+        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ
         """
         try:
-            # Используем тот же метод что в рабочем скрипте
+            # Используем только обязательные параметры
             response = self.robokassa.generate_open_payment_link(
                 out_sum=out_sum,
                 inv_id=inv_id,
                 description=description or f"Оплата заказа #{inv_id}",
                 email=email,
-                **kwargs
+                # НИКАКИХ shp_ параметров!
             )
             
             return {
@@ -84,69 +52,37 @@ class RobokassaHandler:
             
         except Exception as e:
             print(f"❌ Error in generate_protected_payment_link: {str(e)}", file=sys.stderr)
-            # Если JWT не сработал, возвращаемся к классическому методу
-            return await self.generate_open_payment_link(out_sum, inv_id, description, email, **kwargs)
+            return {
+                'success': False,
+                'error': str(e),
+                'method': 'jwt_protected'
+            }
 
     def check_result_signature(self, out_sum, inv_id, signature, **kwargs):
         """
         Проверка подписи для Result URL (уведомление от Robokassa)
-        ВАЖНО: Robokassa сортирует shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА (shp_email, shp_product_id)
+        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ!
         """
         try:
             print(f"🔍 DEBUG check_result_signature called", file=sys.stderr)
             print(f"🔍 out_sum: {out_sum}, inv_id: {inv_id}, signature: {signature}", file=sys.stderr)
             print(f"🔍 kwargs: {kwargs}", file=sys.stderr)
             
-            # Формируем строку для отладки
-            params_str = f"{out_sum}:{inv_id}:{self.password1}"
-            shp_params = {}
-            
-            for key, value in kwargs.items():
-                if key.startswith('shp_'):
-                    shp_params[key] = str(value)
-            
-            # ВАЖНО: Сортируем shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА
-            # Пример: shp_email, shp_product_id
-            if shp_params:
-                sorted_shp_keys = sorted(shp_params.keys())
-                print(f"🔍 Sorted shp keys: {sorted_shp_keys}", file=sys.stderr)
-                for key in sorted_shp_keys:
-                    params_str += f":{shp_params[key]}"
-                    print(f"🔍 Added {key}: {shp_params[key]}", file=sys.stderr)
-            
-            print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
-            
-            import hashlib
-            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
-            print(f"🔍 DEBUG: Calculated signature: {calculated_signature}", file=sys.stderr)
-            print(f"🔍 DEBUG: Received signature: {signature}", file=sys.stderr)
-            print(f"🔍 DEBUG: Match: {calculated_signature.lower() == signature.lower()}", file=sys.stderr)
-            
             # Проверяем подпись Result URL с помощью библиотеки
-            try:
-                is_valid = self.robokassa.is_result_notification_valid(
-                    signature=signature,
-                    out_sum=out_sum,
-                    inv_id=inv_id,
-                    **kwargs
-                )
-                print(f"✅ Library check: {is_valid}", file=sys.stderr)
-            except Exception as lib_error:
-                print(f"⚠️ Library check failed: {lib_error}", file=sys.stderr)
-                # Проверяем вручную
-                is_valid = (calculated_signature.lower() == signature.lower())
-                print(f"✅ Manual check: {is_valid}", file=sys.stderr)
+            # БЕЗ shp_ параметров!
+            is_valid = self.robokassa.is_result_notification_valid(
+                signature=signature,
+                out_sum=out_sum,
+                inv_id=inv_id
+            )
+            print(f"✅ Library check: {is_valid}", file=sys.stderr)
             
             return {
                 'success': True,
                 'is_valid': is_valid,
                 'inv_id': inv_id,
                 'out_sum': out_sum,
-                'calculated': calculated_signature,
-                'received': signature,
-                'params_checked': kwargs,
-                'hash_string': params_str,
-                'sorted_keys': sorted(shp_params.keys()) if shp_params else []
+                'method': 'is_result_notification_valid'
             }
             
         except Exception as e:
@@ -157,37 +93,56 @@ class RobokassaHandler:
                 'error': str(e)
             }
 
+    def check_redirect_signature(self, out_sum, inv_id, signature, **kwargs):
+        """
+        Проверка подписи для Success/Fail URL (редирект пользователя)
+        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ!
+        """
+        try:
+            print(f"🔍 DEBUG check_redirect_signature called", file=sys.stderr)
+            print(f"🔍 out_sum: {out_sum}, inv_id: {inv_id}, signature: {signature}", file=sys.stderr)
+            print(f"🔍 kwargs: {kwargs}", file=sys.stderr)
+            
+            # Проверяем подпись Redirect URL с помощью библиотеки
+            # БЕЗ shp_ параметров!
+            is_valid = self.robokassa.is_redirect_valid(
+                signature=signature,
+                out_sum=out_sum,
+                inv_id=inv_id
+            )
+            print(f"✅ Library check: {is_valid}", file=sys.stderr)
+            
+            return {
+                'success': True,
+                'is_valid': is_valid,
+                'inv_id': inv_id,
+                'out_sum': out_sum,
+                'method': 'is_redirect_valid'
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in check_redirect_signature: {str(e)}", file=sys.stderr)
+            return {
+                'success': False,
+                'is_valid': False,
+                'error': str(e)
+            }
 
     def calculate_signature_debug(self, out_sum, inv_id, **kwargs):
         """
         Отладочная функция для расчета подписи
+        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ
         """
         try:
             print(f"🔍 DEBUG calculate_signature_debug called", file=sys.stderr)
             
-            # Формируем строку как Robokassa
+            # Формируем строку как Robokassa (ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ)
             params_str = f"{out_sum}:{inv_id}:{self.password1}"
-            
-            # Добавляем shp_ параметры в алфавитном порядке
-            shp_params = {}
-            for key, value in kwargs.items():
-                if key.startswith('shp_'):
-                    shp_params[key] = str(value)
-            
-            # Сортируем shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА
-            if shp_params:
-                sorted_shp_keys = sorted(shp_params.keys())
-                print(f"🔍 Sorted shp keys: {sorted_shp_keys}", file=sys.stderr)
-                for key in sorted_shp_keys:
-                    params_str += f":{shp_params[key]}"
-                    print(f"🔍 Added {key}: {shp_params[key]}", file=sys.stderr)
             
             print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
             print(f"🔍 DEBUG: Password1 used: {self.password1}", file=sys.stderr)
-            print(f"🔍 DEBUG: All kwargs: {kwargs}", file=sys.stderr)
             
             # Вычисляем MD5
-            import hashlib
             calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
             
             print(f"🔍 DEBUG: Calculated signature: {calculated_signature}", file=sys.stderr)
@@ -196,86 +151,13 @@ class RobokassaHandler:
                 'success': True,
                 'calculated_signature': calculated_signature,
                 'params_string': params_str,
-                'password1': self.password1,
-                'shp_params': shp_params,
-                'sorted_keys': sorted(shp_params.keys()) if shp_params else []
+                'password1': self.password1
             }
             
         except Exception as e:
             print(f"❌ Error in calculate_signature_debug: {str(e)}", file=sys.stderr)
             return {
                 'success': False,
-                'error': str(e)
-            }
-        
-
-    def check_redirect_signature(self, out_sum, inv_id, signature, **kwargs):
-        """
-        Проверка подписи для Success/Fail URL (редирект пользователя)
-        ВАЖНО: Robokassa сортирует shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА (shp_email, shp_product_id)
-        """
-        try:
-            print(f"🔍 DEBUG check_redirect_signature called", file=sys.stderr)
-            print(f"🔍 out_sum: {out_sum}, inv_id: {inv_id}, signature: {signature}", file=sys.stderr)
-            print(f"🔍 kwargs: {kwargs}", file=sys.stderr)
-            
-            # Формируем строку для отладки
-            params_str = f"{out_sum}:{inv_id}:{self.password1}"
-            shp_params = {}
-            
-            for key, value in kwargs.items():
-                if key.startswith('shp_'):
-                    shp_params[key] = str(value)
-            
-            # ВАЖНО: Сортируем shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА
-            # Пример: shp_email, shp_product_id
-            if shp_params:
-                sorted_shp_keys = sorted(shp_params.keys())
-                print(f"🔍 Sorted shp keys: {sorted_shp_keys}", file=sys.stderr)
-                for key in sorted_shp_keys:
-                    params_str += f":{shp_params[key]}"
-                    print(f"🔍 Added {key}: {shp_params[key]}", file=sys.stderr)
-            
-            print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
-            
-            import hashlib
-            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
-            print(f"🔍 DEBUG: Calculated signature: {calculated_signature}", file=sys.stderr)
-            print(f"🔍 DEBUG: Received signature: {signature}", file=sys.stderr)
-            print(f"🔍 DEBUG: Match: {calculated_signature.lower() == signature.lower()}", file=sys.stderr)
-            
-            # Проверяем подпись Redirect URL с помощью библиотеки
-            try:
-                is_valid = self.robokassa.is_redirect_valid(
-                    signature=signature,
-                    out_sum=out_sum,
-                    inv_id=inv_id,
-                    **kwargs
-                )
-                print(f"✅ Library check: {is_valid}", file=sys.stderr)
-            except Exception as lib_error:
-                print(f"⚠️ Library check failed: {lib_error}", file=sys.stderr)
-                # Проверяем вручную
-                is_valid = (calculated_signature.lower() == signature.lower())
-                print(f"✅ Manual check: {is_valid}", file=sys.stderr)
-            
-            return {
-                'success': True,
-                'is_valid': is_valid,
-                'inv_id': inv_id,
-                'out_sum': out_sum,
-                'calculated': calculated_signature,
-                'received': signature,
-                'method': 'is_redirect_valid',
-                'hash_string': params_str,
-                'sorted_keys': sorted(shp_params.keys()) if shp_params else []
-            }
-            
-        except Exception as e:
-            print(f"❌ Error in check_redirect_signature: {str(e)}", file=sys.stderr)
-            return {
-                'success': False,
-                'is_valid': False,
                 'error': str(e)
             }
 
@@ -317,36 +199,12 @@ async def main():
             description = data.get('description', 'Оплата заказа')
             email = data.get('email')
             
-            kwargs = {}
-            for key, value in data.items():
-                if key.startswith('shp_'):
-                    kwargs[key] = value
-            
+            # НИКАКИХ shp_ ПАРАМЕТРОВ!
             result = await handler.generate_protected_payment_link(
                 out_sum=out_sum,
                 inv_id=inv_id,
                 description=description,
-                email=email,
-                **kwargs
-            )
-            
-        elif action == 'generate_long_link':
-            out_sum = float(data.get('out_sum', 150))
-            inv_id = int(data.get('inv_id', 123456))
-            description = data.get('description', 'Оплата заказа')
-            email = data.get('email')
-            
-            kwargs = {}
-            for key, value in data.items():
-                if key.startswith('shp_'):
-                    kwargs[key] = value
-            
-            result = await handler.generate_open_payment_link(
-                out_sum=out_sum,
-                inv_id=inv_id,
-                description=description,
-                email=email,
-                **kwargs
+                email=email
             )
             
         elif action == 'check_result_signature':
@@ -354,18 +212,13 @@ async def main():
             inv_id = int(data.get('inv_id', 0))
             signature = data.get('signature', '')
             
-            kwargs = {}
-            for key, value in data.items():
-                if key.startswith('shp_') or key in ['IsTest', 'Culture']:
-                    kwargs[key] = value
-            
+            # НИКАКИХ shp_ ПАРАМЕТРОВ!
             print(f"🔍 Checking result signature: out_sum={out_sum}, inv_id={inv_id}", file=sys.stderr)
             
             result = handler.check_result_signature(
                 out_sum=out_sum,
                 inv_id=inv_id,
-                signature=signature,
-                **kwargs
+                signature=signature
             )
             
         elif action == 'check_redirect_signature':
@@ -373,35 +226,23 @@ async def main():
             inv_id = int(data.get('inv_id', 0))
             signature = data.get('signature', '')
             
-            kwargs = {}
-            for key, value in data.items():
-                # Собираем ВСЕ параметры для проверки подписи
-                if key.startswith('shp_') or key in ['IsTest', 'Culture', 'IncCurr']:
-                    kwargs[key] = value
-            
+            # НИКАКИХ shp_ ПАРАМЕТРОВ!
             print(f"🔍 Checking redirect signature: out_sum={out_sum}, inv_id={inv_id}", file=sys.stderr)
-            print(f"🔍 Additional params: {kwargs}", file=sys.stderr)
             
             result = handler.check_redirect_signature(
                 out_sum=out_sum,
                 inv_id=inv_id,
-                signature=signature,
-                **kwargs
+                signature=signature
             )
             
         elif action == 'debug_signature':
             out_sum = float(data.get('out_sum', 120))
             inv_id = int(data.get('inv_id', 281476090))
             
-            kwargs = {}
-            for key, value in data.items():
-                if key.startswith('shp_') or key in ['IsTest', 'Culture']:
-                    kwargs[key] = value
-
+            # НИКАКИХ shp_ ПАРАМЕТРОВ!
             result = handler.calculate_signature_debug(
                 out_sum=out_sum,
-                inv_id=inv_id,
-                **kwargs
+                inv_id=inv_id
             )
             
         elif action == 'test':
@@ -414,11 +255,11 @@ async def main():
                 'passwords_match': handler.password1 == "U85g8fxYMMyThLkr1W2n" and handler.password2 == "qe9Np4lhWwJG3nKF96Ro",
                 'methods_available': [
                     'generate_short_link',
-                    'generate_long_link',
                     'check_result_signature',
                     'check_redirect_signature',
                     'debug_signature'
-                ]
+                ],
+                'note': 'БЕЗ shp_ параметров! Только обязательные параметры'
             }
         
         else:
