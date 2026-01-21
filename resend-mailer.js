@@ -5,12 +5,6 @@ const { Resend } = require('resend')
 const RESEND_API_KEY = 're_PGrDARf7_TFS92VHBnbfX1jVTQQYp7apo'
 const SITE_URL = process.env.SITE_URL || 'https://www.kf-watchface.ru'
 
-console.log('📧 ====== RESEND CONFIGURATION ======')
-console.log(
-	`📧 RESEND_API_KEY configured: ${RESEND_API_KEY ? 'YES (hidden)' : 'NO'}`
-)
-console.log(`📧 SITE_URL: ${SITE_URL}`)
-
 if (!RESEND_API_KEY) {
 	console.error('❌ CRITICAL: RESEND_API_KEY not configured!')
 	console.error(

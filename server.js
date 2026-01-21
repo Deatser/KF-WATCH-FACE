@@ -736,20 +736,10 @@ function callPythonScript(scriptName, data) {
 
 		pythonProcess.stderr.on('data', data => {
 			stderr += data.toString('utf8')
-			console.log('🐍 Python stderr:', data.toString('utf8'))
+			// Убираем все логи из stderr
 		})
 
 		pythonProcess.on('close', code => {
-			console.log(`🐍 Python exit code: ${code}`)
-			console.log(`🐍 Python stdout length: ${stdout.length}`)
-			console.log(`🐍 Python stderr length: ${stderr.length}`)
-
-			if (stdout.trim()) {
-				console.log(
-					`🐍 Python stdout (first 500 chars): ${stdout.substring(0, 500)}`
-				)
-			}
-
 			if (code === 0) {
 				try {
 					// Очищаем stdout от возможных не-JSON сообщений
@@ -762,37 +752,25 @@ function callPythonScript(scriptName, data) {
 							firstBraceIndex,
 							lastBraceIndex + 1
 						)
-						console.log(
-							`🐍 Trying to parse JSON: ${jsonStr.substring(0, 200)}...`
-						)
 						const result = JSON.parse(jsonStr)
 						resolve(result)
 					} else {
-						console.error('🐍 No valid JSON found in stdout')
-						console.error('🐍 Full stdout:', cleanStdout)
 						reject(new Error('Python script did not return valid JSON'))
 					}
 				} catch (parseError) {
-					console.error('🐍 JSON parse error:', parseError.message)
-					console.error('🐍 Raw stdout:', stdout)
-					console.error('🐍 Raw stderr:', stderr)
 					reject(new Error(`Ошибка парсинга JSON: ${parseError.message}`))
 				}
 			} else {
-				console.error('🐍 Python process failed')
-				console.error('🐍 stderr:', stderr)
 				reject(new Error(`Python ошибка: ${stderr || 'Неизвестная ошибка'}`))
 			}
 		})
 
 		pythonProcess.on('error', error => {
-			console.error('🐍 Python spawn error:', error)
 			reject(new Error(`Ошибка запуска Python: ${error.message}`))
 		})
 
-		// И при записи данных:
+		// И при записи данных (УБИРАЕМ ЛОГ):
 		const inputData = JSON.stringify(data, null, 2)
-		console.log(`🐍 Sending to Python: ${inputData}`)
 		pythonProcess.stdin.write(inputData, 'utf8')
 		pythonProcess.stdin.end()
 	})
@@ -869,13 +847,15 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			is_test: true,
 		}
 
-		console.log(`💰 ==== API: /api/robokassa/create-payment-link ====`)
-		console.log(`🌐 IP клиента: ${req.ip}`)
-		console.log(`🛒 Создаем платеж для товара: ${productId}`)
-		console.log(`📧 Email покупателя: ${customerEmail}`)
+		console.log(`\n\n\n`)
+		console.log(
+			`================================================================`
+		)
+		console.log(`💰 СОЗДАНИЕ ПЛАТЕЖНОЙ ССЫЛКИ`)
+		console.log(`🛒 Товар: ${productId}`)
+		console.log(`📧 Email: ${customerEmail}`)
 		console.log(`💰 Цена: ${price} руб.`)
-		console.log(`🆔 ID заказа: ${invId}`)
-		console.log(`🔑 Без shp_ параметров!`)
+		console.log(`\n`)
 
 		const result = await callPythonScript('robokassa_handler.py', pythonData)
 
@@ -924,10 +904,12 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			return
 		}
 
-		console.log(`✅ Python успешно создал ссылку`)
-		console.log(`🔗 Ссылка оплаты: ${result.payment_url}`)
-		console.log(`💾 Заказ сохранен в Firebase: orders/${invId}`)
-
+		console.log(`✅ Ссылка создана`)
+		console.log(`🔗 ${result.payment_url}`)
+		console.log(`💾 Заказ ${invId} сохранен (ожидание оплаты)`)
+		console.log(
+			`================================================================`
+		)
 		res.json({
 			success: true,
 			paymentUrl: result.payment_url,
@@ -1273,10 +1255,18 @@ app.get('/success', async (req, res) => {
 		const params = req.query
 		const orderId = parseInt(params.InvId)
 
-		console.log('💰 === Robokassa Success URL Called ===')
-		console.log('📅 Time:', new Date().toISOString())
-		console.log('🌐 IP:', req.ip)
-		console.log('📦 All params received:', JSON.stringify(params, null, 2))
+		console.log(`\n\n\n`)
+		console.log(
+			`================================================================`
+		)
+		console.log(`💰 ПОЛУЧЕНИЕ УВЕДОМЛЕНИЯ ОБ ОПЛАТЕ`)
+		console.log(`📦 Параметры:`, {
+			OutSum: params.OutSum,
+			InvId: params.InvId,
+			IsTest: params.IsTest,
+			Culture: params.Culture,
+		})
+		console.log(`\n`)
 
 		// Проверяем только самое минимальное
 		if (!orderId || !params.OutSum) {
@@ -1408,9 +1398,8 @@ app.get('/success', async (req, res) => {
 			})
 
 			if (emailResult.success) {
-				console.log(`✅ EMAIL SENT SUCCESSFULLY to ${order.customerEmail}`)
-				console.log(`📧 Message ID: ${emailResult.messageId}`)
-				console.log(`📧 Response: ${emailResult.response}`)
+				console.log(`\n`)
+				console.log(`📧 ОТПРАВКА ПИСЬМА ПОКУПАТЕЛЮ`)
 
 				// Логируем в Firebase
 				await update(ref(database, `orders/${orderId}`), {
@@ -1947,10 +1936,6 @@ app.get('/api/product/:productId', (req, res) => {
 	try {
 		const productId = parseInt(req.params.productId)
 		const watchPath = path.join(__dirname, 'public', 'watch')
-
-		console.log(`📦 ==== API: /api/product/${productId} ====`)
-		console.log(`🌐 IP клиента: ${req.ip}`)
-		console.log(`🔍 Поиск товара ID: ${productId}`)
 
 		if (!fs.existsSync(watchPath)) {
 			return res.status(404).json({ error: 'Товар не найден' })
@@ -2866,8 +2851,10 @@ app.get('/payment-error', (req, res) => {
 })
 
 // Запуск сервера
+// Запуск сервера
 app.listen(PORT, async () => {
 	// ASCII-арт
+	console.log(`\n\n\n`)
 	console.log(`
 ██████╗ ███████╗ █████╗ ████████╗███████╗███████╗██████╗ 
 ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔════╝██╔════╝██╔══██╗
@@ -2877,57 +2864,40 @@ app.listen(PORT, async () => {
 ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝
 	`)
 
-	console.log(`🚀 Сервер запущен на порту: ${PORT}`)
-	console.log(`📁 Админ панель: http://localhost:${PORT}/admin`)
-	console.log(`🛒 Магазин: http://localhost:${PORT}/`)
-	console.log(`💰 Интеграция с Robokassa: активирована`)
-	console.log(`✅ Success URL: https://kf-watch-face.onrender.com/success`)
-	console.log(`🔥 Firebase интеграция: включена (версия 10+)`)
-	console.log(`🔗 Система получения заказов: включена`)
-	console.log(`⚡ Сжатие GZIP: включено`)
+	console.log(`\n\n\n`)
+	console.log(
+		`================================================================`
+	)
+	console.log(`Сервис FIREBASE для базы данных - ПОДКЛЮЧЕН`)
+	console.log(`\n\n`)
+	console.log(`Сервис RESEND для отправки писем - ПОДКЛЮЧЕН`)
+	console.log(`\n\n`)
+	console.log(`Сервис ROBOKASSA для создания ссылок на оплату - ПОДКЛЮЧЕН`)
+	console.log(
+		`================================================================`
+	)
+	console.log(`\n\n\n`)
 
 	// Тестируем Python
-	console.log(`\n🔍 Проверяем подключение к Python...`)
+	// Проверяем Python
 	try {
-		const pythonTest = await testPythonConnection()
-		if (pythonTest.success) {
-			console.log(`✅ Python подключен успешно!`)
-			console.log(`📦 Библиотека: ${pythonTest.result.library_version}`)
-			console.log(`🏪 Мерчант: ${pythonTest.result.merchant_login}`)
-			console.log(
-				`🧪 Режим: ${pythonTest.result.is_test ? 'Тестовый' : 'Продакшн'}`
-			)
+		const pythonCheck = await checkPythonInstallation()
+		if (pythonCheck.installed) {
 		} else {
-			console.log(`⚠️ Python не подключен: ${pythonTest.error}`)
+			console.log(`❌ Сервис ROBOKASSA: Python не установлен`)
 		}
 	} catch (error) {
-		console.error(`❌ Ошибка проверки Python: ${error.message}`)
+		console.log(`❌ Сервис ROBOKASSA: ${error.message}`)
 	}
 
-	// Тестируем Firebase
-	console.log(`\n🔍 Проверяем подключение к Firebase...`)
-	try {
-		// Простой тест соединения
-		const testRef = ref(database, '.info/connected')
-		console.log(`✅ Firebase подключен!`)
-		console.log(`📊 База данных: ${firebaseConfig.databaseURL}`)
-	} catch (error) {
-		console.error(`❌ Ошибка подключения к Firebase: ${error.message}`)
-		console.log(`⚠️  Заказы будут сохраняться локально`)
-	}
-
-	// Проверяем папку orders (для обратной совместимости)
-	const ordersPath = path.join(__dirname, 'orders')
-	if (!fs.existsSync(ordersPath)) {
-		fs.mkdirSync(ordersPath, { recursive: true })
-		console.log(
-			`📁 Создана папка для локальных заказов (backup): ${ordersPath}`
-		)
-	}
-
+	console.log(`\n\n\n`)
 	console.log(
-		`\n📊 Готов к работе! Время запуска: ${new Date().toLocaleString()}`
+		`================================================================`
 	)
-	console.log(`🔗 Пример URL получения: /purchase/receiving/ABC123XYZ`)
-	console.log(`💾 Хранение заказов: Firebase + локальный backup`)
+	console.log(`🚀 СЕРВЕР ЗАПУЩЕН`)
+	console.log(`📅 Время запуска: ${new Date().toLocaleString()}`)
+	console.log(
+		`================================================================`
+	)
+	console.log(`\n\n\n`)
 })
