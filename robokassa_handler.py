@@ -3,6 +3,7 @@ import sys
 import json
 import os
 import asyncio
+import hashlib
 
 # Импортируем официальную библиотеку robokassa
 from robokassa import HashAlgorithm, Robokassa
@@ -89,6 +90,7 @@ class RobokassaHandler:
     def check_result_signature(self, out_sum, inv_id, signature, **kwargs):
         """
         Проверка подписи для Result URL (уведомление от Robokassa)
+        ВАЖНО: Robokassa сортирует shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА (shp_email, shp_product_id)
         """
         try:
             print(f"🔍 DEBUG check_result_signature called", file=sys.stderr)
@@ -103,11 +105,14 @@ class RobokassaHandler:
                 if key.startswith('shp_'):
                     shp_params[key] = str(value)
             
-            # Сортируем shp_ параметры по алфавиту
+            # ВАЖНО: Сортируем shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА
+            # Пример: shp_email, shp_product_id
             if shp_params:
                 sorted_shp_keys = sorted(shp_params.keys())
+                print(f"🔍 Sorted shp keys: {sorted_shp_keys}", file=sys.stderr)
                 for key in sorted_shp_keys:
                     params_str += f":{shp_params[key]}"
+                    print(f"🔍 Added {key}: {shp_params[key]}", file=sys.stderr)
             
             print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
             
@@ -117,15 +122,20 @@ class RobokassaHandler:
             print(f"🔍 DEBUG: Received signature: {signature}", file=sys.stderr)
             print(f"🔍 DEBUG: Match: {calculated_signature.lower() == signature.lower()}", file=sys.stderr)
             
-            # Проверяем подпись Result URL
-            is_valid = self.robokassa.is_result_notification_valid(
-                signature=signature,
-                out_sum=out_sum,
-                inv_id=inv_id,
-                **kwargs
-            )
-            
-            print(f"✅ Result signature is valid: {is_valid}", file=sys.stderr)
+            # Проверяем подпись Result URL с помощью библиотеки
+            try:
+                is_valid = self.robokassa.is_result_notification_valid(
+                    signature=signature,
+                    out_sum=out_sum,
+                    inv_id=inv_id,
+                    **kwargs
+                )
+                print(f"✅ Library check: {is_valid}", file=sys.stderr)
+            except Exception as lib_error:
+                print(f"⚠️ Library check failed: {lib_error}", file=sys.stderr)
+                # Проверяем вручную
+                is_valid = (calculated_signature.lower() == signature.lower())
+                print(f"✅ Manual check: {is_valid}", file=sys.stderr)
             
             return {
                 'success': True,
@@ -134,7 +144,9 @@ class RobokassaHandler:
                 'out_sum': out_sum,
                 'calculated': calculated_signature,
                 'received': signature,
-                'params_checked': kwargs
+                'params_checked': kwargs,
+                'hash_string': params_str,
+                'sorted_keys': sorted(shp_params.keys()) if shp_params else []
             }
             
         except Exception as e:
@@ -162,11 +174,13 @@ class RobokassaHandler:
                 if key.startswith('shp_'):
                     shp_params[key] = str(value)
             
-            # Сортируем shp_ параметры по алфавиту
+            # Сортируем shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА
             if shp_params:
                 sorted_shp_keys = sorted(shp_params.keys())
+                print(f"🔍 Sorted shp keys: {sorted_shp_keys}", file=sys.stderr)
                 for key in sorted_shp_keys:
                     params_str += f":{shp_params[key]}"
+                    print(f"🔍 Added {key}: {shp_params[key]}", file=sys.stderr)
             
             print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
             print(f"🔍 DEBUG: Password1 used: {self.password1}", file=sys.stderr)
@@ -183,7 +197,8 @@ class RobokassaHandler:
                 'calculated_signature': calculated_signature,
                 'params_string': params_str,
                 'password1': self.password1,
-                'shp_params': shp_params
+                'shp_params': shp_params,
+                'sorted_keys': sorted(shp_params.keys()) if shp_params else []
             }
             
         except Exception as e:
@@ -197,6 +212,7 @@ class RobokassaHandler:
     def check_redirect_signature(self, out_sum, inv_id, signature, **kwargs):
         """
         Проверка подписи для Success/Fail URL (редирект пользователя)
+        ВАЖНО: Robokassa сортирует shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА (shp_email, shp_product_id)
         """
         try:
             print(f"🔍 DEBUG check_redirect_signature called", file=sys.stderr)
@@ -211,11 +227,14 @@ class RobokassaHandler:
                 if key.startswith('shp_'):
                     shp_params[key] = str(value)
             
-            # Сортируем shp_ параметры по алфавиту
+            # ВАЖНО: Сортируем shp_ параметры по алфавиту по ИМЕНИ КЛЮЧА
+            # Пример: shp_email, shp_product_id
             if shp_params:
                 sorted_shp_keys = sorted(shp_params.keys())
+                print(f"🔍 Sorted shp keys: {sorted_shp_keys}", file=sys.stderr)
                 for key in sorted_shp_keys:
                     params_str += f":{shp_params[key]}"
+                    print(f"🔍 Added {key}: {shp_params[key]}", file=sys.stderr)
             
             print(f"🔍 DEBUG: String for hash: {params_str}", file=sys.stderr)
             
@@ -225,15 +244,20 @@ class RobokassaHandler:
             print(f"🔍 DEBUG: Received signature: {signature}", file=sys.stderr)
             print(f"🔍 DEBUG: Match: {calculated_signature.lower() == signature.lower()}", file=sys.stderr)
             
-            # Проверяем подпись Redirect URL
-            is_valid = self.robokassa.is_redirect_valid(
-                signature=signature,
-                out_sum=out_sum,
-                inv_id=inv_id,
-                **kwargs
-            )
-            
-            print(f"✅ Redirect signature is valid: {is_valid}", file=sys.stderr)
+            # Проверяем подпись Redirect URL с помощью библиотеки
+            try:
+                is_valid = self.robokassa.is_redirect_valid(
+                    signature=signature,
+                    out_sum=out_sum,
+                    inv_id=inv_id,
+                    **kwargs
+                )
+                print(f"✅ Library check: {is_valid}", file=sys.stderr)
+            except Exception as lib_error:
+                print(f"⚠️ Library check failed: {lib_error}", file=sys.stderr)
+                # Проверяем вручную
+                is_valid = (calculated_signature.lower() == signature.lower())
+                print(f"✅ Manual check: {is_valid}", file=sys.stderr)
             
             return {
                 'success': True,
@@ -243,6 +267,8 @@ class RobokassaHandler:
                 'calculated': calculated_signature,
                 'received': signature,
                 'method': 'is_redirect_valid',
+                'hash_string': params_str,
+                'sorted_keys': sorted(shp_params.keys()) if shp_params else []
             }
             
         except Exception as e:
