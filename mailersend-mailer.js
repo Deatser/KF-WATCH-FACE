@@ -1,6 +1,4 @@
-// mailersend-mailer.js - отправка через MailerSend API
-const axios = require('axios')
-
+// mailersend-mailer.js - отправка через MailerSend API (с использованием fetch)
 // Получаем API ключ из переменных окружения
 const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY
 const SITE_URL = process.env.SITE_URL || 'https://kf-watch-face.onrender.com'
@@ -48,24 +46,22 @@ async function sendOrderEmail(order) {
 		const downloadUrl = `${SITE_URL}/purchase/receiving/${order.receivingId}`
 		console.log(`🔗 Download URL: ${downloadUrl}`)
 
-		// Отправляем через MailerSend API
+		// Отправляем через MailerSend API используя fetch
 		console.log(`📧 Sending via MailerSend API...`)
 
-		const response = await axios.post(
-			'https://api.mailersend.com/v1/email',
-			{
-				from: {
-					email: 'onboarding@trial-3zq0xl5g5y5g5y5g.mailersend.net', // Временный email от MailerSend
-					name: 'KF WATCH FACE',
+		const emailData = {
+			from: {
+				email: 'onboarding@trial-3zq0xl5g5y5g5y5g.mailersend.net', // Временный email от MailerSend
+				name: 'KF WATCH FACE',
+			},
+			to: [
+				{
+					email: order.customerEmail,
+					name: 'Customer',
 				},
-				to: [
-					{
-						email: order.customerEmail,
-						name: 'Customer',
-					},
-				],
-				subject: `✅ Заказ #${order.orderId} оплачен - KF WATCH FACE`,
-				text: `
+			],
+			subject: `✅ Заказ #${order.orderId} оплачен - KF WATCH FACE`,
+			text: `
 Заказ #${order.orderId} успешно оплачен!
 
 Циферблат: ${order.productName || order.productId}
@@ -80,8 +76,8 @@ ${downloadUrl}
 Поддержка: https://t.me/krek_free
 
 KF WATCH FACE
-				`,
-				html: `
+			`,
+			html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -255,48 +251,52 @@ KF WATCH FACE
     </div>
 </body>
 </html>
-				`,
+			`,
+		}
+
+		const response = await fetch('https://api.mailersend.com/v1/email', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${MAILERSEND_API_KEY}`,
+				'Content-Type': 'application/json',
 			},
-			{
-				headers: {
-					Authorization: `Bearer ${MAILERSEND_API_KEY}`,
-					'Content-Type': 'application/json',
-				},
+			body: JSON.stringify(emailData),
+		})
+
+		const responseData = await response.json()
+
+		if (!response.ok) {
+			console.error(`❌ MAILERSEND API ERROR: Status ${response.status}`)
+			console.error('❌ Error response:', responseData)
+
+			return {
+				success: false,
+				error: `API error: ${response.status} - ${
+					responseData.message || 'Unknown error'
+				}`,
+				details: responseData,
 			}
-		)
+		}
 
 		console.log(`✅ MAILERSEND EMAIL SENT SUCCESSFULLY!`)
 		console.log(`📧 Response status: ${response.status}`)
-		console.log(`📧 Response data:`, response.data)
+		console.log(`📧 Response data:`, responseData)
 		console.log(`📧 ====== EMAIL SENT ======`)
 
 		return {
 			success: true,
-			messageId: response.data.id || response.headers['x-message-id'],
-			data: response.data,
+			messageId: responseData.id || response.headers.get('x-message-id'),
+			data: responseData,
 		}
 	} catch (error) {
-		console.error('❌ MAILERSEND API ERROR:')
-
-		if (error.response) {
-			// Сервер ответил с ошибкой
-			console.error('❌ Status:', error.response.status)
-			console.error('❌ Headers:', error.response.headers)
-			console.error('❌ Data:', error.response.data)
-		} else if (error.request) {
-			// Запрос был отправлен, но ответа нет
-			console.error('❌ No response received:', error.request)
-		} else {
-			// Ошибка при настройке запроса
-			console.error('❌ Error message:', error.message)
-		}
-
-		console.error('❌ Full error:', error)
+		console.error('❌ MAILERSEND UNEXPECTED ERROR:')
+		console.error('❌ Error message:', error.message)
+		console.error('❌ Stack trace:', error.stack)
 
 		return {
 			success: false,
 			error: error.message,
-			details: error.response?.data || null,
+			details: error,
 		}
 	}
 }
