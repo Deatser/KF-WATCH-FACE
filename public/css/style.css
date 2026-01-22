@@ -17,7 +17,9 @@ body {
 	line-height: 1.6;
 	color: #1a1a1a;
 	background-color: #ffffff;
-	font-feature-settings: 'kern' 1, 'liga' 1;
+	font-feature-settings:
+		'kern' 1,
+		'liga' 1;
 	overflow-x: hidden;
 	width: 100%;
 	max-width: 100vw;
@@ -61,7 +63,8 @@ body {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-image: radial-gradient(
+	background-image:
+		radial-gradient(
 			circle at 20% 80%,
 			rgba(255, 255, 255, 0.2) 0%,
 			transparent 50%
@@ -698,6 +701,15 @@ body {
 	text-align: center;
 }
 
+.daily-offer-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 30px;
+	padding-left: 40px;
+	width: 100%;
+}
+
 /* ========================================== */
 /* ПРЕДЛОЖЕНИЕ ДНЯ - ОБНОВЛЕННАЯ СТРУКТУРА */
 /* ========================================== */
@@ -863,11 +875,10 @@ body {
 	}
 
 	.daily-offer-header {
-		flex-direction: column;
-		gap: 15px;
-		align-items: center;
-		padding-left: 0; /* Убрано смещение */
+		justify-content: center;
+		padding-left: 0 !important;
 		text-align: center;
+		margin-bottom: 25px;
 	}
 }
 
@@ -983,7 +994,7 @@ body {
 	color: #1a1a1a;
 	margin: 0 0 10px 0;
 	line-height: 1.2;
-	text-align: left !important; /* Принудительно */
+	text-align: left; /* Принудительно */
 	align-self: flex-start; /* Если используется flex */
 	width: 100%; /* Занимает всю ширину */
 }
@@ -1930,8 +1941,11 @@ body {
 	padding: 0 15px;
 	opacity: 0;
 	transform: translateY(-10px);
-	transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease,
-		opacity 0.2s ease, transform 0.2s ease;
+	transition:
+		max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+		padding 0.3s ease,
+		opacity 0.2s ease,
+		transform 0.2s ease;
 }
 
 .faq-answer.active {
@@ -3194,5 +3208,483 @@ body {
 
 	.logo {
 		margin-right: auto;
+	}
+}
+
+/* ========================================== */
+/* МОБИЛЬНАЯ ВЕРСИЯ: НАЗВАНИЕ, ЦЕНА, КНОПКА НАД ФОТО */
+/* ========================================== */
+
+/* Мобильный хедер (скрыт по умолчанию) */
+.mobile-offer-header {
+	display: none;
+	width: 100%;
+	text-align: center;
+	margin-bottom: 20px;
+	order: -1; /* Помещаем в начало контейнера */
+}
+
+/* Десктопная версия (показывается по умолчанию) */
+.daily-offer-details {
+	display: flex;
+	flex-direction: column;
+}
+
+/* На мобильных устройствах */
+@media (max-width: 768px) {
+	/* Показываем мобильный хедер */
+	.mobile-offer-header {
+		display: block;
+	}
+
+	/* Скрываем десктопную версию названия и цены */
+	.desktop-watch-name,
+	.desktop-price,
+	.desktop-buy-btn {
+		display: none !important;
+	}
+
+	/* Стили для мобильного названия часов */
+	#mobileDailyOfferWatchName {
+		font-size: 1.8rem !important;
+		font-weight: 700;
+		color: #1a1a1a;
+		margin: 0 0 15px 0;
+		line-height: 1.2;
+		text-align: center !important;
+		width: 100%;
+	}
+
+	/* Стили для мобильной цены */
+	.mobile-offer-header .daily-offer-price {
+		display: flex;
+		align-items: baseline;
+		justify-content: center;
+		gap: 15px;
+		margin-bottom: 20px;
+		flex-wrap: wrap;
+	}
+
+	.mobile-offer-header .daily-offer-price .price {
+		font-size: 2.2rem !important;
+		font-weight: 800;
+		color: #ff6b6b;
+	}
+
+	.mobile-offer-header .daily-offer-price .price-old {
+		font-size: 1.5rem !important;
+		color: #999;
+		text-decoration: line-through;
+	}
+
+	.mobile-offer-header .daily-offer-price .discount-badge {
+		background: #ff6b6b;
+		color: white;
+		padding: 6px 12px;
+		border-radius: 10px;
+		font-size: 1rem;
+		font-weight: 700;
+	}
+
+	/* Кнопка для мобильных */
+	.mobile-buy-btn {
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+		color: white;
+		border: none;
+		border-radius: 12px;
+		font-size: 1.1rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		text-decoration: none;
+		width: 100%;
+		max-width: 300px;
+		margin: 0 auto;
+		padding: 16px 20px;
+		box-shadow: 0 8px 25px rgba(139, 115, 85, 0.3);
+	}
+
+	.mobile-buy-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 10px 30px rgba(139, 115, 85, 0.4);
+	}
+
+	/* Изменяем структуру для мобильных */
+	.daily-offer-main {
+		display: flex;
+		flex-direction: column;
+		gap: 25px;
+		align-items: center;
+	}
+
+	.daily-offer-carousel {
+		width: 100%;
+		max-width: 500px;
+		order: 2; /* Помещаем фотографию после заголовка */
+	}
+
+	.daily-offer-details {
+		order: 3; /* Помещаем статистику в конец */
+		width: 100%;
+		max-width: 500px;
+		margin-top: 10px;
+	}
+
+	/* Уменьшаем отступы для лучшего отображения */
+	.daily-offer {
+		padding: 25px 15px;
+	}
+}
+
+/* Для планшетов (768px - 992px) */
+@media (min-width: 769px) and (max-width: 992px) {
+	/* На планшетах оставляем оригинальную структуру */
+	.mobile-offer-header {
+		display: none !important;
+	}
+
+	.daily-offer-details {
+		display: flex !important;
+	}
+
+	.desktop-watch-name,
+	.desktop-price,
+	.desktop-buy-btn {
+		display: block !important;
+	}
+}
+
+/* Для очень маленьких телефонов */
+@media (max-width: 400px) {
+	#mobileDailyOfferWatchName {
+		font-size: 1.6rem !important;
+	}
+
+	.mobile-offer-header .daily-offer-price .price {
+		font-size: 1.9rem !important;
+	}
+
+	.mobile-offer-header .daily-offer-price .price-old {
+		font-size: 1.3rem !important;
+	}
+
+	.mobile-offer-header .daily-offer-price {
+		gap: 10px;
+	}
+
+	.mobile-buy-btn {
+		padding: 14px 16px !important;
+		font-size: 1rem !important;
+		max-width: 280px;
+	}
+}
+
+/* ========================================== */
+/* ЦЕНТРИРОВАНИЕ ВСЕГО ВЕРХНЕГО БЛОКА НА МОБИЛЬНЫХ */
+/* ========================================== */
+
+/* Скрываем мобильный хедер по умолчанию */
+.offer-header-mobile {
+	display: none;
+}
+
+/* Показываем десктопный хедер по умолчанию */
+.offer-header-desktop {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+}
+
+/* На мобильных устройствах */
+@media (max-width: 768px) {
+	/* Скрываем десктопный хедер */
+	.offer-header-desktop {
+		display: none !important;
+	}
+
+	/* Показываем мобильный хедер */
+	.offer-header-mobile {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		text-align: center;
+		margin-bottom: 25px;
+	}
+
+	/* Верхняя часть с бейджем */
+	.offer-header-mobile-top {
+		margin-bottom: 20px;
+		width: 100%;
+	}
+
+	/* Бейдж "ПРЕДЛОЖЕНИЕ ДНЯ" для мобильных */
+	.offer-header-mobile .offer-badge {
+		background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+		color: white;
+		padding: 10px 20px;
+		border-radius: 20px;
+		font-weight: 700;
+		font-size: 0.95rem;
+		letter-spacing: 0.5px;
+		box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+		text-transform: uppercase;
+		display: inline-block;
+		margin: 0 auto;
+	}
+
+	/* Таймер для мобильных */
+	.offer-timer-mobile {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		background: rgba(139, 115, 85, 0.1);
+		padding: 15px 20px;
+		border-radius: 15px;
+		width: 100%;
+		max-width: 300px;
+		margin: 0 auto;
+	}
+
+	/* Отображение времени */
+	.timer-display-mobile {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		font-weight: 700;
+	}
+
+	.offer-timer-mobile i {
+		color: #ff6b6b;
+		font-size: 1.2rem;
+	}
+
+	#timerHoursMobile,
+	#timerMinutesMobile,
+	#timerSecondsMobile {
+		font-size: 1.8rem;
+		color: #1a1a1a;
+		min-width: 30px;
+		text-align: center;
+		font-weight: 700;
+		font-family: 'Comfortaa', monospace;
+	}
+
+	.timer-label-mobile {
+		font-size: 0.9rem;
+		color: #666;
+		font-weight: normal;
+		letter-spacing: 0.5px;
+	}
+
+	/* Центрируем весь контент в daily-offer */
+	.daily-offer {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.daily-offer-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: 100%;
+	}
+
+	.daily-offer-header {
+		width: 100%;
+		padding-left: 0 !important;
+		text-align: center;
+		margin-bottom: 20px;
+	}
+
+	/* Центрируем мобильный хедер с названием, ценой и кнопкой */
+	.mobile-offer-header {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		text-align: center;
+		margin-bottom: 25px;
+	}
+
+	/* Центрируем название часов */
+	#mobileDailyOfferWatchName {
+		font-size: 1.8rem !important;
+		font-weight: 700;
+		color: #1a1a1a;
+		margin: 0 0 15px 0;
+		line-height: 1.2;
+		text-align: center;
+		width: 100%;
+		padding: 0 15px;
+	}
+
+	/* Центрируем цену */
+	.mobile-offer-header .daily-offer-price {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 15px;
+		margin-bottom: 20px;
+		flex-wrap: wrap;
+		width: 100%;
+	}
+
+	.mobile-offer-header .daily-offer-price .price {
+		font-size: 2.2rem !important;
+		font-weight: 800;
+		color: #ff6b6b;
+		text-align: center;
+	}
+
+	.mobile-offer-header .daily-offer-price .price-old {
+		font-size: 1.5rem !important;
+		color: #999;
+		text-decoration: line-through;
+		text-align: center;
+	}
+
+	.mobile-offer-header .daily-offer-price .discount-badge {
+		background: #ff6b6b;
+		color: white;
+		padding: 6px 12px;
+		border-radius: 10px;
+		font-size: 1rem;
+		font-weight: 700;
+		text-align: center;
+	}
+
+	/* Центрируем кнопку */
+	.mobile-buy-btn {
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		background: linear-gradient(135deg, #8b7355 0%, #a89176 100%);
+		color: white;
+		border: none;
+		border-radius: 12px;
+		font-size: 1.1rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		text-decoration: none;
+		width: 100%;
+		max-width: 300px;
+		margin: 0 auto;
+		padding: 16px 20px;
+		box-shadow: 0 8px 25px rgba(139, 115, 85, 0.3);
+	}
+
+	/* Центрируем карусель */
+	.daily-offer-carousel {
+		width: 100%;
+		max-width: 500px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin: 0 auto;
+	}
+
+	/* Центрируем точки навигации карусели */
+	.carousel-controls {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+		margin-top: 15px;
+	}
+
+	/* Центрируем статистику */
+	.daily-offer-stats {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.stats-grid {
+		width: 100%;
+		max-width: 500px;
+	}
+}
+
+/* Для очень маленьких телефонов */
+@media (max-width: 400px) {
+	.offer-header-mobile .offer-badge {
+		font-size: 0.85rem;
+		padding: 8px 16px;
+	}
+
+	#timerHoursMobile,
+	#timerMinutesMobile,
+	#timerSecondsMobile {
+		font-size: 1.6rem;
+	}
+
+	.timer-display-mobile {
+		gap: 5px;
+	}
+
+	.offer-timer-mobile i {
+		font-size: 1.1rem;
+	}
+
+	.timer-label-mobile {
+		font-size: 0.85rem;
+	}
+
+	#mobileDailyOfferWatchName {
+		font-size: 1.6rem !important;
+		padding: 0 10px;
+	}
+
+	.mobile-offer-header .daily-offer-price .price {
+		font-size: 1.9rem !important;
+	}
+
+	.mobile-offer-header .daily-offer-price .price-old {
+		font-size: 1.3rem !important;
+	}
+
+	.mobile-offer-header .daily-offer-price {
+		gap: 10px;
+	}
+
+	.mobile-buy-btn {
+		padding: 14px 16px !important;
+		font-size: 1rem !important;
+		max-width: 280px;
+	}
+
+	.daily-offer-carousel {
+		max-width: 100%;
+	}
+}
+
+/* Для планшетов (768px - 992px) */
+@media (min-width: 769px) and (max-width: 992px) {
+	/* На планшетах возвращаем оригинальный вид */
+	.offer-header-mobile {
+		display: none !important;
+	}
+
+	.offer-header-desktop {
+		display: flex !important;
+	}
+
+	.daily-offer-header {
+		padding-left: 40px !important;
 	}
 }

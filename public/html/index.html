@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 	<head>
 		<!-- Google tag (gtag.js) -->
@@ -492,19 +492,64 @@
 				<section class="daily-offer">
 					<div class="daily-offer-content">
 						<!-- Заголовок предложения дня -->
+						<!-- Заголовок предложения дня -->
 						<div class="daily-offer-header">
-							<span class="offer-badge"
-								><i class="fas fa-fire"></i> ПРЕДЛОЖЕНИЕ ДНЯ</span
-							>
-							<div class="offer-timer" id="offerTimer">
-								<i class="fas fa-clock"></i>
-								<span id="timerHours">24</span>:<span id="timerMinutes">00</span
-								>:<span id="timerSeconds">00</span>
-								<span class="timer-label">До конца акции</span>
+							<!-- Десктопная версия -->
+							<div class="offer-header-desktop">
+								<span class="offer-badge"
+									><i class="fas fa-fire"></i> ПРЕДЛОЖЕНИЕ ДНЯ</span
+								>
+								<div class="offer-timer" id="offerTimer">
+									<i class="fas fa-clock"></i>
+									<span id="timerHours">24</span>:<span id="timerMinutes"
+										>00</span
+									>:<span id="timerSeconds">00</span>
+									<span class="timer-label">До конца акции</span>
+								</div>
+							</div>
+
+							<!-- Мобильная версия (скрыта по умолчанию) -->
+							<div class="offer-header-mobile">
+								<div class="offer-header-mobile-top">
+									<span class="offer-badge"
+										><i class="fas fa-fire"></i> ПРЕДЛОЖЕНИЕ ДНЯ</span
+									>
+								</div>
+								<div class="offer-timer-mobile" id="offerTimerMobile">
+									<div class="timer-display-mobile">
+										<i class="fas fa-clock"></i>
+										<span id="timerHoursMobile">24</span>:<span
+											id="timerMinutesMobile"
+											>00</span
+										>:<span id="timerSecondsMobile">00</span>
+									</div>
+									<span class="timer-label-mobile">До конца акции</span>
+								</div>
 							</div>
 						</div>
 
 						<div class="daily-offer-main">
+							<!-- Мобильная версия: название, цена и кнопка над фотографией -->
+							<div class="mobile-offer-header">
+								<h1
+									class="daily-offer-watch-name"
+									id="mobileDailyOfferWatchName"
+								></h1>
+								<div class="daily-offer-price">
+									<span class="price">120 ₽</span>
+									<span class="price-old">150 ₽</span>
+									<span class="discount-badge">-20%</span>
+								</div>
+								<a
+									href="#"
+									class="btn btn-primary mobile-buy-btn"
+									id="mobileDailyOfferBuyButton"
+								>
+									<i class="fas fa-shopping-bag"></i>
+									Купить сейчас
+								</a>
+							</div>
+
 							<!-- Карусель для предложения дня -->
 							<div class="daily-offer-carousel">
 								<div class="carousel-container" id="dailyOfferCarousel">
@@ -528,19 +573,22 @@
 								</div>
 							</div>
 
+							<!-- Десктопная версия: все детали справа -->
 							<div class="daily-offer-details">
-								<!-- Название часов теперь здесь -->
 								<h1
-									class="daily-offer-watch-name"
+									class="daily-offer-watch-name desktop-watch-name"
 									id="dailyOfferWatchName"
 								></h1>
-
-								<div class="daily-offer-price">
+								<div class="daily-offer-price desktop-price">
 									<span class="price">120 ₽</span>
 									<span class="price-old">150 ₽</span>
 									<span class="discount-badge">-20%</span>
 								</div>
-								<a href="#" class="btn btn-primary" id="dailyOfferBuyButton">
+								<a
+									href="#"
+									class="btn btn-primary desktop-buy-btn"
+									id="dailyOfferBuyButton"
+								>
 									<i class="fas fa-shopping-bag"></i>
 									Купить сейчас
 								</a>

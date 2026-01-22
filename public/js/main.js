@@ -81,7 +81,7 @@ async function updateDailyOfferInFirebase(newDailyProductId) {
 					isdaily: false,
 				})
 				console.log(
-					`Сбросили isdaily для предыдущего товара дня: ${previousDailyProductId}`
+					`Сбросили isdaily для предыдущего товара дня: ${previousDailyProductId}`,
 				)
 			} catch (error) {
 				console.error('Ошибка при сбросе предыдущего товара дня:', error)
@@ -95,7 +95,7 @@ async function updateDailyOfferInFirebase(newDailyProductId) {
 					isdaily: true,
 				})
 				console.log(
-					`Установили isdaily=true для нового товара дня: ${newDailyProductId}`
+					`Установили isdaily=true для нового товара дня: ${newDailyProductId}`,
 				)
 
 				// Сохраняем ID текущего товара дня как предыдущий для следующего обновления
@@ -111,13 +111,13 @@ async function updateDailyOfferInFirebase(newDailyProductId) {
 							isdaily: true,
 						})
 						console.log(
-							`Создали папку и установили isdaily=true для товара дня: ${newDailyProductId}`
+							`Создали папку и установили isdaily=true для товара дня: ${newDailyProductId}`,
 						)
 						previousDailyProductId = newDailyProductId
 					} catch (createError) {
 						console.error(
 							'Ошибка при создании папки для товара дня:',
-							createError
+							createError,
 						)
 					}
 				} else {
@@ -216,7 +216,9 @@ async function loadProductsFromWatch() {
 				if (folder.files) {
 					// Фильтруем только изображения
 					const imageFiles = folder.files.filter(f =>
-						['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(f.type.toLowerCase())
+						['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(
+							f.type.toLowerCase(),
+						),
 					)
 
 					// Если есть изображения, берем ВСЕ изображения (без ограничений)
@@ -229,7 +231,7 @@ async function loadProductsFromWatch() {
 							name: file.name,
 							type: file.type,
 							url: `/api/view-file?folder=${encodeURIComponent(
-								folder.name
+								folder.name,
 							)}&file=${encodeURIComponent(file.name)}`,
 						}))
 					}
@@ -247,7 +249,7 @@ async function loadProductsFromWatch() {
 					folderName: folder.name,
 					folderNumber: extractFolderNumber(folder.name),
 				}
-			})
+			}),
 		)
 
 		// Сортируем товары по номеру папки (KF001, KF002 и т.д.)
@@ -316,12 +318,12 @@ async function loadPriorityImages(products) {
 	const loadingTime = ((endTime - startTime) / 1000).toFixed(2)
 
 	const successCount = results.filter(
-		r => r.status === 'fulfilled' && r.value.success
+		r => r.status === 'fulfilled' && r.value.success,
 	).length
 	const failedCount = priorityPromises.length - successCount
 
 	console.log(
-		`Завершена Загрузка первых фото: ${(endTime - startTime).toFixed(2)}ms`
+		`Завершена Загрузка первых фото: ${(endTime - startTime).toFixed(2)}ms`,
 	)
 
 	return endTime - startTime // Возвращаем время в мс
@@ -350,7 +352,7 @@ async function loadRemainingImagesBackground(products) {
 	}
 
 	console.log(
-		`📊 Всего дополнительных фото для фоновой загрузки: ${remainingImagesCount}`
+		`📊 Всего дополнительных фото для фоновой загрузки: ${remainingImagesCount}`,
 	)
 
 	const loadPromises = []
@@ -670,6 +672,12 @@ function updateDailyOfferInfo(product) {
         `
 	}
 
+	// Синхронизируем с мобильной версией названия
+	const mobileWatchName = document.getElementById('mobileDailyOfferWatchName')
+	if (mobileWatchName && watchNameElement) {
+		mobileWatchName.textContent = watchNameElement.textContent
+	}
+
 	// Обновляем цену (специальная цена для товара дня 120)
 	if (dailyOfferPrice) {
 		dailyOfferPrice.textContent = `${formatPrice(120)} ₽`
@@ -764,18 +772,18 @@ function getDailyOfferProduct(products) {
 
 	// Добавляем смещение на номер дня в году для разнообразия
 	const dayOfYear = Math.floor(
-		(today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)
+		(today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24),
 	)
 	randomIndex = (randomIndex + dayOfYear) % products.length
 
 	return products[randomIndex]
 }
 
-// Инициализация таймера обратного отсчета
+// Инициализация таймера обратного отсчета с синхронизацией для мобильной версии
 function initOfferTimer() {
 	clearInterval(offerTimerInterval)
 
-	// Функция обновления таймера
+	// Функция обновления таймера с синхронизацией для мобильной версии
 	function updateTimer() {
 		const now = new Date()
 		const endOfDay = new Date(now)
@@ -794,12 +802,29 @@ function initOfferTimer() {
 		const seconds = Math.floor((diff % (1000 * 60)) / 1000)
 
 		// Форматирование с ведущими нулями
-		timerHours.textContent = hours.toString().padStart(2, '0')
-		timerMinutes.textContent = minutes.toString().padStart(2, '0')
-		timerSeconds.textContent = seconds.toString().padStart(2, '0')
+		const hoursStr = hours.toString().padStart(2, '0')
+		const minutesStr = minutes.toString().padStart(2, '0')
+		const secondsStr = seconds.toString().padStart(2, '0')
+
+		// Обновляем десктопный таймер
+		if (timerHours) timerHours.textContent = hoursStr
+		if (timerMinutes) timerMinutes.textContent = minutesStr
+		if (timerSeconds) timerSeconds.textContent = secondsStr
+
+		// Синхронизируем с мобильным таймером
+		const hoursMobile = document.getElementById('timerHoursMobile')
+		const minutesMobile = document.getElementById('timerMinutesMobile')
+		const secondsMobile = document.getElementById('timerSecondsMobile')
+
+		if (hoursMobile) hoursMobile.textContent = hoursStr
+		if (minutesMobile) minutesMobile.textContent = minutesStr
+		if (secondsMobile) secondsMobile.textContent = secondsStr
 	}
 
+	// Первоначальное обновление
 	updateTimer()
+
+	// Запускаем интервал
 	offerTimerInterval = setInterval(updateTimer, 1000)
 }
 
@@ -837,6 +862,12 @@ async function updateDailyOffer() {
 		// Обновляем кнопку покупки
 		if (dailyOfferBuyButton) {
 			dailyOfferBuyButton.href = `/purchase/${dailyOfferProduct.id}`
+		}
+
+		// Синхронизируем мобильную кнопку покупки
+		const mobileBuyBtn = document.getElementById('mobileDailyOfferBuyButton')
+		if (mobileBuyBtn) {
+			mobileBuyBtn.href = `/purchase/${dailyOfferProduct.id}`
 		}
 	} else {
 		// Если нет товаров, показываем заглушку
@@ -1067,7 +1098,7 @@ function renderAllProducts(productsToRender) {
 	const renderTime = renderEndTime - renderStartTime
 
 	console.log(
-		`✅ Отрисовка фото и создание карточек товаров: ${renderTime.toFixed(2)}ms`
+		`✅ Отрисовка фото и создание карточек товаров: ${renderTime.toFixed(2)}ms`,
 	)
 
 	// После отрисовки всех товаров инициализируем свайпы для всех каруселей
@@ -1138,12 +1169,12 @@ function handleSwipeGesture(type, productId) {
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
-					`[data-product-id="${productId}"] .product-slide`
+					`[data-product-id="${productId}"] .product-slide`,
 				)
 				const totalSlides = slides.length
 				goToProductSlide(
 					productId,
-					(currentSlide - 1 + totalSlides) % totalSlides
+					(currentSlide - 1 + totalSlides) % totalSlides,
 				)
 			}
 		} else {
@@ -1153,7 +1184,7 @@ function handleSwipeGesture(type, productId) {
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
-					`[data-product-id="${productId}"] .product-slide`
+					`[data-product-id="${productId}"] .product-slide`,
 				)
 				const totalSlides = slides.length
 				goToProductSlide(productId, (currentSlide + 1) % totalSlides)
@@ -1175,12 +1206,12 @@ function handleMouseSwipe(startX, endX, type, productId) {
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
-					`[data-product-id="${productId}"] .product-slide`
+					`[data-product-id="${productId}"] .product-slide`,
 				)
 				const totalSlides = slides.length
 				goToProductSlide(
 					productId,
-					(currentSlide - 1 + totalSlides) % totalSlides
+					(currentSlide - 1 + totalSlides) % totalSlides,
 				)
 			}
 		} else {
@@ -1190,7 +1221,7 @@ function handleMouseSwipe(startX, endX, type, productId) {
 			} else if (type === 'product' && productId) {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
-					`[data-product-id="${productId}"] .product-slide`
+					`[data-product-id="${productId}"] .product-slide`,
 				)
 				const totalSlides = slides.length
 				goToProductSlide(productId, (currentSlide + 1) % totalSlides)
@@ -1356,7 +1387,7 @@ function addProductClickHandlers(productCard, productId) {
 // Инициализация карусели для товара
 function initProductCarousel(productId, images, hasRealImages) {
 	const slidesContainer = document.querySelector(
-		`.product-carousel-slides[data-product-id="${productId}"]`
+		`.product-carousel-slides[data-product-id="${productId}"]`,
 	)
 	const dotsContainer = document.getElementById(`dots-${productId}`)
 
@@ -1585,14 +1616,14 @@ function initProductCarousel(productId, images, hasRealImages) {
 			btn.addEventListener('click', e => {
 				const currentSlide = getCurrentProductSlide(productId)
 				const slides = document.querySelectorAll(
-					`[data-product-id="${productId}"] .product-slide`
+					`[data-product-id="${productId}"] .product-slide`,
 				)
 				const totalSlides = slides.length
 
 				if (e.target.closest('.prev-btn')) {
 					goToProductSlide(
 						productId,
-						(currentSlide - 1 + totalSlides) % totalSlides
+						(currentSlide - 1 + totalSlides) % totalSlides,
 					)
 				} else if (e.target.closest('.next-btn')) {
 					goToProductSlide(productId, (currentSlide + 1) % totalSlides)
@@ -1621,7 +1652,7 @@ function generateColors(productId, count) {
 // Получение текущего слайда товара
 function getCurrentProductSlide(productId) {
 	const slides = document.querySelectorAll(
-		`[data-product-id="${productId}"] .product-slide`
+		`[data-product-id="${productId}"] .product-slide`,
 	)
 	let currentIndex = 0
 
@@ -1637,10 +1668,10 @@ function getCurrentProductSlide(productId) {
 // Переход к определенному слайду товара
 function goToProductSlide(productId, index) {
 	const slides = document.querySelectorAll(
-		`[data-product-id="${productId}"] .product-slide`
+		`[data-product-id="${productId}"] .product-slide`,
 	)
 	const dots = document.querySelectorAll(
-		`#dots-${productId} .product-carousel-dot`
+		`#dots-${productId} .product-carousel-dot`,
 	)
 
 	// Обновляем слайды
@@ -1779,6 +1810,77 @@ function adjustCatalogLayout() {
 	}
 }
 
+// ФУНКЦИЯ ДЛЯ СИНХРОНИЗАЦИИ ТАЙМЕРА МЕЖДУ ДЕСКТОПНОЙ И МОБИЛЬНОЙ ВЕРСИЯМИ
+function syncTimer() {
+	const hours = document.getElementById('timerHours')
+	const minutes = document.getElementById('timerMinutes')
+	const seconds = document.getElementById('timerSeconds')
+	const hoursMobile = document.getElementById('timerHoursMobile')
+	const minutesMobile = document.getElementById('timerMinutesMobile')
+	const secondsMobile = document.getElementById('timerSecondsMobile')
+
+	// Если элементы существуют, синхронизируем значения
+	if (hours && hoursMobile) {
+		hoursMobile.textContent = hours.textContent
+	}
+	if (minutes && minutesMobile) {
+		minutesMobile.textContent = minutes.textContent
+	}
+	if (seconds && secondsMobile) {
+		secondsMobile.textContent = seconds.textContent
+	}
+}
+
+// ФУНКЦИЯ ДЛЯ СИНХРОНИЗАЦИИ НАЗВАНИЙ ЧАСОВ
+function syncWatchNames() {
+	const desktopWatchName = document.getElementById('dailyOfferWatchName')
+	const mobileWatchName = document.getElementById('mobileDailyOfferWatchName')
+
+	if (desktopWatchName && mobileWatchName && desktopWatchName.textContent) {
+		mobileWatchName.textContent = desktopWatchName.textContent
+	}
+}
+
+// ФУНКЦИЯ ДЛЯ СИНХРОНИЗАЦИИ ЦЕН
+function syncPrices() {
+	const desktopPrice = document.querySelector('.desktop-price .price')
+	const mobilePrice = document.querySelector('.mobile-price .price')
+	const desktopOldPrice = document.querySelector('.desktop-price .price-old')
+	const mobileOldPrice = document.querySelector('.mobile-price .price-old')
+	const desktopDiscount = document.querySelector(
+		'.desktop-price .discount-badge',
+	)
+	const mobileDiscount = document.querySelector('.mobile-price .discount-badge')
+
+	if (desktopPrice && mobilePrice) {
+		mobilePrice.textContent = desktopPrice.textContent
+	}
+	if (desktopOldPrice && mobileOldPrice) {
+		mobileOldPrice.textContent = desktopOldPrice.textContent
+	}
+	if (desktopDiscount && mobileDiscount) {
+		mobileDiscount.textContent = desktopDiscount.textContent
+	}
+}
+
+// ФУНКЦИЯ ДЛЯ СИНХРОНИЗАЦИИ ССЫЛОК НА ПОКУПКУ
+function syncBuyLinks() {
+	const desktopBuyBtn = document.getElementById('dailyOfferBuyButton')
+	const mobileBuyBtn = document.getElementById('mobileDailyOfferBuyButton')
+
+	if (desktopBuyBtn && mobileBuyBtn && desktopBuyBtn.href) {
+		mobileBuyBtn.href = desktopBuyBtn.href
+	}
+}
+
+// ФУНКЦИЯ ДЛЯ ПОЛНОЙ СИНХРОНИЗАЦИИ ВСЕХ ДАННЫХ
+function syncAllMobileData() {
+	syncWatchNames()
+	syncPrices()
+	syncTimer()
+	syncBuyLinks()
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
 	console.log('⏱️ Начало загрузки страницы')
@@ -1801,7 +1903,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	allProducts = products
 
 	// Инициализируем предложение дня
-	await updateDailyOffer() // Добавили await
+	await updateDailyOffer()
 
 	if (allProducts.length > 0) {
 		// 1. Загружаем первые фото каждого товара
@@ -1814,14 +1916,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 		const firstVisibleTime = firstImagesTime + renderTime
 		console.log(
 			`✅ Итоговое время загрузки чтобы было видно товары с первым фото: ${firstVisibleTime.toFixed(
-				2
-			)}ms - Сайт можно смотреть и ПЕРВЫЕ фото есть`
+				2,
+			)}ms - Сайт можно смотреть и ПЕРВЫЕ фото есть`,
 		)
 
 		// 4. В фоне загружаем остальные фото и ждем их завершения
-		const remainingImagesResult = await loadRemainingImagesBackground(
-			allProducts
-		) // ЖДЕМ ЗАВЕРШЕНИЯ
+		const remainingImagesResult =
+			await loadRemainingImagesBackground(allProducts)
 
 		// 5. НОВОЕ: Запускаем периодическую проверку изображений
 		startPeriodicImageCheck()
@@ -1830,16 +1931,120 @@ document.addEventListener('DOMContentLoaded', async () => {
 		const totalLoadTime = performance.now() - pageLoadStartTime
 		console.log(
 			`✅ Финальная загрузка страницы - ${totalLoadTime.toFixed(
-				2
-			)}ms Вообще все ${remainingImagesResult.loaded} фото загружены`
+				2,
+			)}ms Вообще все ${remainingImagesResult.loaded} фото загружены`,
 		)
 		console.log(
-			`🎉 Полное время загрузки страницы: ${totalLoadTime.toFixed(2)}ms`
+			`🎉 Полное время загрузки страницы: ${totalLoadTime.toFixed(2)}ms`,
 		)
 	} else {
 		// Если нет товаров
 		loadingIndicator.style.display = 'none'
 	}
+
+	// СИНХРОНИЗАЦИЯ ДАННЫХ ДЛЯ МОБИЛЬНОЙ ВЕРСИИ
+	// 1. Синхронизируем все данные сразу
+	syncAllMobileData()
+
+	// 2. Наблюдаем за изменениями в десктопном названии часов
+	const desktopWatchName = document.getElementById('dailyOfferWatchName')
+	if (desktopWatchName) {
+		const nameObserver = new MutationObserver(function (mutations) {
+			mutations.forEach(function (mutation) {
+				if (
+					mutation.type === 'characterData' ||
+					mutation.type === 'childList'
+				) {
+					syncWatchNames()
+				}
+			})
+		})
+
+		nameObserver.observe(desktopWatchName, {
+			characterData: true,
+			childList: true,
+			subtree: true,
+		})
+	}
+
+	// 3. Наблюдаем за изменениями в таймере
+	const timerElements = [
+		document.getElementById('timerHours'),
+		document.getElementById('timerMinutes'),
+		document.getElementById('timerSeconds'),
+	]
+
+	timerElements.forEach(element => {
+		if (element) {
+			const timerObserver = new MutationObserver(function (mutations) {
+				mutations.forEach(function (mutation) {
+					if (
+						mutation.type === 'characterData' ||
+						mutation.type === 'childList'
+					) {
+						syncTimer()
+					}
+				})
+			})
+
+			timerObserver.observe(element, {
+				characterData: true,
+				childList: true,
+				subtree: true,
+			})
+		}
+	})
+
+	// 4. Наблюдаем за изменениями в ценах
+	const priceElements = document.querySelectorAll(
+		'.desktop-price .price, .desktop-price .price-old, .desktop-price .discount-badge',
+	)
+	priceElements.forEach(element => {
+		if (element) {
+			const priceObserver = new MutationObserver(function (mutations) {
+				mutations.forEach(function (mutation) {
+					if (
+						mutation.type === 'characterData' ||
+						mutation.type === 'childList'
+					) {
+						syncPrices()
+					}
+				})
+			})
+
+			priceObserver.observe(element, {
+				characterData: true,
+				childList: true,
+				subtree: true,
+			})
+		}
+	})
+
+	// 5. Наблюдаем за изменениями в ссылке покупки
+	const desktopBuyBtn = document.getElementById('dailyOfferBuyButton')
+	if (desktopBuyBtn) {
+		const linkObserver = new MutationObserver(function (mutations) {
+			mutations.forEach(function (mutation) {
+				if (
+					mutation.type === 'attributes' &&
+					mutation.attributeName === 'href'
+				) {
+					syncBuyLinks()
+				}
+			})
+		})
+
+		linkObserver.observe(desktopBuyBtn, {
+			attributes: true,
+			attributeFilter: ['href'],
+		})
+	}
+
+	// 6. Периодическая проверка синхронизации (на всякий случай)
+	setInterval(syncAllMobileData, 2000)
+
+	// 7. Синхронизация при изменении размера окна
+	window.addEventListener('resize', syncAllMobileData)
 
 	// Вызываем при загрузке и изменении размера окна
 	adjustCatalogLayout()
