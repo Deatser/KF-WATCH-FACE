@@ -765,7 +765,7 @@ function getDailyOfferProduct(products) {
 	// Используем текущую дату как seed для детерминированного случайного выбора
 	const today = new Date()
 	const seed =
-		today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate()
+		today.getFullYear() * 9999 + (today.getMonth() + 1) * 100 + today.getDate()
 
 	// Простой детерминированный генератор (одинаковый для всех в один день)
 	let randomIndex = seed % products.length
