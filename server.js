@@ -105,7 +105,7 @@ app.get('/api/secure-download/:receivingId', async (req, res) => {
 
 		if (order.status !== 'paid') {
 			console.log(
-				`❌ Заказ не оплачен: ${order.orderId}, статус: ${order.status}`
+				`❌ Заказ не оплачен: ${order.orderId}, статус: ${order.status}`,
 			)
 			return res.status(403).json({
 				success: false,
@@ -159,8 +159,8 @@ app.get('/api/secure-download/:receivingId', async (req, res) => {
 		apkFiles.forEach((file, index) => {
 			console.log(
 				`   ${index + 1}. ${file.name} (${(file.size / 1024 / 1024).toFixed(
-					2
-				)} MB)`
+					2,
+				)} MB)`,
 			)
 		})
 
@@ -175,12 +175,12 @@ app.get('/api/secure-download/:receivingId', async (req, res) => {
 			res.setHeader('Content-Type', 'application/vnd.android.package-archive')
 			res.setHeader(
 				'Content-Disposition',
-				`attachment; filename="${originalFileName}"`
+				`attachment; filename="${originalFileName}"`,
 			)
 			res.setHeader('X-Content-Type-Options', 'nosniff')
 			res.setHeader(
 				'Cache-Control',
-				'no-store, no-cache, must-revalidate, private'
+				'no-store, no-cache, must-revalidate, private',
 			)
 
 			const fileStream = fs.createReadStream(apkData.path)
@@ -194,12 +194,12 @@ app.get('/api/secure-download/:receivingId', async (req, res) => {
 			res.setHeader('Content-Type', 'application/zip')
 			res.setHeader(
 				'Content-Disposition',
-				`attachment; filename="${zipFileName}"`
+				`attachment; filename="${zipFileName}"`,
 			)
 			res.setHeader('X-Content-Type-Options', 'nosniff')
 			res.setHeader(
 				'Cache-Control',
-				'no-store, no-cache, must-revalidate, private'
+				'no-store, no-cache, must-revalidate, private',
 			)
 
 			// Создаем ZIP архив
@@ -405,7 +405,7 @@ const storage = multer.diskStorage({
 		const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
 		cb(
 			null,
-			file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)
+			file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname),
 		)
 	},
 })
@@ -507,7 +507,7 @@ async function generateReceivingForPaidOrder(orderId) {
 		})
 
 		console.log(
-			`✅ Generated receivingId for paid order ${orderId}: ${receivingId}`
+			`✅ Generated receivingId for paid order ${orderId}: ${receivingId}`,
 		)
 		return receivingId
 	} catch (error) {
@@ -521,7 +521,7 @@ async function getOrderByReceivingIdFromFirebase(receivingId) {
 	try {
 		// Сначала получаем индекс
 		const indexSnapshot = await get(
-			ref(database, `orderByReceivingId/${receivingId}`)
+			ref(database, `orderByReceivingId/${receivingId}`),
 		)
 
 		if (!indexSnapshot.exists()) {
@@ -537,7 +537,7 @@ async function getOrderByReceivingIdFromFirebase(receivingId) {
 
 		// Получаем полный заказ
 		const orderSnapshot = await get(
-			ref(database, `orders/${indexData.orderId}`)
+			ref(database, `orders/${indexData.orderId}`),
 		)
 
 		if (!orderSnapshot.exists()) {
@@ -616,12 +616,12 @@ function saveOrderWithReceivingId(orderData) {
 		const orderFileById = path.join(
 			__dirname,
 			'orders',
-			`order_${orderData.orderId}.json`
+			`order_${orderData.orderId}.json`,
 		)
 		const orderFileByReceivingId = path.join(
 			__dirname,
 			'orders',
-			`receiving_${safeReceivingId}.json`
+			`receiving_${safeReceivingId}.json`,
 		)
 
 		fs.writeFileSync(orderFileById, JSON.stringify(orderData, null, 2))
@@ -641,7 +641,7 @@ function getOrderByReceivingId(receivingId) {
 		const orderFile = path.join(
 			__dirname,
 			'orders',
-			`receiving_${safeReceivingId}.json`
+			`receiving_${safeReceivingId}.json`,
 		)
 
 		if (fs.existsSync(orderFile)) {
@@ -772,8 +772,8 @@ function callPythonScript(scriptName, data) {
 			} else {
 				reject(
 					new Error(
-						`Python ошибка (код ${code}): ${stderr || 'Неизвестная ошибка'}`
-					)
+						`Python ошибка (код ${code}): ${stderr || 'Неизвестная ошибка'}`,
+					),
 				)
 			}
 		})
@@ -841,7 +841,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			const timestampPart = Math.floor(Date.now() / 1000)
 			const randomPart = Math.floor(Math.random() * 10000)
 			const uniqueId = parseInt(
-				timestampPart.toString() + randomPart.toString().padStart(4, '0')
+				timestampPart.toString() + randomPart.toString().padStart(4, '0'),
 			)
 			return uniqueId % 1000000000
 		}
@@ -857,12 +857,12 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			email: customerEmail,
 			Culture: 'ru',
 			IncCurr: '',
-			is_test: true,
+			is_test: false,
 		}
 
 		console.log(`\n\n\n`)
 		console.log(
-			`================================================================`
+			`================================================================`,
 		)
 		console.log(`💰 СОЗДАНИЕ ПЛАТЕЖНОЙ ССЫЛКИ`)
 		console.log(`🛒 Товар: ${productId}`)
@@ -889,7 +889,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			status: 'pending',
 			isDaily: false,
 			robokassaData: {
-				is_test: result.is_test || true,
+				is_test: result.is_test || false,
 				method: result.method || 'jwt_protected',
 			},
 		}
@@ -912,7 +912,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 				orderId: invId,
 				receivingId: oldReceivingId,
 				message: 'Ссылка для оплаты успешно создана (локальное сохранение)',
-				test_mode: result.is_test || true,
+				test_mode: result.is_test || false,
 			})
 			return
 		}
@@ -921,7 +921,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 		console.log(`🔗 ${result.payment_url}`)
 		console.log(`💾 Заказ ${invId} сохранен (ожидание оплаты)`)
 		console.log(
-			`================================================================`
+			`================================================================`,
 		)
 		res.json({
 			success: true,
@@ -929,7 +929,7 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			orderId: invId,
 			receivingId: null, // НЕТ receivingId до оплаты!
 			message: 'Ссылка для оплаты успешно создана',
-			test_mode: result.is_test || true,
+			test_mode: result.is_test || false,
 		})
 	} catch (error) {
 		console.error(`❌ Ошибка: ${error.message}`)
@@ -962,7 +962,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 		// Проверяем обязательные параметры
 		if (!params.OutSum || !params.InvId || !params.SignatureValue) {
 			console.error(
-				'❌ MISSING REQUIRED PARAMETERS FOR is_result_notification_valid()'
+				'❌ MISSING REQUIRED PARAMETERS FOR is_result_notification_valid()',
 			)
 			console.error('- Has OutSum:', !!params.OutSum)
 			console.error('- Has InvId:', !!params.InvId)
@@ -978,7 +978,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 			out_sum: parseFloat(params.OutSum),
 			inv_id: orderId,
 			signature: params.SignatureValue,
-			IsTest: params.IsTest || '0',
+			IsTest: false,
 			Culture: params.Culture || 'ru',
 		}
 
@@ -995,7 +995,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 		console.log('- Is Valid:', result.is_valid)
 		console.log(
 			'- Method Used:',
-			result.method_used || 'is_result_notification_valid'
+			result.method_used || 'is_result_notification_valid',
 		)
 		console.log('- Error:', result.error || 'None')
 		console.log('- Full result:', JSON.stringify(result, null, 2))
@@ -1113,7 +1113,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 			// Обновляем статус на paid
 			if (order.status !== 'paid') {
 				console.log(
-					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`
+					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`,
 				)
 
 				// Если нет receivingId, генерируем его
@@ -1266,7 +1266,7 @@ app.get('/success', async (req, res) => {
 
 		console.log(`\n\n\n`)
 		console.log(
-			`================================================================`
+			`================================================================`,
 		)
 		console.log(`💰 ПОЛУЧЕНИЕ УВЕДОМЛЕНИЯ ОБ ОПЛАТЕ`)
 		console.log(`📦 Параметры:`, {
@@ -1330,7 +1330,7 @@ app.get('/success', async (req, res) => {
 			// ОБНОВЛЯЕМ СТАТУС НА PAID (если еще не оплачен)
 			if (order.status !== 'paid') {
 				console.log(
-					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`
+					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`,
 				)
 
 				const updates = {
@@ -1584,7 +1584,7 @@ app.post('/api/payment/create', async (req, res) => {
 					productName,
 					price: price || 150,
 				}),
-			}
+			},
 		)
 
 		const result = await response.json()
@@ -1653,7 +1653,7 @@ app.get('/api/download/watchface/:receivingId', async (req, res) => {
 
 		// Логируем скачивание
 		console.log(
-			`📥 Скачивание: ${receivingId}, файл: ${apkFile}, email: ${order.customerEmail}`
+			`📥 Скачивание: ${receivingId}, файл: ${apkFile}, email: ${order.customerEmail}`,
 		)
 
 		// Отправляем файл
@@ -1679,7 +1679,7 @@ app.get('/purchase/receiving/:receivingId', (req, res) => {
 			__dirname,
 			'public',
 			'html',
-			'receiving.html'
+			'receiving.html',
 		)
 
 		if (!fs.existsSync(receivingPage)) {
@@ -1780,7 +1780,7 @@ function createReceivingPage(order) {
 						<div class="info-row">
 							<span class="label">Дата оплаты:</span>
 							<span class="value">${new Date(order.paidAt || order.createdAt).toLocaleString(
-								'ru-RU'
+								'ru-RU',
 							)}</span>
 						</div>
 					</div>
@@ -1974,7 +1974,7 @@ app.get('/api/product/:productId', (req, res) => {
 		if (productId > 0 && productId <= rawFolders.length) {
 			folderName = rawFolders[productId - 1]
 			console.log(
-				`✅ Найден по индексу: ${folderName} (индекс ${productId - 1})`
+				`✅ Найден по индексу: ${folderName} (индекс ${productId - 1})`,
 			)
 		}
 
@@ -2006,7 +2006,7 @@ app.get('/api/product/:productId', (req, res) => {
 				name: file.name,
 				type: file.type,
 				url: `/api/view-file?folder=${encodeURIComponent(
-					folderName
+					folderName,
 				)}&file=${encodeURIComponent(file.name)}`,
 				size: file.size,
 			}))
@@ -2016,7 +2016,7 @@ app.get('/api/product/:productId', (req, res) => {
 		const descFile = files.find(
 			f =>
 				f.name.toLowerCase() === 'описание.txt' ||
-				f.name.toLowerCase() === 'description.txt'
+				f.name.toLowerCase() === 'description.txt',
 		)
 		if (descFile) {
 			const descPath = path.join(folderPath, descFile.name)
@@ -2099,7 +2099,7 @@ app.get('/api/products', (req, res) => {
 			.map(file => ({
 				name: file.name,
 				url: `/api/view-file?folder=${encodeURIComponent(
-					latestFolder
+					latestFolder,
 				)}&file=${encodeURIComponent(file.name)}`,
 			}))
 
@@ -2121,7 +2121,7 @@ app.get('/api/products', (req, res) => {
 			const files = getFolderFiles(folderPath)
 
 			const firstImage = files.find(file =>
-				['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.type)
+				['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.type),
 			)
 
 			return {
@@ -2133,8 +2133,8 @@ app.get('/api/products', (req, res) => {
 				hasImage: !!firstImage,
 				imageUrl: firstImage
 					? `/api/view-file?folder=${encodeURIComponent(
-							folder
-					  )}&file=${encodeURIComponent(firstImage.name)}`
+							folder,
+						)}&file=${encodeURIComponent(firstImage.name)}`
 					: null,
 				folderNumber: extractFolderNumber(folder),
 			}
@@ -2212,7 +2212,7 @@ function calculateStats(folders) {
 		if (folder.files) {
 			totalFiles += folder.files.length
 			totalImages += folder.files.filter(file =>
-				['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.type)
+				['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.type),
 			).length
 		}
 	})
@@ -2401,7 +2401,7 @@ app.post('/api/delete-file', (req, res) => {
 			'public',
 			'watch',
 			folderName,
-			fileName
+			fileName,
 		)
 
 		if (!fs.existsSync(filePath)) {
@@ -2586,7 +2586,7 @@ app.get('/api/guides/:guideName/images', (req, res) => {
 				name: file,
 				url: `/guide/${guideName}/${file}`,
 				apiUrl: `/api/view-file?type=guide&folder=${encodeURIComponent(
-					guideName
+					guideName,
 				)}&file=${encodeURIComponent(file)}`,
 			}))
 
@@ -2630,7 +2630,7 @@ app.get('/public/:folder/:filename', (req, res) => {
 		__dirname,
 		'public',
 		req.params.folder,
-		req.params.filename
+		req.params.filename,
 	)
 
 	if (fs.existsSync(filePath)) {
@@ -2646,7 +2646,7 @@ app.get('/guide/:guideName/:fileName', (req, res) => {
 		'public',
 		'guide',
 		req.params.guideName,
-		req.params.fileName
+		req.params.fileName,
 	)
 
 	if (fs.existsSync(filePath)) {
@@ -2873,7 +2873,7 @@ app.listen(PORT, async () => {
 
 	console.log(`\n\n\n`)
 	console.log(
-		`================================================================`
+		`================================================================`,
 	)
 	console.log(`Сервис FIREBASE для базы данных - ПОДКЛЮЧЕН`)
 	console.log(`\n\n`)
@@ -2881,7 +2881,7 @@ app.listen(PORT, async () => {
 	console.log(`\n\n`)
 	console.log(`Сервис ROBOKASSA для создания ссылок на оплату - ПОДКЛЮЧЕН`)
 	console.log(
-		`================================================================`
+		`================================================================`,
 	)
 	console.log(`\n\n\n`)
 
@@ -2899,12 +2899,12 @@ app.listen(PORT, async () => {
 
 	console.log(`\n\n\n`)
 	console.log(
-		`================================================================`
+		`================================================================`,
 	)
 	console.log(`🚀 СЕРВЕР ЗАПУЩЕН`)
 	console.log(`📅 Время запуска: ${new Date().toLocaleString()}`)
 	console.log(
-		`================================================================`
+		`================================================================`,
 	)
 	console.log(`\n\n\n`)
 })

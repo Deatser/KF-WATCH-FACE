@@ -2,8 +2,8 @@ from robokassa import HashAlgorithm, Robokassa
 
 robokassa = Robokassa(
     merchant_login="kfwatchface",  # демо-аккаунт
-    password1="U85g8fxYMMyThLkr1W2n",
-    password2="qe9Np4lhWwJG3nKF96Ro",
+    password1="1",
+    password2="1",
     is_test=True,
     algorithm=HashAlgorithm.md5,
 )

@@ -9,7 +9,7 @@ import hashlib
 from robokassa import HashAlgorithm, Robokassa
 
 class RobokassaHandler:
-    def __init__(self, is_test=True):
+    def __init__(self, is_test=False):
         # ВАЖНО: Используйте те же данные что в рабочем скрипте
         self.merchant_login = os.environ.get('ROBOKASSA_LOGIN', '')
         self.password1 = os.environ.get('ROBOKASSA_PASS1', '')
@@ -163,7 +163,7 @@ async def main():
             data = {'action': 'test'}
         
         action = data.get('action', 'test')
-        is_test = data.get('is_test', True)
+        is_test = data.get('is_test', False)
         
         handler = RobokassaHandler(is_test=is_test)
         
@@ -220,7 +220,6 @@ async def main():
                 'library_version': 'robokassa (official)',
                 'merchant_login': handler.merchant_login,
                 'is_test': handler.is_test,
-                'passwords_match': handler.password1 == "U85g8fxYMMyThLkr1W2n" and handler.password2 == "qe9Np4lhWwJG3nKF96Ro",
                 'methods_available': [
                     'generate_short_link',
                     'check_result_signature',
