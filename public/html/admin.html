@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 	<head>
-		<!DOCTYPE html>
+		<!doctype html>
 		<html lang="ru">
 			<head>
 				<!-- Google tag (gtag.js) -->
@@ -717,7 +717,7 @@
 						const createFolderModal =
 							document.getElementById('createFolderModal')
 						const closeCreateBtns = createFolderModal.querySelectorAll(
-							'.close-btn, #cancelCreateBtn'
+							'.close-btn, #cancelCreateBtn',
 						)
 
 						closeCreateBtns.forEach(btn => {
@@ -733,7 +733,7 @@
 						// Модальное окно добавления файлов
 						const addFilesModal = document.getElementById('addFilesModal')
 						const closeUploadBtns = addFilesModal.querySelectorAll(
-							'.close-btn, #cancelUploadBtn'
+							'.close-btn, #cancelUploadBtn',
 						)
 
 						closeUploadBtns.forEach(btn => {
@@ -795,7 +795,7 @@
 						;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(
 							eventName => {
 								fileDropArea.addEventListener(eventName, preventDefaults, false)
-							}
+							},
 						)
 
 						function preventDefaults(e) {
@@ -910,8 +910,8 @@
 							const fileCount = folder.files ? folder.files.length : 0
 							const imageCount = folder.files
 								? folder.files.filter(f =>
-										['jpg', 'jpeg', 'png', 'gif'].includes(f.type)
-								  ).length
+										['jpg', 'jpeg', 'png', 'gif'].includes(f.type),
+									).length
 								: 0
 
 							totalFiles += fileCount
@@ -935,8 +935,8 @@
 						const fileCount = folder.files ? folder.files.length : 0
 						const imageCount = folder.files
 							? folder.files.filter(f =>
-									['jpg', 'jpeg', 'png', 'gif'].includes(f.type)
-							  ).length
+									['jpg', 'jpeg', 'png', 'gif'].includes(f.type),
+								).length
 							: 0
 
 						div.innerHTML = `
@@ -964,7 +964,7 @@
 										<i class="fas fa-trash"></i>
 									</button>
 								</div>
-							`
+							`,
 										)
 										.join('')
 								: '<div style="padding: 10px; text-align: center; color: #999;">Нет файлов</div>'
@@ -1051,8 +1051,8 @@
 
 							const response = await fetch(
 								`/api/view-file?folder=${encodeURIComponent(
-									folderName
-								)}&file=${encodeURIComponent(fileName)}`
+									folderName,
+								)}&file=${encodeURIComponent(fileName)}`,
 							)
 
 							console.log('Ответ сервера:', response.status)
@@ -1061,7 +1061,7 @@
 								// Для изображений и текстовых файлов используем разные подходы
 								const fileExt = fileName.split('.').pop().toLowerCase()
 								const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(
-									fileExt
+									fileExt,
 								)
 								const isText = [
 									'txt',
@@ -1111,7 +1111,7 @@
 								console.log('Ошибка сервера:', error)
 								alert(
 									'Ошибка при открытии файла: ' +
-										(error || 'Неизвестная ошибка')
+										(error || 'Неизвестная ошибка'),
 								)
 							}
 						} catch (error) {
@@ -1130,7 +1130,7 @@
 
 						// Устанавливаем заголовок
 						titleElement.innerHTML = `<i class="${getFileIconClass(
-							fileInfo.type
+							fileInfo.type,
 						)}"></i> ${title}`
 
 						// Очищаем содержимое
@@ -1194,7 +1194,7 @@
 
 						const { folderName, fileName } = currentFileData
 						const downloadUrl = `/api/download-file?folder=${encodeURIComponent(
-							folderName
+							folderName,
 						)}&file=${encodeURIComponent(fileName)}`
 
 						// Создаем временную ссылку для скачивания
@@ -1223,7 +1223,7 @@
 						// Проверка имени папки
 						if (!/^[a-zA-Z0-9_\-]+$/.test(folderName)) {
 							alert(
-								'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание'
+								'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание',
 							)
 							return
 						}
@@ -1269,7 +1269,7 @@
 					async function deleteFile(folderName, fileName) {
 						if (
 							!confirm(
-								`Вы уверены, что хотите удалить файл "${fileName}" из папки "${folderName}"?`
+								`Вы уверены, что хотите удалить файл "${fileName}" из папки "${folderName}"?`,
 							)
 						) {
 							return
@@ -1369,7 +1369,7 @@
 							// Проверяем, нет ли уже такого файла
 							if (
 								!selectedFiles.some(
-									f => f.name === file.name && f.size === file.size
+									f => f.name === file.name && f.size === file.size,
 								)
 							) {
 								selectedFiles.push(file)
@@ -1417,7 +1417,7 @@
 							<i class="fas fa-times"></i>
 						</button>
 					</div>
-				`
+				`,
 							)
 							.join('')
 
@@ -1494,7 +1494,7 @@
 								alert(
 									`Файлы успешно загружены! Добавлено: ${
 										result.uploadedFiles || result.uploaded
-									} файлов`
+									} файлов`,
 								)
 								document.getElementById('addFilesModal').style.display = 'none'
 								resetFileUpload()
@@ -1535,7 +1535,7 @@
 
 						if (!/^[a-zA-Z0-9_\-]+$/.test(newName)) {
 							alert(
-								'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание'
+								'Имя папки может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание',
 							)
 							return
 						}
@@ -1579,7 +1579,7 @@
 					async function deleteFolder(folderName) {
 						if (
 							!confirm(
-								`Вы уверены, что хотите удалить папку "${folderName}" и все её содержимое?`
+								`Вы уверены, что хотите удалить папку "${folderName}" и все её содержимое?`,
 							)
 						) {
 							return
