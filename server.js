@@ -848,15 +848,15 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 
 		const invId = generateInvoiceId()
 
-		// ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ, БЕЗ shp_!
+		// ПЕРЕДАЕМ ВСЁ КАК В ТЕСТОВОМ КОДЕ
 		const pythonData = {
 			action: 'generate_short_link',
 			out_sum: parseFloat(price),
 			inv_id: invId,
 			description: encodeURIComponent(`Watchface ${productName || productId}`),
 			email: customerEmail,
+			product_name: productName || productId, // ВАЖНО: передаем название товара
 			Culture: 'ru',
-			IncCurr: '',
 			is_test: false,
 		}
 
@@ -864,10 +864,11 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 		console.log(
 			`================================================================`,
 		)
-		console.log(`💰 СОЗДАНИЕ ПЛАТЕЖНОЙ ССЫЛКИ`)
+		console.log(`💰 СОЗДАНИЕ ПЛАТЕЖНОЙ ССЫЛКИ С RECEIPT`)
 		console.log(`🛒 Товар: ${productId}`)
 		console.log(`📧 Email: ${customerEmail}`)
 		console.log(`💰 Цена: ${price} руб.`)
+		console.log(`📋 Product Name: ${productName || productId}`)
 		console.log(`\n`)
 
 		const result = await callPythonScript('robokassa_handler.py', pythonData)
@@ -890,22 +891,21 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			isDaily: false,
 			robokassaData: {
 				is_test: result.is_test || false,
-				method: result.method || 'jwt_protected',
+				method: result.method || 'manual_with_receipt',
+				receipt_data: result.receipt_data || null, // сохраняем receipt для отладки
 			},
 		}
 
-		// Сохраняем заказ в Firebase (возвращает true/false)
+		// Сохраняем заказ в Firebase
 		const saveResult = await saveOrderToFirebase(orderData)
 
 		if (!saveResult) {
-			// Fallback: сохраняем локально если Firebase не работает
 			console.log('⚠️  Firebase не работает, сохраняем локально')
 			const oldReceivingId = saveOrderWithReceivingId(orderData)
 			if (!oldReceivingId) {
 				throw new Error('Ошибка сохранения заказа')
 			}
 
-			// В локальной версии receivingId генерируется сразу
 			res.json({
 				success: true,
 				paymentUrl: result.payment_url,
@@ -917,18 +917,19 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 			return
 		}
 
-		console.log(`✅ Ссылка создана`)
-		console.log(`🔗 ${result.payment_url}`)
+		console.log(`✅ Ссылка создана (с Receipt)`)
+		console.log(`🔗 ${result.payment_url.substring(0, 100)}...`)
 		console.log(`💾 Заказ ${invId} сохранен (ожидание оплаты)`)
 		console.log(
 			`================================================================`,
 		)
+
 		res.json({
 			success: true,
 			paymentUrl: result.payment_url,
 			orderId: invId,
 			receivingId: null, // НЕТ receivingId до оплаты!
-			message: 'Ссылка для оплаты успешно создана',
+			message: 'Ссылка для оплаты успешно создана с фискализацией',
 			test_mode: result.is_test || false,
 		})
 	} catch (error) {
@@ -957,13 +958,19 @@ app.post('/api/robokassa/result', async (req, res) => {
 		console.log('- SignatureValue:', params.SignatureValue)
 		console.log('- IsTest:', params.IsTest)
 		console.log('- Culture:', params.Culture)
-		console.log('- All params:', JSON.stringify(params, null, 2))
+		console.log(
+			'- Receipt:',
+			params.Receipt
+				? 'ПРИСУТСТВУЕТ (' + params.Receipt.substring(0, 50) + '...)'
+				: 'ОТСУТСТВУЕТ',
+		)
+		console.log('- Email:', params.Email)
+		console.log('- Description:', params.Description)
+		console.log('- All params keys:', Object.keys(params))
 
 		// Проверяем обязательные параметры
 		if (!params.OutSum || !params.InvId || !params.SignatureValue) {
-			console.error(
-				'❌ MISSING REQUIRED PARAMETERS FOR is_result_notification_valid()',
-			)
+			console.error('❌ MISSING REQUIRED PARAMETERS')
 			console.error('- Has OutSum:', !!params.OutSum)
 			console.error('- Has InvId:', !!params.InvId)
 			console.error('- Has SignatureValue:', !!params.SignatureValue)
@@ -972,33 +979,30 @@ app.post('/api/robokassa/result', async (req, res) => {
 
 		const orderId = parseInt(params.InvId)
 
-		// ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ, БЕЗ shp_!
+		// ВАЖНО: получаем Receipt из параметров (если есть)
+		const receiptParam = params.Receipt || null
+
+		// Проверяем подпись с учетом Receipt
 		const pythonData = {
 			action: 'check_result_signature',
 			out_sum: parseFloat(params.OutSum),
 			inv_id: orderId,
 			signature: params.SignatureValue,
+			receipt: receiptParam, // ПЕРЕДАЕМ RECEIPT если есть
 			IsTest: false,
 			Culture: params.Culture || 'ru',
 		}
 
-		// НИКАКИХ shp_ ПАРАМЕТРОВ НЕ ДОБАВЛЯЕМ!
-
-		console.log('🐍 CALLING Python is_result_notification_valid() with:')
+		console.log('🐍 CALLING Python check_result_signature() with:')
 		console.log(JSON.stringify(pythonData, null, 2))
 
 		// Вызываем Python скрипт для проверки подписи
 		const result = await callPythonScript('robokassa_handler.py', pythonData)
 
-		console.log('✅ Python is_result_notification_valid() RETURNED:')
+		console.log('✅ Python check_result_signature() RETURNED:')
 		console.log('- Success:', result.success)
 		console.log('- Is Valid:', result.is_valid)
-		console.log(
-			'- Method Used:',
-			result.method_used || 'is_result_notification_valid',
-		)
 		console.log('- Error:', result.error || 'None')
-		console.log('- Full result:', JSON.stringify(result, null, 2))
 
 		// Проверяем результат
 		if (!result.success) {
@@ -1008,11 +1012,8 @@ app.post('/api/robokassa/result', async (req, res) => {
 		}
 
 		if (!result.is_valid) {
-			console.error('❌ INVALID SIGNATURE from is_result_notification_valid()')
+			console.error('❌ INVALID SIGNATURE from check_result_signature()')
 			console.error('🔒 Payment NOT confirmed - signature verification FAILED')
-			console.error('⚠️ This could mean:')
-			console.error('   1. Wrong password1/password2 in robokassa_handler.py')
-			console.error('   2. Parameters were tampered with')
 
 			// Попробуем пропустить проверку для тестового режима
 			if (params.IsTest === '1') {
@@ -1024,14 +1025,13 @@ app.post('/api/robokassa/result', async (req, res) => {
 			}
 		}
 
-		console.log('🎉 PAYMENT CONFIRMED by is_result_notification_valid()')
+		console.log('🎉 PAYMENT CONFIRMED by check_result_signature()')
 		console.log(`📋 Order ID: ${orderId}`)
 		console.log(`💰 Amount: ${params.OutSum} RUB`)
 		console.log(`🧪 Test mode: ${params.IsTest === '1' ? 'YES' : 'NO'}`)
-		console.log(`🌍 Culture: ${params.Culture}`)
+		console.log(`📝 Receipt provided: ${receiptParam ? 'YES' : 'NO'}`)
 
 		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
-		// Получаем заказ из БД
 		let order = await getOrderByOrderIdFromFirebase(orderId)
 
 		// ВАЖНО: Объявляем receivingId здесь
@@ -1079,6 +1079,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 					bypassed: result.bypassed || false,
 					confirmed_via: 'result_url',
 					confirmed_at: new Date().toISOString(),
+					receipt_provided: !!receiptParam,
 				},
 				isDaily: false,
 				receivingId: receivingId,
@@ -1136,6 +1137,7 @@ app.post('/api/robokassa/result', async (req, res) => {
 						bypassed: result.bypassed || false,
 						confirmed_via: 'result_url',
 						confirmed_at: new Date().toISOString(),
+						receipt_provided: !!receiptParam,
 					},
 				}
 
@@ -1165,7 +1167,6 @@ app.post('/api/robokassa/result', async (req, res) => {
 		}
 
 		// ========== ОТПРАВКА ПИСЬМА ==========
-
 		try {
 			const emailResult = await sendOrderEmail({
 				orderId: orderId,
@@ -1180,7 +1181,6 @@ app.post('/api/robokassa/result', async (req, res) => {
 			if (emailResult.success) {
 				console.log(`✅ EMAIL SENT SUCCESSFULLY to ${order.customerEmail}`)
 				console.log(`📧 Message ID: ${emailResult.messageId}`)
-				console.log(`📧 Response: ${emailResult.response}`)
 
 				// Логируем в Firebase
 				await update(ref(database, `orders/${orderId}`), {
@@ -1192,7 +1192,6 @@ app.post('/api/robokassa/result', async (req, res) => {
 			} else {
 				console.log(`❌ EMAIL FAILED for ${order.customerEmail}`)
 				console.log(`❌ Error: ${emailResult.error}`)
-				console.log(`❌ Details:`, emailResult.details)
 
 				// Логируем ошибку в Firebase
 				await update(ref(database, `orders/${orderId}`), {
@@ -1205,7 +1204,6 @@ app.post('/api/robokassa/result', async (req, res) => {
 		} catch (emailErr) {
 			console.log(`❌ CRITICAL EMAIL ERROR:`)
 			console.log(`❌ Message: ${emailErr.message}`)
-			console.log(`❌ Stack:`, emailErr.stack)
 		}
 
 		console.log(`📧 ====== EMAIL PROCESSING COMPLETE ======`)
@@ -1274,8 +1272,12 @@ app.get('/success', async (req, res) => {
 			InvId: params.InvId,
 			IsTest: params.IsTest,
 			Culture: params.Culture,
+			Receipt: params.Receipt ? 'Есть' : 'Нет',
 		})
 		console.log(`\n`)
+
+		// Получаем Receipt из параметров (если есть)
+		const receiptParam = params.Receipt || null
 
 		// Проверяем только самое минимальное
 		if (!orderId || !params.OutSum) {

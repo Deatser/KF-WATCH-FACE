@@ -2,85 +2,125 @@
 import sys
 import json
 import os
-import asyncio
 import hashlib
-
-# Импортируем официальную библиотеку robokassa
-from robokassa import HashAlgorithm, Robokassa
+import urllib.parse
 
 class RobokassaHandler:
     def __init__(self, is_test=False):
-        # ВАЖНО: Используйте те же данные что в рабочем скрипте
         self.merchant_login = os.environ.get('ROBOKASSA_LOGIN', '')
         self.password1 = os.environ.get('ROBOKASSA_PASS1', '')
         self.password2 = os.environ.get('ROBOKASSA_PASS2', '')
         self.is_test = is_test
         
-        # Проверяем что пароли установлены
         if not self.password1 or not self.password2:
-            raise ValueError("Robokassa пароли не установлены в переменных окружения. Установите ROBOKASSA_PASSWORD1 и ROBOKASSA_PASSWORD2")
-        
-        # Инициализируем Robokassa клиент (как в рабочем скрипте)
-        self.robokassa = Robokassa(
-            merchant_login=self.merchant_login,
-            password1=self.password1,
-            password2=self.password2,
-            is_test=self.is_test,
-            algorithm=HashAlgorithm.md5,
-        )
-    
+            raise ValueError("Robokassa пароли не установлены")
+
     async def generate_protected_payment_link(self, out_sum, inv_id, description=None, email=None, **kwargs):
         """
-        Создание короткой JWT ссылки
-        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ
+        Создание платежной ссылки с Receipt (РАБОЧИЙ РУЧНОЙ МЕТОД)
         """
         try:
-            # Используем только обязательные параметры
-            response = self.robokassa.generate_open_payment_link(
-                out_sum=out_sum,
-                inv_id=inv_id,
-                description=description or f"Оплата заказа #{inv_id}",
-                email=email,
-                # НИКАКИХ shp_ параметров!
-            )
+            # Получаем название товара
+            product_name = kwargs.get('product_name', '')
+            if not product_name and description:
+                # Пытаемся извлечь KFXXX из описания
+                import re
+                match = re.search(r'KF\d{3}', description)
+                if match:
+                    product_name = f"Циферблат {match.group(0)}"
+            
+            if not product_name:
+                product_name = f"Циферблат #{inv_id}"
+            
+            # 1. Формируем Receipt
+            receipt_data = {
+                "sno": "usn_income",  # УСН доходы
+                "items": [{
+                    "name": product_name[:128],
+                    "quantity": 1,
+                    "sum": float(out_sum),
+                    "payment_method": "full_payment",
+                    "payment_object": "commodity",
+                    "tax": "none"
+                }]
+            }
+            
+            # 2. Преобразуем в JSON
+            receipt_json = json.dumps(receipt_data, ensure_ascii=False, separators=(',', ':'))
+            
+            # 3. URL-кодируем ОДИН раз
+            encoded_receipt = urllib.parse.quote(receipt_json, safe='')
+            
+            # 4. Формируем строку для подписи
+            signature_string = f"{self.merchant_login}:{out_sum}:{inv_id}:{encoded_receipt}:{self.password1}"
+            
+            # 5. Вычисляем MD5
+            signature = hashlib.md5(signature_string.encode('utf-8')).hexdigest()
+            
+            # 6. Формируем параметры
+            params = {
+                "MerchantLogin": self.merchant_login,
+                "OutSum": out_sum,
+                "InvId": inv_id,
+                "Receipt": encoded_receipt,
+                "Description": description or f"Оплата заказа #{inv_id}",
+                "Email": email or "",
+                "Culture": "ru",
+                "IsTest": 1 if self.is_test else 0,
+                "SignatureValue": signature
+            }
+            
+            # 7. Собираем URL
+            base_url = "https://auth.robokassa.ru/Merchant/Index.aspx"
+            
+            query_parts = []
+            for key, value in params.items():
+                if value is not None and str(value) != "":
+                    encoded_key = urllib.parse.quote(str(key), safe='')
+                    encoded_value = urllib.parse.quote(str(value), safe='')
+                    query_parts.append(f"{encoded_key}={encoded_value}")
+            
+            query_string = "&".join(query_parts)
+            payment_url = f"{base_url}?{query_string}"
             
             return {
                 'success': True,
-                'payment_url': response.url,
+                'payment_url': payment_url,
                 'invoice_id': str(inv_id),
                 'inv_id': inv_id,
                 'out_sum': out_sum,
                 'is_test': self.is_test,
-                'method': 'jwt_protected'
+                'method': 'manual_with_receipt',
+                'receipt_data': receipt_data
             }
             
         except Exception as e:
             return {
                 'success': False,
                 'error': str(e),
-                'method': 'jwt_protected'
+                'method': 'manual_with_receipt'
             }
 
-    def check_result_signature(self, out_sum, inv_id, signature, **kwargs):
+    def check_result_signature(self, out_sum, inv_id, signature, receipt=None, **kwargs):
         """
-        Проверка подписи для Result URL (уведомление от Robokassa)
-        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ!
+        Проверка подписи для Result URL
         """
         try:
-            # Проверяем подпись Result URL с помощью библиотеки
-            # БЕЗ shp_ параметров!
-            is_valid = self.robokassa.is_result_notification_valid(
-                signature=signature,
-                out_sum=out_sum,
-                inv_id=inv_id
-            )
+            if receipt:
+                # С Receipt в подписи
+                signature_string = f"{self.merchant_login}:{out_sum}:{inv_id}:{receipt}:{self.password2}"
+            else:
+                # Без Receipt (старый формат)
+                signature_string = f"{self.merchant_login}:{out_sum}:{inv_id}:{self.password2}"
+            
+            calculated = hashlib.md5(signature_string.encode('utf-8')).hexdigest()
+            is_valid = (calculated.lower() == signature.lower())
             
             return {
                 'success': True,
                 'is_valid': is_valid,
                 'inv_id': inv_id,
-                'out_sum': out_sum,
-                'method': 'is_result_notification_valid'
+                'out_sum': out_sum
             }
             
         except Exception as e:
@@ -90,26 +130,24 @@ class RobokassaHandler:
                 'error': str(e)
             }
 
-    def check_redirect_signature(self, out_sum, inv_id, signature, **kwargs):
+    def check_redirect_signature(self, out_sum, inv_id, signature, receipt=None, **kwargs):
         """
-        Проверка подписи для Success/Fail URL (редирект пользователя)
-        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ!
+        Проверка подписи для Success/Fail URL
         """
         try:
-            # Проверяем подпись Redirect URL с помощью библиотеки
-            # БЕЗ shp_ параметров!
-            is_valid = self.robokassa.is_redirect_valid(
-                signature=signature,
-                out_sum=out_sum,
-                inv_id=inv_id
-            )
+            if receipt:
+                signature_string = f"{out_sum}:{inv_id}:{receipt}:{self.password1}"
+            else:
+                signature_string = f"{out_sum}:{inv_id}:{self.password1}"
+            
+            calculated = hashlib.md5(signature_string.encode('utf-8')).hexdigest()
+            is_valid = (calculated.lower() == signature.lower())
             
             return {
                 'success': True,
                 'is_valid': is_valid,
                 'inv_id': inv_id,
-                'out_sum': out_sum,
-                'method': 'is_redirect_valid'
+                'out_sum': out_sum
             }
             
         except Exception as e:
@@ -122,20 +160,32 @@ class RobokassaHandler:
     def calculate_signature_debug(self, out_sum, inv_id, **kwargs):
         """
         Отладочная функция для расчета подписи
-        ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ
         """
         try:
-            # Формируем строку как Robokassa (ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ)
-            params_str = f"{out_sum}:{inv_id}:{self.password1}"
+            # Для отладки создаем тестовый Receipt
+            receipt_data = {
+                "sno": "usn_income",
+                "items": [{
+                    "name": "Тестовый товар",
+                    "quantity": 1,
+                    "sum": float(out_sum),
+                    "payment_method": "full_payment",
+                    "payment_object": "commodity",
+                    "tax": "none"
+                }]
+            }
             
-            # Вычисляем MD5
+            receipt_json = json.dumps(receipt_data, ensure_ascii=False, separators=(',', ':'))
+            encoded_receipt = urllib.parse.quote(receipt_json, safe='')
+            
+            params_str = f"{self.merchant_login}:{out_sum}:{inv_id}:{encoded_receipt}:{self.password1}"
             calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
             
             return {
                 'success': True,
                 'calculated_signature': calculated_signature,
                 'params_string': params_str,
-                'password1': self.password1
+                'receipt_encoded': encoded_receipt
             }
             
         except Exception as e:
@@ -146,17 +196,13 @@ class RobokassaHandler:
 
 async def main():
     try:
-        # Читаем входные данные
         input_data = sys.stdin.read()
-
+        
         if input_data.strip():
             try:
                 data = json.loads(input_data)
             except json.JSONDecodeError as e:
-                error_result = {
-                    'success': False,
-                    'error': f'Invalid JSON input: {str(e)}'
-                }
+                error_result = {'success': False, 'error': f'Invalid JSON: {str(e)}'}
                 print(json.dumps(error_result, ensure_ascii=False))
                 sys.exit(1)
         else:
@@ -172,42 +218,46 @@ async def main():
             inv_id = int(data.get('inv_id', 123456))
             description = data.get('description', 'Оплата заказа')
             email = data.get('email')
+            product_name = data.get('product_name', '')  # Новый параметр
             
-            # НИКАКИХ shp_ ПАРАМЕТРОВ!
             result = await handler.generate_protected_payment_link(
                 out_sum=out_sum,
                 inv_id=inv_id,
                 description=description,
-                email=email
+                email=email,
+                product_name=product_name
             )
             
         elif action == 'check_result_signature':
             out_sum = float(data.get('out_sum', 0))
             inv_id = int(data.get('inv_id', 0))
             signature = data.get('signature', '')
+            receipt = data.get('receipt')  # Новый параметр
             
             result = handler.check_result_signature(
                 out_sum=out_sum,
                 inv_id=inv_id,
-                signature=signature
+                signature=signature,
+                receipt=receipt
             )
             
         elif action == 'check_redirect_signature':
             out_sum = float(data.get('out_sum', 0))
             inv_id = int(data.get('inv_id', 0))
             signature = data.get('signature', '')
+            receipt = data.get('receipt')  # Новый параметр
             
             result = handler.check_redirect_signature(
                 out_sum=out_sum,
                 inv_id=inv_id,
-                signature=signature
+                signature=signature,
+                receipt=receipt
             )
             
         elif action == 'debug_signature':
             out_sum = float(data.get('out_sum', 120))
             inv_id = int(data.get('inv_id', 281476090))
             
-            # НИКАКИХ shp_ ПАРАМЕТРОВ!
             result = handler.calculate_signature_debug(
                 out_sum=out_sum,
                 inv_id=inv_id
@@ -216,8 +266,7 @@ async def main():
         elif action == 'test':
             result = {
                 'success': True,
-                'message': 'Robokassa handler ready',
-                'library_version': 'robokassa (official)',
+                'message': 'Robokassa handler ready (MANUAL RECEIPT METHOD)',
                 'merchant_login': handler.merchant_login,
                 'is_test': handler.is_test,
                 'methods_available': [
@@ -226,24 +275,19 @@ async def main():
                     'check_redirect_signature',
                     'debug_signature'
                 ],
-                'note': 'БЕЗ shp_ параметров! Только обязательные параметры'
+                'note': 'Ручной метод с Receipt, без двойного кодирования'
             }
         
         else:
             result = {'success': False, 'error': f'Unknown action: {action}'}
         
-        # Выводим ТОЛЬКО JSON
         print(json.dumps(result, ensure_ascii=False))
         
     except Exception as e:
-        # В случае ошибки выводим только JSON
-        error_result = {
-            'success': False, 
-            'error': str(e),
-        }
+        error_result = {'success': False, 'error': str(e)}
         print(json.dumps(error_result, ensure_ascii=False))
         sys.exit(1)
 
 if __name__ == "__main__":
-    # Запускаем асинхронную функцию
+    import asyncio
     asyncio.run(main())
