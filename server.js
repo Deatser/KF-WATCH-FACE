@@ -948,11 +948,30 @@ app.post('/api/robokassa/result', async (req, res) => {
 		console.log('📅 Time:', new Date().toISOString())
 		console.log('🌐 IP:', req.ip)
 		console.log('📦 Content-Type:', req.headers['content-type'])
+		console.log('📦 Raw body keys:', Object.keys(req.body))
 
 		// Robokassa отправляет как application/x-www-form-urlencoded
-		const params = req.body
+		// Node.js парсит все ключи в lowercase
+		const rawParams = req.body
 
-		console.log('🔍 Raw parameters received:')
+		// Нормализуем параметры - учитываем все возможные варианты имен
+		const params = {
+			OutSum: rawParams.OutSum || rawParams.out_summ || rawParams.outsum,
+			InvId: rawParams.InvId || rawParams.inv_id || rawParams.invid,
+			SignatureValue:
+				rawParams.SignatureValue || rawParams.crc || rawParams.signaturevalue,
+			Receipt: rawParams.Receipt || rawParams.receipt,
+			IsTest: rawParams.IsTest || rawParams.istest || rawParams.is_test,
+			Culture: rawParams.Culture || rawParams.culture,
+			Email: rawParams.Email || rawParams.EMail || rawParams.email,
+			Description: rawParams.Description || rawParams.description,
+			PaymentMethod: rawParams.PaymentMethod || rawParams.paymentmethod,
+			IncSum: rawParams.IncSum || rawParams.incsum,
+			IncCurrLabel: rawParams.IncCurrLabel || rawParams.inccurrlabel,
+			Fee: rawParams.Fee || rawParams.fee,
+		}
+
+		console.log('🔍 Normalized parameters:')
 		console.log('- OutSum:', params.OutSum)
 		console.log('- InvId:', params.InvId)
 		console.log('- SignatureValue:', params.SignatureValue)
@@ -966,7 +985,10 @@ app.post('/api/robokassa/result', async (req, res) => {
 		)
 		console.log('- Email:', params.Email)
 		console.log('- Description:', params.Description)
-		console.log('- All params keys:', Object.keys(params))
+		console.log('- PaymentMethod:', params.PaymentMethod)
+		console.log('- IncSum:', params.IncSum)
+		console.log('- IncCurrLabel:', params.IncCurrLabel)
+		console.log('- Fee:', params.Fee)
 
 		// Проверяем обязательные параметры
 		if (!params.OutSum || !params.InvId || !params.SignatureValue) {
@@ -974,62 +996,147 @@ app.post('/api/robokassa/result', async (req, res) => {
 			console.error('- Has OutSum:', !!params.OutSum)
 			console.error('- Has InvId:', !!params.InvId)
 			console.error('- Has SignatureValue:', !!params.SignatureValue)
+			console.error('- Raw params:', rawParams)
 			return res.status(400).send('ERROR: Missing required parameters')
 		}
 
 		const orderId = parseInt(params.InvId)
 
-		// ВАЖНО: получаем Receipt из параметров (если есть)
-		const receiptParam = params.Receipt || null
+		// Пробуем оба варианта проверки подписи
+		let result = null
+		let signatureValid = false
 
-		// Проверяем подпись с учетом Receipt
-		const pythonData = {
-			action: 'check_result_signature',
-			out_sum: parseFloat(params.OutSum),
-			inv_id: orderId,
-			signature: params.SignatureValue,
-			receipt: receiptParam, // ПЕРЕДАЕМ RECEIPT если есть
-			IsTest: false,
-			Culture: params.Culture || 'ru',
+		// Сначала пробуем проверку С Receipt
+		if (params.Receipt) {
+			console.log('🐍 TRYING check_result_signature WITH receipt...')
+			const pythonDataWithReceipt = {
+				action: 'check_result_signature',
+				out_sum: parseFloat(params.OutSum),
+				inv_id: orderId,
+				signature: params.SignatureValue,
+				receipt: params.Receipt,
+				IsTest: params.IsTest === '1',
+				Culture: params.Culture || 'ru',
+			}
+
+			console.log(
+				'🐍 Python data WITH receipt:',
+				JSON.stringify(pythonDataWithReceipt, null, 2),
+			)
+
+			try {
+				result = await callPythonScript(
+					'robokassa_handler.py',
+					pythonDataWithReceipt,
+				)
+				console.log('✅ Python check_result_signature WITH receipt RETURNED:')
+				console.log('- Success:', result.success)
+				console.log('- Is Valid:', result.is_valid)
+				console.log('- Method:', result.method)
+				console.log('- Error:', result.error || 'None')
+
+				signatureValid = result.is_valid
+			} catch (error) {
+				console.log('❌ Python WITH receipt check failed:', error.message)
+			}
 		}
 
-		console.log('🐍 CALLING Python check_result_signature() with:')
-		console.log(JSON.stringify(pythonData, null, 2))
+		// Если не прошло или нет Receipt, пробуем БЕЗ Receipt
+		if (!signatureValid) {
+			console.log('🐍 TRYING check_result_signature_simple WITHOUT receipt...')
+			const pythonDataSimple = {
+				action: 'check_result_signature_simple',
+				out_sum: parseFloat(params.OutSum),
+				inv_id: orderId,
+				signature: params.SignatureValue,
+				IsTest: params.IsTest === '1',
+				Culture: params.Culture || 'ru',
+			}
 
-		// Вызываем Python скрипт для проверки подписи
-		const result = await callPythonScript('robokassa_handler.py', pythonData)
+			console.log(
+				'🐍 Python data WITHOUT receipt:',
+				JSON.stringify(pythonDataSimple, null, 2),
+			)
 
-		console.log('✅ Python check_result_signature() RETURNED:')
-		console.log('- Success:', result.success)
-		console.log('- Is Valid:', result.is_valid)
-		console.log('- Error:', result.error || 'None')
+			try {
+				result = await callPythonScript(
+					'robokassa_handler.py',
+					pythonDataSimple,
+				)
+				console.log('✅ Python check_result_signature_simple RETURNED:')
+				console.log('- Success:', result.success)
+				console.log('- Is Valid:', result.is_valid)
+				console.log('- Calculated:', result.calculated)
+				console.log('- Received:', result.received)
+				console.log('- Error:', result.error || 'None')
+
+				signatureValid = result.is_valid
+			} catch (error) {
+				console.log('❌ Python WITHOUT receipt check failed:', error.message)
+			}
+		}
+
+		// Если все еще не валидно, пробуем ручную проверку
+		if (!signatureValid) {
+			console.log('🔍 Manual signature check as last resort...')
+			const manualSignatureString = `${process.env.ROBOKASSA_LOGIN}:${params.OutSum}:${orderId}:${process.env.ROBOKASSA_PASS2}`
+			const manualCalculated = crypto
+				.createHash('md5')
+				.update(manualSignatureString)
+				.digest('hex')
+				.toUpperCase()
+			const manualReceived = params.SignatureValue.toUpperCase()
+
+			console.log('🔍 Manual check details:')
+			console.log('- String:', manualSignatureString)
+			console.log('- Calculated:', manualCalculated)
+			console.log('- Received:', manualReceived)
+
+			if (manualCalculated === manualReceived) {
+				console.log('✅ Manual signature check PASSED')
+				signatureValid = true
+				result = {
+					success: true,
+					is_valid: true,
+					method: 'manual_check',
+					calculated: manualCalculated,
+				}
+			} else {
+				console.log('❌ Manual signature check FAILED')
+
+				// ВНИМАНИЕ: Временный bypass для тестирования
+				if (params.IsTest === '1') {
+					console.warn('⚠️ Test mode - bypassing signature check for debugging')
+					signatureValid = true
+					result = {
+						success: true,
+						is_valid: true,
+						method: 'bypassed_for_testing',
+						bypassed: true,
+					}
+				}
+			}
+		}
 
 		// Проверяем результат
-		if (!result.success) {
-			console.error('❌ PYTHON SCRIPT ERROR:', result.error)
+		if (!result || !result.success) {
+			console.error('❌ PYTHON SCRIPT ERROR:', result?.error || 'Unknown error')
 			console.error('⚠️ Payment NOT confirmed - Python script failed')
 			return res.status(400).send('ERROR: Python script error')
 		}
 
-		if (!result.is_valid) {
-			console.error('❌ INVALID SIGNATURE from check_result_signature()')
+		if (!signatureValid) {
+			console.error('❌ ALL SIGNATURE CHECKS FAILED')
 			console.error('🔒 Payment NOT confirmed - signature verification FAILED')
-
-			// Попробуем пропустить проверку для тестового режима
-			if (params.IsTest === '1') {
-				console.warn('⚠️ Test mode - bypassing signature check for debugging')
-				result.is_valid = true
-				result.bypassed = true
-			} else {
-				return res.status(400).send('ERROR: Invalid signature')
-			}
+			return res.status(400).send('ERROR: Invalid signature')
 		}
 
-		console.log('🎉 PAYMENT CONFIRMED by check_result_signature()')
+		console.log('🎉 PAYMENT CONFIRMED!')
 		console.log(`📋 Order ID: ${orderId}`)
 		console.log(`💰 Amount: ${params.OutSum} RUB`)
 		console.log(`🧪 Test mode: ${params.IsTest === '1' ? 'YES' : 'NO'}`)
-		console.log(`📝 Receipt provided: ${receiptParam ? 'YES' : 'NO'}`)
+		console.log(`📝 Receipt provided: ${params.Receipt ? 'YES' : 'NO'}`)
+		console.log(`🔐 Method used: ${result.method || 'unknown'}`)
 
 		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
 		let order = await getOrderByOrderIdFromFirebase(orderId)
@@ -1075,11 +1182,12 @@ app.post('/api/robokassa/result', async (req, res) => {
 				robokassaData: {
 					is_test: params.IsTest || '0',
 					method: 'robokassa',
-					signature_valid: result.is_valid,
+					signature_valid: signatureValid,
+					signature_method: result.method || 'unknown',
 					bypassed: result.bypassed || false,
 					confirmed_via: 'result_url',
 					confirmed_at: new Date().toISOString(),
-					receipt_provided: !!receiptParam,
+					receipt_provided: !!params.Receipt,
 				},
 				isDaily: false,
 				receivingId: receivingId,
@@ -1133,11 +1241,12 @@ app.post('/api/robokassa/result', async (req, res) => {
 					robokassaData: {
 						...(order.robokassaData || {}),
 						is_test: params.IsTest || '0',
-						signature_valid: result.is_valid,
+						signature_valid: signatureValid,
+						signature_method: result.method || 'unknown',
 						bypassed: result.bypassed || false,
 						confirmed_via: 'result_url',
 						confirmed_at: new Date().toISOString(),
-						receipt_provided: !!receiptParam,
+						receipt_provided: !!params.Receipt,
 					},
 				}
 
@@ -1378,17 +1487,177 @@ app.get('/api/debug/signature', async (req, res) => {
 			Culture: params.Culture || 'ru',
 		}
 
-		// Добавляем все shp_ параметры
-		Object.keys(params).forEach(key => {
-			if (key.startsWith('shp_')) {
-				pythonData[key] = params[key]
-			}
-		})
-
 		const result = await callPythonScript('robokassa_handler.py', pythonData)
-		res.json(result)
+
+		// Добавляем ручную проверку для сравнения
+		const manualCheck = {
+			with_receipt: {
+				string: `${process.env.ROBOKASSA_LOGIN}:${params.OutSum || 120}:${params.InvId || 281476090}:${result.receipt_encoded}:${process.env.ROBOKASSA_PASS1}`,
+				signature: crypto
+					.createHash('md5')
+					.update(
+						`${process.env.ROBOKASSA_LOGIN}:${params.OutSum || 120}:${params.InvId || 281476090}:${result.receipt_encoded}:${process.env.ROBOKASSA_PASS1}`,
+					)
+					.digest('hex'),
+			},
+			without_receipt: {
+				string: `${process.env.ROBOKASSA_LOGIN}:${params.OutSum || 120}:${params.InvId || 281476090}:${process.env.ROBOKASSA_PASS2}`,
+				signature: crypto
+					.createHash('md5')
+					.update(
+						`${process.env.ROBOKASSA_LOGIN}:${params.OutSum || 120}:${params.InvId || 281476090}:${process.env.ROBOKASSA_PASS2}`,
+					)
+					.digest('hex'),
+			},
+		}
+
+		res.json({
+			...result,
+			manual_check: manualCheck,
+			env_vars: {
+				ROBOKASSA_LOGIN: process.env.ROBOKASSA_LOGIN,
+				ROBOKASSA_PASS1: process.env.ROBOKASSA_PASS1
+					? '***' + process.env.ROBOKASSA_PASS1.slice(-3)
+					: 'NOT SET',
+				ROBOKASSA_PASS2: process.env.ROBOKASSA_PASS2
+					? '***' + process.env.ROBOKASSA_PASS2.slice(-3)
+					: 'NOT SET',
+			},
+		})
 	} catch (error) {
 		res.status(500).json({ error: error.message })
+	}
+})
+
+app.get('/api/test/signature-check', async (req, res) => {
+	try {
+		const { out_sum, inv_id, signature, receipt } = req.query
+
+		const pythonData = {
+			action: 'check_result_signature',
+			out_sum: parseFloat(out_sum || 120),
+			inv_id: parseInt(inv_id || 141377873),
+			signature: signature || '75F64EC5304E7CAB97975F268231842C',
+			receipt: receipt || null,
+			IsTest: true,
+			Culture: 'ru',
+		}
+
+		const result = await callPythonScript('robokassa_handler.py', pythonData)
+
+		// Также пробуем простую проверку
+		const pythonDataSimple = {
+			action: 'check_result_signature_simple',
+			out_sum: parseFloat(out_sum || 120),
+			inv_id: parseInt(inv_id || 141377873),
+			signature: signature || '75F64EC5304E7CAB97975F268231842C',
+			IsTest: true,
+			Culture: 'ru',
+		}
+
+		const resultSimple = await callPythonScript(
+			'robokassa_handler.py',
+			pythonDataSimple,
+		)
+
+		// Ручная проверка
+		const manualString = `${process.env.ROBOKASSA_LOGIN}:${out_sum || 120}:${inv_id || 141377873}:${process.env.ROBOKASSA_PASS2}`
+		const manualSignature = crypto
+			.createHash('md5')
+			.update(manualString)
+			.digest('hex')
+			.toUpperCase()
+
+		res.json({
+			original_check: result,
+			simple_check: resultSimple,
+			manual_check: {
+				string: manualString,
+				calculated: manualSignature,
+				received: signature || '75F64EC5304E7CAB97975F268231842C',
+				match:
+					manualSignature ===
+					(signature || '75F64EC5304E7CAB97975F268231842C').toUpperCase(),
+			},
+			test_data: {
+				out_sum: out_sum || 120,
+				inv_id: inv_id || 141377873,
+				signature: signature || '75F64EC5304E7CAB97975F268231842C',
+				receipt: receipt || 'NOT PROVIDED',
+			},
+		})
+	} catch (error) {
+		res.status(500).json({ error: error.message })
+	}
+})
+
+app.post('/api/test/signature-validation', async (req, res) => {
+	try {
+		const { out_sum, inv_id, signature, receipt } = req.body
+
+		console.log('🔍 Testing signature validation with:')
+		console.log('- out_sum:', out_sum)
+		console.log('- inv_id:', inv_id)
+		console.log('- signature:', signature)
+		console.log('- receipt:', receipt ? 'PROVIDED' : 'NOT PROVIDED')
+
+		// Тест 1: Проверка с receipt
+		let resultWithReceipt = null
+		if (receipt) {
+			try {
+				const pythonDataWith = {
+					action: 'check_result_signature',
+					out_sum: parseFloat(out_sum),
+					inv_id: parseInt(inv_id),
+					signature: signature,
+					receipt: receipt,
+					IsTest: true,
+					Culture: 'ru',
+				}
+				resultWithReceipt = await callPythonScript(
+					'robokassa_handler.py',
+					pythonDataWith,
+				)
+			} catch (error) {
+				console.log('❌ Check with receipt failed:', error.message)
+			}
+		}
+
+		// Тест 2: Проверка без receipt
+		let resultWithoutReceipt = null
+		try {
+			const pythonDataWithout = {
+				action: 'check_result_signature_simple',
+				out_sum: parseFloat(out_sum),
+				inv_id: parseInt(inv_id),
+				signature: signature,
+				IsTest: true,
+				Culture: 'ru',
+			}
+			resultWithoutReceipt = await callPythonScript(
+				'robokassa_handler.py',
+				pythonDataWithout,
+			)
+		} catch (error) {
+			console.log('❌ Check without receipt failed:', error.message)
+		}
+
+		res.json({
+			success: true,
+			with_receipt: resultWithReceipt,
+			without_receipt: resultWithoutReceipt,
+			summary: {
+				valid_with_receipt: resultWithReceipt?.is_valid || false,
+				valid_without_receipt: resultWithoutReceipt?.is_valid || false,
+				any_valid:
+					resultWithReceipt?.is_valid ||
+					false ||
+					resultWithoutReceipt?.is_valid ||
+					false,
+			},
+		})
+	} catch (error) {
+		res.status(500).json({ success: false, error: error.message })
 	}
 })
 

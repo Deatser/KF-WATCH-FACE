@@ -91,7 +91,9 @@ class RobokassaHandler:
                 'out_sum': out_sum,
                 'is_test': self.is_test,
                 'method': 'manual_with_receipt',
-                'receipt_data': receipt_data
+                'receipt_data': receipt_data,
+                'signature_string': signature_string,  # для отладки
+                'encoded_receipt': encoded_receipt     # для отладки
             }
             
         except Exception as e:
@@ -103,22 +105,101 @@ class RobokassaHandler:
 
     def check_result_signature(self, out_sum, inv_id, signature, receipt=None, **kwargs):
         """
-        Проверка подписи для Result URL
+        Проверка подписи для Result URL с учетом разных вариантов
         """
         try:
-            if receipt:
-                # С Receipt в подписи
-                signature_string = f"{self.merchant_login}:{out_sum}:{inv_id}:{receipt}:{self.password2}"
-            else:
-                # Без Receipt (старый формат)
-                signature_string = f"{self.merchant_login}:{out_sum}:{inv_id}:{self.password2}"
+            print(f"🔍 DEBUG: Starting signature check")
+            print(f"  out_sum: {out_sum}")
+            print(f"  inv_id: {inv_id}")
+            print(f"  signature: {signature}")
+            print(f"  receipt: {receipt}")
+            print(f"  merchant_login: {self.merchant_login}")
             
+            # Вариант 1: С Receipt (если Robokassa его отправил)
+            if receipt:
+                signature_string_with_receipt = f"{self.merchant_login}:{out_sum}:{inv_id}:{receipt}:{self.password2}"
+                calculated_with_receipt = hashlib.md5(signature_string_with_receipt.encode('utf-8')).hexdigest()
+                print(f"  With receipt string: {signature_string_with_receipt}")
+                print(f"  With receipt calculated: {calculated_with_receipt}")
+                
+                if calculated_with_receipt.lower() == signature.lower():
+                    return {
+                        'success': True,
+                        'is_valid': True,
+                        'method': 'with_receipt',
+                        'inv_id': inv_id,
+                        'out_sum': out_sum,
+                        'calculated': calculated_with_receipt
+                    }
+            
+            # Вариант 2: Без Receipt (Robokassa часто не отправляет Receipt в Result URL)
+            signature_string_without_receipt = f"{self.merchant_login}:{out_sum}:{inv_id}:{self.password2}"
+            calculated_without_receipt = hashlib.md5(signature_string_without_receipt.encode('utf-8')).hexdigest()
+            print(f"  Without receipt string: {signature_string_without_receipt}")
+            print(f"  Without receipt calculated: {calculated_without_receipt}")
+            
+            # Вариант 3: С пустым Receipt (двойное двоеточие)
+            signature_string_empty_receipt = f"{self.merchant_login}:{out_sum}:{inv_id}::{self.password2}"
+            calculated_empty_receipt = hashlib.md5(signature_string_empty_receipt.encode('utf-8')).hexdigest()
+            print(f"  Empty receipt string: {signature_string_empty_receipt}")
+            print(f"  Empty receipt calculated: {calculated_empty_receipt}")
+            
+            # Проверяем все варианты
+            if calculated_without_receipt.lower() == signature.lower():
+                return {
+                    'success': True,
+                    'is_valid': True,
+                    'method': 'without_receipt',
+                    'inv_id': inv_id,
+                    'out_sum': out_sum,
+                    'calculated': calculated_without_receipt
+                }
+            
+            if calculated_empty_receipt.lower() == signature.lower():
+                return {
+                    'success': True,
+                    'is_valid': True,
+                    'method': 'empty_receipt',
+                    'inv_id': inv_id,
+                    'out_sum': out_sum,
+                    'calculated': calculated_empty_receipt
+                }
+            
+            # Все варианты не прошли
+            return {
+                'success': True,
+                'is_valid': False,
+                'method': 'none',
+                'inv_id': inv_id,
+                'out_sum': out_sum,
+                'calculated_without': calculated_without_receipt,
+                'calculated_empty': calculated_empty_receipt,
+                'received': signature
+            }
+            
+        except Exception as e:
+            print(f"❌ ERROR in check_result_signature: {str(e)}")
+            return {
+                'success': False,
+                'is_valid': False,
+                'error': str(e)
+            }
+
+    def check_result_signature_simple(self, out_sum, inv_id, signature, **kwargs):
+        """
+        Упрощенная проверка подписи для Result URL (без Receipt)
+        """
+        try:
+            # Robokassa НЕ передает Receipt в Result URL
+            signature_string = f"{self.merchant_login}:{out_sum}:{inv_id}:{self.password2}"
             calculated = hashlib.md5(signature_string.encode('utf-8')).hexdigest()
             is_valid = (calculated.lower() == signature.lower())
             
             return {
                 'success': True,
                 'is_valid': is_valid,
+                'calculated': calculated,
+                'received': signature,
                 'inv_id': inv_id,
                 'out_sum': out_sum
             }
@@ -178,13 +259,20 @@ class RobokassaHandler:
             receipt_json = json.dumps(receipt_data, ensure_ascii=False, separators=(',', ':'))
             encoded_receipt = urllib.parse.quote(receipt_json, safe='')
             
-            params_str = f"{self.merchant_login}:{out_sum}:{inv_id}:{encoded_receipt}:{self.password1}"
-            calculated_signature = hashlib.md5(params_str.encode('utf-8')).hexdigest()
+            # Подпись для генерации (с Receipt)
+            params_str_with_receipt = f"{self.merchant_login}:{out_sum}:{inv_id}:{encoded_receipt}:{self.password1}"
+            calculated_signature_with = hashlib.md5(params_str_with_receipt.encode('utf-8')).hexdigest()
+            
+            # Подпись для Result URL (без Receipt)
+            params_str_without = f"{self.merchant_login}:{out_sum}:{inv_id}:{self.password2}"
+            calculated_signature_without = hashlib.md5(params_str_without.encode('utf-8')).hexdigest()
             
             return {
                 'success': True,
-                'calculated_signature': calculated_signature,
-                'params_string': params_str,
+                'calculated_signature_with_receipt': calculated_signature_with,
+                'calculated_signature_without_receipt': calculated_signature_without,
+                'params_string_with_receipt': params_str_with_receipt,
+                'params_string_without_receipt': params_str_without,
                 'receipt_encoded': encoded_receipt
             }
             
@@ -241,6 +329,17 @@ async def main():
                 receipt=receipt
             )
             
+        elif action == 'check_result_signature_simple':
+            out_sum = float(data.get('out_sum', 0))
+            inv_id = int(data.get('inv_id', 0))
+            signature = data.get('signature', '')
+            
+            result = handler.check_result_signature_simple(
+                out_sum=out_sum,
+                inv_id=inv_id,
+                signature=signature
+            )
+            
         elif action == 'check_redirect_signature':
             out_sum = float(data.get('out_sum', 0))
             inv_id = int(data.get('inv_id', 0))
@@ -272,6 +371,7 @@ async def main():
                 'methods_available': [
                     'generate_short_link',
                     'check_result_signature',
+                    'check_result_signature_simple',
                     'check_redirect_signature',
                     'debug_signature'
                 ],
