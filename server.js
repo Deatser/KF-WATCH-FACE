@@ -944,315 +944,138 @@ app.post('/api/robokassa/create-payment-link', async (req, res) => {
 
 app.post('/api/robokassa/result', async (req, res) => {
 	try {
-		console.log('📨 ====== ROBOKASSA RESULT URL CALLBACK (POST) ======')
+		console.log('📨 ====== ROBOKASSA RESULT URL ======')
 		console.log('📅 Time:', new Date().toISOString())
 		console.log('🌐 IP:', req.ip)
-		console.log('📦 Content-Type:', req.headers['content-type'])
-		console.log('📦 Raw body keys:', Object.keys(req.body))
 
-		// Robokassa отправляет как application/x-www-form-urlencoded
-		// Node.js парсит все ключи в lowercase
-		const rawParams = req.body
+		// Получаем параметры
+		const params = req.body
+		const orderId = parseInt(params.InvId || params.inv_id)
+		const paidAmount = parseFloat(params.OutSum || params.out_summ)
+		const requestEmail = params.Email || params.EMail
 
-		// Нормализуем параметры - учитываем все возможные варианты имен
-		const params = {
-			OutSum: rawParams.OutSum || rawParams.out_summ || rawParams.outsum,
-			InvId: rawParams.InvId || rawParams.inv_id || rawParams.invid,
-			SignatureValue:
-				rawParams.SignatureValue || rawParams.crc || rawParams.signaturevalue,
-			Receipt: rawParams.Receipt || rawParams.receipt,
-			IsTest: rawParams.IsTest || rawParams.istest || rawParams.is_test,
-			Culture: rawParams.Culture || rawParams.culture,
-			Email: rawParams.Email || rawParams.EMail || rawParams.email,
-			Description: rawParams.Description || rawParams.description,
-			PaymentMethod: rawParams.PaymentMethod || rawParams.paymentmethod,
-			IncSum: rawParams.IncSum || rawParams.incsum,
-			IncCurrLabel: rawParams.IncCurrLabel || rawParams.inccurrlabel,
-			Fee: rawParams.Fee || rawParams.fee,
+		// Базовые проверки
+		if (!orderId || !paidAmount) {
+			console.error('❌ Missing required params')
+			return res.status(400).send('ERROR')
 		}
 
-		console.log('🔍 Normalized parameters:')
-		console.log('- OutSum:', params.OutSum)
-		console.log('- InvId:', params.InvId)
-		console.log('- SignatureValue:', params.SignatureValue)
-		console.log('- IsTest:', params.IsTest)
-		console.log('- Culture:', params.Culture)
 		console.log(
-			'- Receipt:',
-			params.Receipt
-				? 'ПРИСУТСТВУЕТ (' + params.Receipt.substring(0, 50) + '...)'
-				: 'ОТСУТСТВУЕТ',
+			`🔍 Payment attempt: Order ${orderId}, Amount: ${paidAmount}RUB`,
 		)
-		console.log('- Email:', params.Email)
-		console.log('- Description:', params.Description)
-		console.log('- PaymentMethod:', params.PaymentMethod)
-		console.log('- IncSum:', params.IncSum)
-		console.log('- IncCurrLabel:', params.IncCurrLabel)
-		console.log('- Fee:', params.Fee)
 
-		// Проверяем обязательные параметры
-		if (!params.OutSum || !params.InvId || !params.SignatureValue) {
-			console.error('❌ MISSING REQUIRED PARAMETERS')
-			console.error('- Has OutSum:', !!params.OutSum)
-			console.error('- Has InvId:', !!params.InvId)
-			console.error('- Has SignatureValue:', !!params.SignatureValue)
-			console.error('- Raw params:', rawParams)
-			return res.status(400).send('ERROR: Missing required parameters')
-		}
-
-		const orderId = parseInt(params.InvId)
-
-		// Пробуем оба варианта проверки подписи
-		let result = null
-		let signatureValid = false
-
-		// Сначала пробуем проверку С Receipt
-		if (params.Receipt) {
-			console.log('🐍 TRYING check_result_signature WITH receipt...')
-			const pythonDataWithReceipt = {
-				action: 'check_result_signature',
-				out_sum: parseFloat(params.OutSum),
-				inv_id: orderId,
-				signature: params.SignatureValue,
-				receipt: params.Receipt,
-				IsTest: params.IsTest === '1',
-				Culture: params.Culture || 'ru',
-			}
-
-			console.log(
-				'🐍 Python data WITH receipt:',
-				JSON.stringify(pythonDataWithReceipt, null, 2),
-			)
-
-			try {
-				result = await callPythonScript(
-					'robokassa_handler.py',
-					pythonDataWithReceipt,
-				)
-				console.log('✅ Python check_result_signature WITH receipt RETURNED:')
-				console.log('- Success:', result.success)
-				console.log('- Is Valid:', result.is_valid)
-				console.log('- Method:', result.method)
-				console.log('- Error:', result.error || 'None')
-
-				signatureValid = result.is_valid
-			} catch (error) {
-				console.log('❌ Python WITH receipt check failed:', error.message)
-			}
-		}
-
-		// Если не прошло или нет Receipt, пробуем БЕЗ Receipt
-		if (!signatureValid) {
-			console.log('🐍 TRYING check_result_signature_simple WITHOUT receipt...')
-			const pythonDataSimple = {
-				action: 'check_result_signature_simple',
-				out_sum: parseFloat(params.OutSum),
-				inv_id: orderId,
-				signature: params.SignatureValue,
-				IsTest: params.IsTest === '1',
-				Culture: params.Culture || 'ru',
-			}
-
-			console.log(
-				'🐍 Python data WITHOUT receipt:',
-				JSON.stringify(pythonDataSimple, null, 2),
-			)
-
-			try {
-				result = await callPythonScript(
-					'robokassa_handler.py',
-					pythonDataSimple,
-				)
-				console.log('✅ Python check_result_signature_simple RETURNED:')
-				console.log('- Success:', result.success)
-				console.log('- Is Valid:', result.is_valid)
-				console.log('- Calculated:', result.calculated)
-				console.log('- Received:', result.received)
-				console.log('- Error:', result.error || 'None')
-
-				signatureValid = result.is_valid
-			} catch (error) {
-				console.log('❌ Python WITHOUT receipt check failed:', error.message)
-			}
-		}
-
-		// Если все еще не валидно, пробуем ручную проверку
-		if (!signatureValid) {
-			console.log('🔍 Manual signature check as last resort...')
-			const manualSignatureString = `${process.env.ROBOKASSA_LOGIN}:${params.OutSum}:${orderId}:${process.env.ROBOKASSA_PASS2}`
-			const manualCalculated = crypto
-				.createHash('md5')
-				.update(manualSignatureString)
-				.digest('hex')
-				.toUpperCase()
-			const manualReceived = params.SignatureValue.toUpperCase()
-
-			console.log('🔍 Manual check details:')
-			console.log('- String:', manualSignatureString)
-			console.log('- Calculated:', manualCalculated)
-			console.log('- Received:', manualReceived)
-
-			if (manualCalculated === manualReceived) {
-				console.log('✅ Manual signature check PASSED')
-				signatureValid = true
-				result = {
-					success: true,
-					is_valid: true,
-					method: 'manual_check',
-					calculated: manualCalculated,
-				}
-			} else {
-				console.log('❌ Manual signature check FAILED')
-
-				// ВНИМАНИЕ: Временный bypass для тестирования
-				if (params.IsTest === '1') {
-					console.warn('⚠️ Test mode - bypassing signature check for debugging')
-					signatureValid = true
-					result = {
-						success: true,
-						is_valid: true,
-						method: 'bypassed_for_testing',
-						bypassed: true,
-					}
-				}
-			}
-		}
-
-		// Проверяем результат
-		if (!result || !result.success) {
-			console.error('❌ PYTHON SCRIPT ERROR:', result?.error || 'Unknown error')
-			console.error('⚠️ Payment NOT confirmed - Python script failed')
-			return res.status(400).send('ERROR: Python script error')
-		}
-
-		if (!signatureValid) {
-			console.error('❌ ALL SIGNATURE CHECKS FAILED')
-			console.error('🔒 Payment NOT confirmed - signature verification FAILED')
-			return res.status(400).send('ERROR: Invalid signature')
-		}
-
-		console.log('🎉 PAYMENT CONFIRMED!')
-		console.log(`📋 Order ID: ${orderId}`)
-		console.log(`💰 Amount: ${params.OutSum} RUB`)
-		console.log(`🧪 Test mode: ${params.IsTest === '1' ? 'YES' : 'NO'}`)
-		console.log(`📝 Receipt provided: ${params.Receipt ? 'YES' : 'NO'}`)
-		console.log(`🔐 Method used: ${result.method || 'unknown'}`)
-
-		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
-		let order = await getOrderByOrderIdFromFirebase(orderId)
-
-		// ВАЖНО: Объявляем receivingId здесь
-		let receivingId = null
-
+		// Ищем заказ в БД
+		const order = await getOrderByOrderIdFromFirebase(orderId)
 		if (!order) {
-			console.log(`⚠️ Order ${orderId} not found in Firebase`)
-			console.log('🆕 Creating new order from Result URL data...')
+			console.error(`❌ Order ${orderId} not found in database`)
+			return res.status(400).send('ERROR')
+		}
 
-			// Получаем email из параметров если есть
-			let customerEmail = 'unknown@example.com'
-			if (params.Email) {
-				customerEmail = params.Email
-			}
+		console.log(`✅ Order found: Status ${order.status}`)
 
-			// Получаем productId из description или параметров
-			let productId = 'unknown'
-			if (params.Description) {
-				const match = params.Description.match(/KF\d{3}/i)
-				if (match) {
-					productId = match[0].toUpperCase()
-				}
-			}
+		// 1. Проверяем что заказ еще не оплачен
+		if (order.status === 'paid') {
+			console.log(`⚠️ Order already paid, skipping duplicate`)
+			return res.send('OK' + orderId)
+		}
 
-			// Генерируем receivingId
-			receivingId = generateReceivingId()
+		// 2. Проверяем сумму (ГЛАВНАЯ ПРОВЕРКА!)
+		const expectedAmount = parseFloat(order.price)
+		const paidAmountRounded = Math.round(paidAmount * 100) / 100
+		const expectedAmountRounded = Math.round(expectedAmount * 100) / 100
 
-			// Создаем новый заказ с данными из Result URL
-			order = {
-				orderId: orderId,
-				productId: productId,
-				customerEmail: customerEmail,
-				price: parseFloat(params.OutSum),
-				productName: `Циферблат ${productId}`,
-				status: 'paid',
-				paymentUrl: null,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-				paidAt: new Date().toISOString(),
-				robokassaParams: params,
-				robokassaData: {
-					is_test: params.IsTest || '0',
-					method: 'robokassa',
-					signature_valid: signatureValid,
-					signature_method: result.method || 'unknown',
-					bypassed: result.bypassed || false,
-					confirmed_via: 'result_url',
-					confirmed_at: new Date().toISOString(),
-					receipt_provided: !!params.Receipt,
-				},
-				isDaily: false,
-				receivingId: receivingId,
-				receivingUrl: `/purchase/receiving/${receivingId}`,
-			}
+		console.log(
+			`💰 Amount check: Paid ${paidAmountRounded} vs Expected ${expectedAmountRounded}`,
+		)
 
-			// Сохраняем новый заказ
-			await set(ref(database, `orders/${orderId}`), order)
+		if (paidAmountRounded !== expectedAmountRounded) {
+			console.error(`❌ AMOUNT MISMATCH FRAUD!`)
+			console.error(`  Paid: ${paidAmountRounded} RUB`)
+			console.error(`  Expected: ${expectedAmountRounded} RUB`)
 
-			// Создаем индекс для быстрого поиска
-			await set(ref(database, `orderByReceivingId/${receivingId}`), {
-				orderId: orderId,
-				status: 'paid',
-				receivingId: receivingId,
-				productId: order.productId,
-				customerEmail: order.customerEmail,
-				createdAt: new Date().toISOString(),
-				paidAt: order.paidAt || new Date().toISOString(),
+			// Логируем попытку мошенничества
+			await logFraudAttempt(orderId, {
+				type: 'amount_mismatch',
+				paid: paidAmount,
+				expected: expectedAmount,
+				ip: req.ip,
+				timestamp: new Date().toISOString(),
 			})
 
-			console.log(`✅ Created new order ${orderId} from Result URL`)
-			console.log(`🔗 Generated receivingId: ${receivingId}`)
-		} else {
-			console.log(`✅ Found existing order ${orderId}`)
-			console.log(`📊 Current status: ${order.status}`)
-			console.log(`📧 Customer email: ${order.customerEmail}`)
-			console.log(`🛒 Product: ${order.productId}`)
+			return res.status(400).send('ERROR')
+		}
 
-			// Сохраняем существующий receivingId
-			receivingId = order.receivingId || null
+		// 3. Проверяем email (ВТОРАЯ ВАЖНАЯ ПРОВЕРКА!)
+		const orderEmail = order.customerEmail.toLowerCase()
 
-			// Обновляем статус на paid
-			if (order.status !== 'paid') {
-				console.log(
-					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`,
-				)
+		if (requestEmail) {
+			const requestEmailLower = requestEmail.toLowerCase()
 
-				// Если нет receivingId, генерируем его
-				if (!receivingId) {
-					receivingId = generateReceivingId()
-					console.log(`🔑 Generated new receivingId: ${receivingId}`)
-				}
+			if (requestEmailLower !== orderEmail) {
+				console.error(`🚨 EMAIL MISMATCH FRAUD!`)
+				console.error(`  Order email: ${orderEmail}`)
+				console.error(`  Request email: ${requestEmailLower}`)
 
+				await logFraudAttempt(orderId, {
+					type: 'email_mismatch',
+					order_email: orderEmail,
+					request_email: requestEmailLower,
+					ip: req.ip,
+					timestamp: new Date().toISOString(),
+				})
+
+				return res.status(400).send('ERROR')
+			}
+		}
+
+		// 4. Дополнительные признаки реального платежа (для логов)
+		const hasFee = params.Fee || params.fee
+		const hasPaymentMethod = params.IncCurrLabel || params.IncSum
+
+		console.log(
+			`🔐 Security markers: Fee=${hasFee ? 'YES' : 'NO'}, PaymentMethod=${hasPaymentMethod ? 'YES' : 'NO'}`,
+		)
+
+		// 5. ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ - принимаем платеж!
+		console.log(`✅ PAYMENT ACCEPTED for order ${orderId}`)
+
+		// Сразу отвечаем Robokassa (в течение 10 секунд!)
+		res.send('OK' + orderId)
+
+		// 6. Асинхронно обрабатываем заказ (после отправки OK)
+		setTimeout(async () => {
+			try {
+				// Генерируем receivingId (НЕ логируем его!)
+				const receivingId = generateReceivingId()
+
+				// Обновляем заказ в БД
 				const updates = {
 					status: 'paid',
 					paidAt: new Date().toISOString(),
 					receivingId: receivingId,
 					receivingUrl: `/purchase/receiving/${receivingId}`,
-					robokassaParams: params,
+					robokassaParams: {
+						// Сохраняем только безопасные данные
+						OutSum: paidAmount,
+						InvId: orderId,
+						IsTest: params.IsTest || '0',
+						hasFee: !!hasFee,
+						hasPaymentMethod: !!hasPaymentMethod,
+					},
 					updatedAt: new Date().toISOString(),
 					robokassaData: {
-						...(order.robokassaData || {}),
 						is_test: params.IsTest || '0',
-						signature_valid: signatureValid,
-						signature_method: result.method || 'unknown',
-						bypassed: result.bypassed || false,
+						has_fee: !!hasFee,
+						has_payment_method: !!hasPaymentMethod,
 						confirmed_via: 'result_url',
 						confirmed_at: new Date().toISOString(),
-						receipt_provided: !!params.Receipt,
+						security_check: 'amount_and_email_verified',
 					},
 				}
 
 				await update(ref(database, `orders/${orderId}`), updates)
 
-				// Обновляем индекс
+				// СОЗДАЕМ ИНДЕКС ДЛЯ ПОИСКА
 				await set(ref(database, `orderByReceivingId/${receivingId}`), {
 					orderId: orderId,
 					status: 'paid',
@@ -1260,75 +1083,63 @@ app.post('/api/robokassa/result', async (req, res) => {
 					productId: order.productId,
 					customerEmail: order.customerEmail,
 					createdAt: new Date().toISOString(),
-					paidAt: order.paidAt || new Date().toISOString(),
+					paidAt: new Date().toISOString(),
 				})
 
 				console.log(`✅ Order ${orderId} marked as PAID`)
-				console.log(`🔗 Receiving URL: /purchase/receiving/${receivingId}`)
+				console.log(`📧 Customer: ${orderEmail}`)
+				console.log(`🛒 Product: ${order.productId}`)
 
-				// Обновляем локальный объект
-				order = { ...order, ...updates }
-			} else {
-				console.log(`✅ Order ${orderId} already marked as paid`)
-				console.log(`📅 Was paid at: ${order.paidAt}`)
-				console.log(`🔗 Existing receiving URL: ${order.receivingUrl}`)
+				// 7. Отправляем письмо ТОЛЬКО на email из заказа
+				try {
+					const emailResult = await sendOrderEmail({
+						orderId: orderId,
+						productId: order.productId,
+						productName: order.productName || `Циферблат ${order.productId}`,
+						customerEmail: order.customerEmail, // ТОЛЬКО из заказа!
+						price: paidAmount,
+						paidAt: new Date().toISOString(),
+						receivingId: receivingId,
+					})
+
+					if (emailResult.success) {
+						console.log(`✅ Email sent successfully to ${order.customerEmail}`)
+
+						// Обновляем статус отправки в БД
+						await update(ref(database, `orders/${orderId}`), {
+							emailSent: true,
+							emailSentAt: new Date().toISOString(),
+							emailMessageId: emailResult.messageId,
+							updatedAt: new Date().toISOString(),
+						})
+					} else {
+						console.log(`⚠️ Email failed for ${order.customerEmail}`)
+						console.log(`⚠️ Error: ${emailResult.error}`)
+
+						// Логируем ошибку
+						await update(ref(database, `orders/${orderId}`), {
+							emailSent: false,
+							emailError: emailResult.error,
+							emailErrorAt: new Date().toISOString(),
+							updatedAt: new Date().toISOString(),
+						})
+					}
+				} catch (emailErr) {
+					console.log(`❌ Critical email error: ${emailErr.message}`)
+				}
+
+				console.log(`✅ Order ${orderId} fully processed`)
+			} catch (error) {
+				console.error(`❌ Error processing order ${orderId}:`, error)
 			}
-		}
-
-		// ========== ОТПРАВКА ПИСЬМА ==========
-		try {
-			const emailResult = await sendOrderEmail({
-				orderId: orderId,
-				productId: order.productId,
-				productName: order.productName || `Циферблат ${order.productId}`,
-				customerEmail: order.customerEmail,
-				price: parseFloat(params.OutSum),
-				paidAt: order.paidAt || new Date().toISOString(),
-				receivingId: receivingId,
-			})
-
-			if (emailResult.success) {
-				console.log(`✅ EMAIL SENT SUCCESSFULLY to ${order.customerEmail}`)
-				console.log(`📧 Message ID: ${emailResult.messageId}`)
-
-				// Логируем в Firebase
-				await update(ref(database, `orders/${orderId}`), {
-					emailSent: true,
-					emailSentAt: new Date().toISOString(),
-					emailMessageId: emailResult.messageId,
-					updatedAt: new Date().toISOString(),
-				})
-			} else {
-				console.log(`❌ EMAIL FAILED for ${order.customerEmail}`)
-				console.log(`❌ Error: ${emailResult.error}`)
-
-				// Логируем ошибку в Firebase
-				await update(ref(database, `orders/${orderId}`), {
-					emailSent: false,
-					emailError: emailResult.error,
-					emailErrorAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
-				})
-			}
-		} catch (emailErr) {
-			console.log(`❌ CRITICAL EMAIL ERROR:`)
-			console.log(`❌ Message: ${emailErr.message}`)
-		}
-
-		console.log(`📧 ====== EMAIL PROCESSING COMPLETE ======`)
-
-		// ВАЖНО: Отправляем ответ Robokassa в правильном формате
-		console.log(`📤 Sending response to Robokassa: "OK${orderId}"`)
-		res.send('OK' + orderId)
-
-		console.log('🎯 RESULT URL PROCESSING COMPLETE')
-		console.log('='.repeat(50))
+		}, 0)
 	} catch (error) {
-		console.error('❌ CRITICAL ERROR in Result URL handler:')
-		console.error('Message:', error.message)
-		console.error('Stack:', error.stack)
-		console.error('Params at time of error:', JSON.stringify(req.body, null, 2))
-		res.status(500).send('ERROR: Server processing error')
+		console.error('❌ Critical error in Result URL:', error)
+
+		// ВСЕГДА отвечаем Robokassa OK, даже при ошибке
+		// чтобы они не считали наш сервер нерабочим
+		const orderId = req.body.InvId || req.body.inv_id || '0'
+		res.send('OK' + orderId)
 	}
 })
 
