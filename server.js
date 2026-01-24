@@ -1262,188 +1262,46 @@ app.get('/success', async (req, res) => {
 		const params = req.query
 		const orderId = parseInt(params.InvId)
 
-		console.log(`\n\n\n`)
-		console.log(
-			`================================================================`,
-		)
-		console.log(`💰 ПОЛУЧЕНИЕ УВЕДОМЛЕНИЯ ОБ ОПЛАТЕ`)
-		console.log(`📦 Параметры:`, {
-			OutSum: params.OutSum,
-			InvId: params.InvId,
-			IsTest: params.IsTest,
-			Culture: params.Culture,
-			Receipt: params.Receipt ? 'Есть' : 'Нет',
-		})
-		console.log(`\n`)
-
-		// Получаем Receipt из параметров (если есть)
-		const receiptParam = params.Receipt || null
-
-		// Проверяем только самое минимальное
-		if (!orderId || !params.OutSum) {
-			console.error('❌ Missing basic parameters in Success URL')
-			return res.redirect('/payment-error?reason=missing_params')
+		if (!orderId) {
+			return res.redirect('/')
 		}
 
-		// НЕТ ПРОВЕРКИ ПОДПИСИ ВООБЩЕ!
-		// Если Robokassa перенаправил сюда - значит платеж уже обработан
-		console.log('🎉 User redirected from Robokassa after payment')
+		// 1. Ищем заказ в Firebase
+		const order = await getOrderByOrderIdFromFirebase(orderId)
 
-		// ========== ПОЛУЧАЕМ ИЛИ СОЗДАЕМ ЗАКАЗ ==========
-		let order = await getOrderByOrderIdFromFirebase(orderId)
-
-		if (!order) {
-			console.log(`🆕 Creating new order from Success URL data...`)
-
-			// Создаем новый заказ из параметров Success URL
-			let customerEmail = 'unknown@example.com'
-			let productId = 'unknown'
-
-			order = {
-				orderId: orderId,
-				productId: productId,
-				customerEmail: customerEmail,
-				price: parseFloat(params.OutSum),
-				productName: `Циферблат ${productId}`,
-				status: 'paid', // Помечаем как оплачено
-				paymentUrl: null,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-				paidAt: new Date().toISOString(),
-				robokassaParams: params,
-				robokassaData: {
-					is_test: params.IsTest || '0',
-					method: 'robokassa',
-					confirmed_via: 'success_url_redirect',
-					confirmed_at: new Date().toISOString(),
-				},
-				isDaily: false,
-				receivingId: null,
-				receivingUrl: null,
-			}
-
-			// Сохраняем в Firebase
-			await set(ref(database, `orders/${orderId}`), order)
-			console.log(`✅ Created new order ${orderId} from Success URL`)
-		} else {
-			console.log(`✅ Found existing order ${orderId}`)
-			console.log(`📊 Current status: ${order.status}`)
-
-			// ОБНОВЛЯЕМ СТАТУС НА PAID (если еще не оплачен)
-			if (order.status !== 'paid') {
-				console.log(
-					`🔄 Updating order ${orderId} from "${order.status}" to "paid"`,
-				)
-
-				const updates = {
-					status: 'paid',
-					paidAt: new Date().toISOString(),
-					robokassaSuccessParams: params,
-					updatedAt: new Date().toISOString(),
-					robokassaData: {
-						...(order.robokassaData || {}),
-						is_test: params.IsTest || '0',
-						confirmed_via: 'success_url_redirect',
-						confirmed_at: new Date().toISOString(),
-					},
-				}
-
-				await update(ref(database, `orders/${orderId}`), updates)
-				console.log(`✅ Order ${orderId} marked as PAID via Success URL`)
-
-				// Обновляем локальный объект
-				order = { ...order, ...updates }
-			} else {
-				console.log(`✅ Order ${orderId} already marked as paid`)
-				console.log(`📅 Was paid at: ${order.paidAt}`)
-			}
+		// 2. Если заказ найден и оплачен - на страницу получения
+		if (order && order.status === 'paid' && order.receivingId) {
+			console.log(`✅ Success URL: перенаправляем на страницу получения`)
+			return res.redirect(`/purchase/receiving/${order.receivingId}`)
 		}
 
-		// ========== ГЕНЕРИРУЕМ RECEIVING ID ==========
-		let receivingId = order.receivingId || null
+		// 3. Если заказ не найден или не оплачен
+		// Возможно Result URL еще не обработал платеж
+		// Просто показываем сообщение и редирект на главную
+		console.log(`⚠️ Success URL: заказ ${orderId} еще не обработан`)
 
-		if (!receivingId) {
-			console.log(`🔑 Generating receivingId for order ${orderId}`)
-			receivingId = generateReceivingId()
-
-			const updates = {
-				receivingId: receivingId,
-				receivingUrl: `/purchase/receiving/${receivingId}`,
-				updatedAt: new Date().toISOString(),
-			}
-
-			// Обновляем заказ
-			await update(ref(database, `orders/${orderId}`), updates)
-
-			// Создаем индекс
-			await set(ref(database, `orderByReceivingId/${receivingId}`), {
-				orderId: orderId,
-				status: 'paid',
-				receivingId: receivingId,
-				productId: order.productId,
-				customerEmail: order.customerEmail,
-				createdAt: new Date().toISOString(),
-				paidAt: order.paidAt || new Date().toISOString(),
-			})
-
-			console.log(`✅ Generated receivingId: ${receivingId}`)
-		} else {
-			console.log(`✅ Order already has receivingId: ${receivingId}`)
-		}
-
-		// ========== ОТПРАВКА ПИСЬМА ==========
-		console.log(`📧 ====== ATTEMPTING TO SEND EMAIL FROM SUCCESS URL ======`)
-		console.log(`📧 Order: ${orderId}`)
-		console.log(`📧 Customer: ${order.customerEmail}`)
-		console.log(`📧 ReceivingId: ${receivingId}`)
-
-		try {
-			const emailResult = await sendOrderEmail({
-				orderId: orderId,
-				productId: order.productId,
-				productName: order.productName || `Циферблат ${order.productId}`,
-				customerEmail: order.customerEmail,
-				price: parseFloat(params.OutSum),
-				paidAt: order.paidAt || new Date().toISOString(),
-				receivingId: receivingId,
-			})
-
-			if (emailResult.success) {
-				console.log(`\n`)
-
-				// Логируем в Firebase
-				await update(ref(database, `orders/${orderId}`), {
-					emailSent: true,
-					emailSentAt: new Date().toISOString(),
-					emailMessageId: emailResult.messageId,
-					updatedAt: new Date().toISOString(),
-				})
-			} else {
-				console.log(`❌ EMAIL FAILED for ${order.customerEmail}`)
-				console.log(`❌ Error: ${emailResult.error}`)
-				console.log(`❌ Details:`, emailResult.details)
-
-				// Логируем ошибку в Firebase
-				await update(ref(database, `orders/${orderId}`), {
-					emailSent: false,
-					emailError: emailResult.error,
-					emailErrorAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
-				})
-			}
-		} catch (emailErr) {
-			console.log(`❌ CRITICAL EMAIL ERROR in Success URL:`)
-			console.log(`❌ Message: ${emailErr.message}`)
-			console.log(`❌ Stack:`, emailErr.stack)
-		}
-
-		console.log(`🔗 Перенаправляем на: /purchase/receiving/${receivingId}`)
-		console.log(`\n\n\n`)
-		return res.redirect(`/purchase/receiving/${receivingId}`)
+		return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Оплата обрабатывается</title>
+        <meta http-equiv="refresh" content="5;url=/">
+        <style>
+          body { font-family: 'Comfortaa', cursive; text-align: center; padding: 50px; }
+        </style>
+      </head>
+      <body>
+        <h2>⏳ Оплата обрабатывается...</h2>
+        <p>Ваш платеж получен и находится в обработке.</p>
+        <p>Ссылка для скачивания будет отправлена на вашу почту.</p>
+        <p>Через 5 секунд вы будете перенаправлены на главную страницу.</p>
+      </body>
+      </html>
+    `)
 	} catch (error) {
-		console.error('❌ Error in Success URL handler:', error)
-		console.error('Error stack:', error.stack)
-		return res.redirect('/payment-error?reason=server_error')
+		console.error('Error in Success URL:', error)
+		return res.redirect('/')
 	}
 })
 
