@@ -362,6 +362,54 @@ app.get('/api/check-apk-files/:kfId', (req, res) => {
 // Добавьте это ДО всех маршрутов robokassa
 const bodyParser = require('body-parser')
 
+// ... после импортов и констант ...
+
+// 1. Редирект с render.com на ваш домен
+app.use((req, res, next) => {
+	const host = req.headers.host
+
+	if (host && host.includes('kf-watch-face.onrender.com')) {
+		const originalUrl = req.originalUrl || req.url
+		const newUrl = `https://www.kf-watchface.ru${originalUrl}`
+		console.log(`🔀 Редирект с ${host}${originalUrl} на ${newUrl}`)
+		return res.redirect(301, newUrl)
+	}
+
+	next()
+})
+
+// 2. Унификация www/non-www
+app.use((req, res, next) => {
+	const host = req.headers.host
+
+	if (host === 'kf-watchface.ru') {
+		const newUrl = `https://www.kf-watchface.ru${req.originalUrl}`
+		console.log(`🌐 Редирект non-www -> www: ${newUrl}`)
+		return res.redirect(301, newUrl)
+	}
+
+	next()
+})
+
+// 3. Проверка HTTPS (если используете за прокси как Render)
+app.use((req, res, next) => {
+	const host = req.headers.host
+
+	// Если используете Cloudflare или другой CDN
+	const forwardedProto =
+		req.headers['x-forwarded-proto'] || req.headers['x-forwarded-proto']
+
+	if (host && host.includes('kf-watchface.ru') && forwardedProto === 'http') {
+		const newUrl = `https://${host}${req.originalUrl}`
+		console.log(`🔐 Редирект HTTP -> HTTPS: ${newUrl}`)
+		return res.redirect(301, newUrl)
+	}
+
+	next()
+})
+
+// ... остальные middleware (compression, bodyParser и т.д.) ...
+
 // Парсинг application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }))
 
